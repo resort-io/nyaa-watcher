@@ -77,7 +77,7 @@ class Config:
             log.info("Cannot find config.json.")
             file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "x")
             config = {"nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME", "watcher_interval_seconds": 600}  # 10 minutes
-            file.write(json.dumps(config, indent=4))
+            file.write(json.dumps(config, indent=2))
             file.close()
             log.info("Created file.")
 
@@ -102,7 +102,7 @@ class Config:
             log.info("Cannot find watchlist.json.")
             file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "x")
             watchlist = {"watchlist": [{'name': '', 'tags': [], 'regex': ''}]}
-            file.write(json.dumps(watchlist, indent=4))
+            file.write(json.dumps(watchlist, indent=2))
             file.close()
             log.info("Created file.")
 
@@ -123,7 +123,7 @@ class Config:
             log.info("Cannot find history.json.")
             file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json", "x")
             history = {"history": []}
-            file.write(json.dumps(history, indent=4))
+            file.write(json.dumps(history, indent=2))
             file.close()
             log.info("Created file.")
 

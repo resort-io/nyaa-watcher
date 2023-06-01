@@ -1,9 +1,9 @@
 {
-    "watchlist": [
-        {
-            "name": "",
-            "tags": [],
-            "regex": []
-        }
-    ]
+  "watchlist": [
+    {
+      "name": "",
+      "tags": [],
+      "regex": []
+    }
+  ]
 }

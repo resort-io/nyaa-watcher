@@ -47,7 +47,7 @@ def update_history_file(watcher: Watcher) -> None:
 
     file_directory = os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json"
     file = open(file_directory, "w")
-    file.write(json.dumps(history, indent=4))
+    file.write(json.dumps(history, indent=2))
     file.close()
 
 
