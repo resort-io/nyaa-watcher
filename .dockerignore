@@ -1,0 +1,8 @@
+.env
+.env.sample
+.git/
+.gitignore
+.idea/
+__pycache__/
+venv/
+watch/

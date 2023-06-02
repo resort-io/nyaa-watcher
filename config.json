@@ -1,0 +1,4 @@
+{
+  "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
+  "watcher_interval_seconds": 600
+}
