@@ -75,7 +75,9 @@ class Watcher:
 
                 # History, if RegEx and a Tag match
                 hash_match = False
-                if tag_match is True and regex_match is True:
+                if tag_match is True and regex_match is True \
+                        or tag_match == "N/A" and regex_match is True \
+                        or tag_match is True and regex_match == "N/A":
                     for history_entry in self.history["history"]:
                         if history_entry["nyaa_hash"] == hash:
                             hash_match = True
@@ -99,9 +101,16 @@ class Watcher:
         return new_torrents
 
     def watchlist_is_empty(self) -> bool:
-        watchlist_entry = self.watchlist['watchlist'][0]
-        if watchlist_entry['name'] == "" \
-                and len(watchlist_entry['tags']) == 0 \
-                and len(watchlist_entry['regex']) == 0:
-            return True
+        for entry in self.watchlist['watchlist']:
+            if entry['name'] == "" \
+                    and len(entry['tags']) == 0 \
+                    and len(entry['regex']) == 0:
+                return True
         return False
+
+    def watchlist_is_valid(self) -> bool:
+        for entry in self.watchlist['watchlist']:
+            if len(entry['tags']) == 0 and len(entry['regex']) == 0 \
+                    or entry['tags'][0] == "" and entry['regex'][0] == "":
+                return False
+        return True
