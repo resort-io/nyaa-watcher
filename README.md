@@ -1,11 +1,12 @@
 # Nyaa Watcher
 
-A python server that monitors a Nyaa RSS feed for specific titles and downloads torrent files into a torrent client watch directory.
+* [GitHub](https://github.com/resort-io/nyaa-watcher)
+* [DockerHub]()
 
 ## Table of Contents
 
    * [Features](#features)
-     * [Future Features](#future-features)
+     * [Upcoming Updates](#upcoming-updates)
    * [Usage](#usage)
       * [docker cli](#docker-cli)
       * [docker compose](#docker-compose)
@@ -22,11 +23,14 @@ A python server that monitors a Nyaa RSS feed for specific titles and downloads 
 
 ## Features
 
-* 
+* Monitors a Nyaa RSS feed for titles, and downloads the torrent files into a torrent client watch directory.
+* Uses custom tags and/or regular expressions to search for specific titles.
+* Maintains a history backlog to store torrent information and prevent duplicate downloads.
 
-### Future Features
+### Upcoming Updates
 
-* 
+* Discord webhook integration.
+* Multiple RSS feeds.
 
 ## Usage
 
@@ -35,27 +39,27 @@ A python server that monitors a Nyaa RSS feed for specific titles and downloads 
 ```bash
 docker run
   --name=nyaa-watcher
-  -e PUID=1000
-  -e PGID=1000
+  -e PUID=1000 #optional
+  -e PGID=1000 #optional
   -e LOG_LEVEL="INFO" #optional
   -v /path/to/torrent-client/watch:/watch
   -v /path/to/appdata/nyaa-watcher:/watcher
   --restart unless-stopped
-  USER_NAME/nyaa-watcher:latest
+  resortdocker/nyaa-watcher:latest
 ```
 
 ### [docker compose](https://docs.docker.com/compose/compose-file/)
 
 ```bash
 ---
-version: "2.1"
+version: "3.8"
 services:
   nyaa-watcher:
-    image: USER_NAME/nyaa-watcher:latest
+    image: resortdocker/nyaa-watcher:latest
     container_name: nyaa-watcher
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=1000 #optional
+      - PGID=1000 #optional
       - LOG_LEVEL="INFO" #optional
     volumes:
       - /path/to/torrent-client/watch:/watch
@@ -67,13 +71,13 @@ services:
 
 Parameter syntax is `<host>:<container>`.
 
-| Parameter      | Function                                            |
-|----------------|-----------------------------------------------------|
-| `-e PUID=1000` | UserID for volume permissions.                      |
-| `-e PGID=1000` | GroupID  for volume permissions.                    |
-| `-e LOG_LEVEL` | Optional - Log information level. `INFO` or `DEBUG` |
-| `-v /watch`    | Watch directory for torrent client.                 |
-| `-v /watcher`  | Directory for Nyaa Watcher files.                   |
+| Parameter      | Function                                                                                      |
+|----------------|-----------------------------------------------------------------------------------------------|
+| `-e PUID=1000` | Optional - UserID for volume permissions. You may need this depending on your host machine.   |
+| `-e PGID=1000` | Optional - GroupID  for volume permissions. You may need this depending on your host machine. |
+| `-e LOG_LEVEL` | Optional - Log information level. `INFO` or `DEBUG`                                           |
+| `-v /watch`    | Watch directory for torrent client.                                                           |
+| `-v /watcher`  | Directory for Nyaa Watcher files.                                                             |
 
 ## Configuration
 
@@ -133,8 +137,9 @@ See [Regular Expressions](#regular-expressions) and [Example Watchlist](#example
 ### Regular Expressions
 Below are some sample regular expressions that search for episodes numbers within the torrent title
 using the `S00E00`, `000`, or `0000` formats.
+If you have simpler regular expressions to use, then feel free to use those instead.
 
-* Each **square bracket** `[0-9]` represents a single digit ranging from the left digit, `0`, to the right digit, `9` (Inclusive).
+* Each set of **square brackets** `[]` represents a single digit, with the number(s) inside being the range. Range hyphenated between two numbers (Inclusive) or can be single digit.
 * Each set of **parentheses** `()` represents a portion of the expression that can be used with a **pipe**.
 * Each **pipe** `|` represents an **OR** statement. Placed inside or outside of parentheses.
 
@@ -147,30 +152,46 @@ Visit [Regex101](https://regex101.com/) for more information on creating and tes
 
 #### `S00E00` Format
 
-| Expression                                           | Use Case                                                                     |
-|------------------------------------------------------|------------------------------------------------------------------------------|
-| `E([0-9][5-9]\|[1-9][0-9])`                          | Matches any torrent with an **episode number >4**.                           |
-| `E([1-9][2-9]\|[2-9][0-9])`                          | Matches any torrent with an **episode number >=12**.                         |
-| `S([0-9][9]\|[1-9][0-9])`                            | Matches any torrent with a **season number >9**.                             |
-| `S[1-9][0-9]`                                        | Matches any torrent with a **season number >=10**.                           |
-| `S([1-9][1-9]\|[2-9][0-9])E([1-9][3-9]\|[2-9][0-9])` | Matches any torrent with a **season number >10** and **episode number >12**. |
+| Expression                                           | Use Case                                                                       |
+|------------------------------------------------------|--------------------------------------------------------------------------------|
+| `E([0-9][5-9]\|[1-9][0-9])`                          | Matches any torrent with an **episode number >=5**.                            |
+| `E([1-9][2-9]\|[2-9][0-9])`                          | Matches any torrent with an **episode number >=12**.                           |
+| `S([0-9][9]\|[1-9][0-9])`                            | Matches any torrent with a **season number >=9**.                              |
+| `S[1-9][0-9]`                                        | Matches any torrent with a **season number >=10**.                             |
+| `S([1-9][1-9]\|[2-9][0-9])E([1-9][3-9]\|[2-9][0-9])` | Matches any torrent with a **season number >=11** and **episode number >=13**. |
 
 #### `0000` Format
 
 Sample expressions do not include episode numbers above 9999.
 
-| Expression                                                                               | Use Case                                               |
-|------------------------------------------------------------------------------------------|--------------------------------------------------------|
-| `[1-9][0-9][0-9]([0-9]\|)`                                                               | Matches any torrent with an **episode number >=100**.  |
-| `[1-9][0-9][0-9][0-9]\|[1-9][0-9][1-9]\|[1-9][1-9][0-9]\|[2-9][0-9][0-9]`                | Matches any torrent with an **episode number >100**.   |
-| `[1-9][0-9][0-9][0-9]\|[7-9][4-9][9]\|[7-9][5-9][0-9]\|[8-9][0-9][0-9]`                  | Matches any torrent with an **episode number >=749**.  |
-| `[1-9][0-9][0-9][0-9]`                                                                   | Matches any torrent with an **episode number >=1000**. |
-| `[1-9]([0-9][0-9][1-9]\|[0-9][1-9][0-9]\|[1-9][0-9][0-9])`                               | Matches any torrent with an **episode number >1000**.  |
-| `[1-9][4-9][5-9][3-9]\|[1-9][4-9][6-9][0-9]\|[1-9][5-9][0-9][0-9]\|[2-9][0-9][0-9][0-9]` | Matches any torrent with an **episode number >=1453**. |
+| Expression                                                                               | Use Case                                                              |
+|------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| `[1-9][0-9][0-9]([0-9]\|)`                                                               | Matches any torrent with an **episode number >=100**. Includes >1000. |
+| `[1-9][0-9][0-9][0-9]\|[1-9][0-9][1-9]\|[1-9][1-9][0-9]\|[2-9][0-9][0-9]`                | Matches any torrent with an **episode number >=101**. Includes >1000. |
+| `[1-9][0-9][0-9][0-9]\|[7-9][4-9][9]\|[7-9][5-9][0-9]\|[8-9][0-9][0-9]`                  | Matches any torrent with an **episode number >=749**.                 |
+| `[1-9][0-9][0-9][0-9]`                                                                   | Matches any torrent with an **episode number >=1000**.                |
+| `[1-9]([0-9][0-9][1-9]\|[0-9][1-9][0-9]\|[1-9][0-9][0-9])`                               | Matches any torrent with an **episode number >1000**.                 |
+| `[1-9][4-9][5-9][3-9]\|[1-9][4-9][6-9][0-9]\|[1-9][5-9][0-9][0-9]\|[2-9][0-9][0-9][0-9]` | Matches any torrent with an **episode number >=1453**.                |
 
 ### Regular Expressions Guide
 
-To modify the expressions for your needs...
+#### `S00E00` Format
+
+The **season number >10** and **episode number >12** expression above is structured as such:
+
+* Season Group 1: `S[1-9][1-9]` **>=S11** - Represents the desired season number you are starting from.
+* Season Group 2: `S[2-9][0-9]` **>=S20** - Represents the remaining numbers in the **Tenth** position.
+* Episode Group 1: `E[1-9][3-9]` **>=E13** - Represents the desired episode number you are starting from.
+* Episode Group 2: `E[2-9][0-9]` **>=E20** - Represents the remaining numbers in the **Tenth** position.
+
+#### `000` and `0000` Formats
+
+The **episode number >=1453** expression above is structured as such:
+
+* Group 1: `[1-9][4-9][5-9][3-9]` **>=1459** - Represents the desired episode number you are starting from.
+* Group 2: `[1-9][4-9][6-9][0-9]` **>=1460** - Represents the remaining numbers in the **Tenth** position.
+* Group 3: `[1-9][5-9][0-9][0-9]` **>=1500** - Represents the remaining numbers in the **Hundredth** position.
+* Group 4: `[2-9][0-9][0-9][0-9]` **>=2000** - Represents the remaining numbers in the **Thousandth** position.
 
 ### Example Watchlist
 
@@ -198,4 +219,5 @@ The example watchlist has two entries:
 
 ## Versions
 
-* **1.0.0** (06/30/2023): Initial release.
+* **1.0.0** (06/30/2023)
+  * Initial release.
