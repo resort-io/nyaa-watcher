@@ -121,10 +121,18 @@ if __name__ == "__main__":
 
         watcher = Watcher(NYAA_RSS, WATCHER_WATCHLIST, WATCHER_HISTORY)
 
+        # Verifying Watchlist
         if watcher.watchlist_is_empty():
-            log.info("No watchlist entries found. Add an entry with a title and tag(s) to watchlist.json and restart "
-                     "the server.")
+            log.info("No watchlist entries found. Add an entry including a title with tag(s) or regex(es) to "
+                     "watchlist.json and restart the server.")
             log.info("Server exited.")
+            log.info("")
+            exit(-1)
+        if not watcher.watchlist_is_valid():
+            log.info("One or more watchlist entries does not have a tag or regex. Add the tag or regex to the "
+                     "entry/entries in watchlist.json and restart the server.")
+            log.info("Server exited.")
+            log.info("")
             exit(-1)
 
         # Verifying RSS URL
@@ -132,11 +140,13 @@ if __name__ == "__main__":
                 or watcher.get_rss() == "":
             log.info("No Nyaa RSS found. Add a Nyaa RSS URL to config.json and restart the server.")
             log.info("Server exited.")
+            log.info("")
             exit(-1)
         response = requests.get(NYAA_RSS)
         if response.status_code != 200:
             log.info("Could not read RSS URL. Add a valid Nyaa RSS URL to config.json and restart the server.")
             log.info("Server exited.")
+            log.info("")
             exit(-1)
 
         log.info("Watcher started.")
