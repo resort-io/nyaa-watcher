@@ -1,7 +1,7 @@
 # Nyaa Watcher
 
-* [GitHub](https://github.com/resort-io/nyaa-watcher)
-* [DockerHub](https://hub.docker.com/r/resortdocker/nyaa-watcher)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/resort-io/nyaa-watcher?color=blue&logo=github&logoColor=white&style=for-the-badge)](https://github.com/resort-io/nyaa-watcher/releases)
+[![Docker Image Version (latest by date)](https://img.shields.io/docker/v/resortdocker/nyaa-watcher?color=blue&logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags)
 
 ## Table of Contents
 
@@ -29,8 +29,8 @@
 
 ### Upcoming Updates
 
-* Discord webhook integration.
-* Multiple RSS feeds.
+* Discord webhook integration for sending download notifications.
+* Multiple Nyaa RSS feeds.
 
 ## Usage
 
