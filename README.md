@@ -1,7 +1,7 @@
 # Nyaa Watcher
 
-* [GitHub](https://github.com/resort-io/nyaa-watcher)
-* [DockerHub](https://hub.docker.com/r/resortdocker/nyaa-watcher)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/resort-io/nyaa-watcher?color=blue&logo=github&logoColor=white&style=for-the-badge)](https://github.com/resort-io/nyaa-watcher/releases)
+[![Docker Image Version (latest by date)](https://img.shields.io/docker/v/resortdocker/nyaa-watcher?color=blue&logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags)
 
 ## Table of Contents
 
@@ -29,8 +29,8 @@
 
 ### Upcoming Updates
 
-* Discord webhook integration.
-* Multiple RSS feeds.
+* Discord webhook integration for sending download notifications.
+* Multiple Nyaa RSS feeds.
 
 ## Usage
 
@@ -76,7 +76,7 @@ Parameter syntax is `<host>:<container>`.
 | `-e PUID=1000` | Optional - UserID for volume permissions. You may need this depending on your host machine.   |
 | `-e PGID=1000` | Optional - GroupID  for volume permissions. You may need this depending on your host machine. |
 | `-e LOG_LEVEL` | Optional - Log information level. `INFO` or `DEBUG`                                           |
-| `-v /watch`    | Watch directory for torrent client.                                                           |
+| `-v /watch`    | Watch directory for your torrent client.                                                      |
 | `-v /watcher`  | Directory for Nyaa Watcher files.                                                             |
 
 ## Configuration
@@ -117,7 +117,7 @@ Contains the tags and regular expressions that the server will search for in the
 Each entry must have at least one tag or one regex value.
 
 * `name` - Name for you to identify the entry. Not used when searching.
-* `tags` - Array to strings to search for in each torrent title. Only one tag needs to match.
+* `tags` - Array of strings to search for in each torrent title. Only one tag needs to match.
 * `regex` - Array of regular expressions to search for in each torrent title. Only one expression needs to match.
 
 ```json
@@ -139,7 +139,7 @@ Below are some sample regular expressions that search for episodes numbers withi
 using the `S00E00`, `000`, or `0000` formats.
 If you have simpler regular expressions to use, then feel free to use those instead.
 
-* Each set of **square brackets** `[]` represents a single digit, with the number(s) inside being the range. Range hyphenated between two numbers (Inclusive) or can be single digit.
+* Each set of **square brackets** `[]` represents a single digit, with the number(s) inside being the range. Range hyphenated between two numbers (Inclusive) or can be single a digit.
 * Each set of **parentheses** `()` represents a portion of the expression that can be used with a **pipe**.
 * Each **pipe** `|` represents an **OR** statement. Placed inside or outside of parentheses.
 
@@ -180,18 +180,18 @@ Sample expressions do not include episode numbers above 9999.
 The **season number >10** and **episode number >12** expression above is structured as such:
 
 * Season Group 1: `S[1-9][1-9]` **>=S11** - Represents the desired season number you are starting from.
-* Season Group 2: `S[2-9][0-9]` **>=S20** - Represents the remaining numbers in the **Tenth** position.
+* Season Group 2: `S[2-9][0-9]` **>=S20** - Represents the remaining numbers in the **Tens** position.
 * Episode Group 1: `E[1-9][3-9]` **>=E13** - Represents the desired episode number you are starting from.
-* Episode Group 2: `E[2-9][0-9]` **>=E20** - Represents the remaining numbers in the **Tenth** position.
+* Episode Group 2: `E[2-9][0-9]` **>=E20** - Represents the remaining numbers in the **Tens** position.
 
 #### `000` and `0000` Formats
 
 The **episode number >=1453** expression above is structured as such:
 
 * Group 1: `[1-9][4-9][5-9][3-9]` **>=1459** - Represents the desired episode number you are starting from.
-* Group 2: `[1-9][4-9][6-9][0-9]` **>=1460** - Represents the remaining numbers in the **Tenth** position.
-* Group 3: `[1-9][5-9][0-9][0-9]` **>=1500** - Represents the remaining numbers in the **Hundredth** position.
-* Group 4: `[2-9][0-9][0-9][0-9]` **>=2000** - Represents the remaining numbers in the **Thousandth** position.
+* Group 2: `[1-9][4-9][6-9][0-9]` **>=1460** - Represents the remaining numbers in the **Tens** position.
+* Group 3: `[1-9][5-9][0-9][0-9]` **>=1500** - Represents the remaining numbers in the **Hundreds** position.
+* Group 4: `[2-9][0-9][0-9][0-9]` **>=2000** - Represents the remaining numbers in the **Thousands** position.
 
 ### Example Watchlist
 
@@ -219,5 +219,9 @@ The example watchlist has two entries:
 
 ## Versions
 
-* **1.0.0** (06/30/2023)
-  * Initial release.
+### *1.0.1* - (06/04/2023)
+* Fixed *watchlist.json* file validation check.
+* Added log messages during startup when testing RSS URL.
+
+### *1.0.0* - (06/01/2023)
+* Initial release.
