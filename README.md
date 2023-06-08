@@ -1,7 +1,12 @@
-# Nyaa Watcher
+![Nyaa Watcher Banner](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/banner.png)
 
-* [GitHub](https://github.com/resort-io/nyaa-watcher)
-* [DockerHub](https://hub.docker.com/r/resortdocker/nyaa-watcher)
+[![resort-io GitHub Repositories](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=resort-io&message=all-repositories&logo=github)](https://github.com/resort-io "All GitHub repositories from resort-io")
+[![resort-io DockerHub Repositories](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=resortdocker&message=all-repositories&logo=docker)](https://hub.docker.com/u/resortdocker "All DockerHub repositories from resortdocker")
+
+[![GitHub Repository](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=github&message=nyaa-watcher&logo=github)](https://github.com/resort-io/nyaa-watcher "Source code of Nyaa Watcher")
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/resort-io/nyaa-watcher?color=0085ff&logo=github&style=for-the-badge)](https://github.com/resort-io/nyaa-watcher/releases "Latest GitHub release")
+[![Docker Image Version (latest by date)](https://img.shields.io/docker/v/resortdocker/nyaa-watcher?color=0085ff&logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags "All docker tags for Nyaa Watcher")
+![Docker Pulls](https://img.shields.io/docker/pulls/resortdocker/nyaa-watcher?color=0085ff&label=pulls&logo=docker&logoColor=white&style=for-the-badge)
 
 ## Table of Contents
 
@@ -12,6 +17,7 @@
       * [docker compose](#docker-compose)
       * [Parameters](#parameters)
    * [Configuration](#configuration)
+      * [Startup](#startup)
       * [Files](#files)
          * [config.json](#configjson)
          * [history.json](#historyjson)
@@ -29,10 +35,13 @@
 
 ### Upcoming Updates
 
-* Discord webhook integration.
-* Multiple RSS feeds.
+* Discord webhook integration for sending download notifications.
+* Multiple Nyaa RSS feeds.
+* Unraid community app support.
 
 ## Usage
+
+Examples for creating the container:
 
 ### [docker cli](https://docs.docker.com/engine/reference/commandline/cli/)
 
@@ -69,22 +78,31 @@ services:
 
 ### Parameters
 
-Parameter syntax is `<host>:<container>`.
+Volume parameter syntax is `<host>:<container>`.
 
-| Parameter      | Function                                                                                      |
-|----------------|-----------------------------------------------------------------------------------------------|
-| `-e PUID=1000` | Optional - UserID for volume permissions. You may need this depending on your host machine.   |
-| `-e PGID=1000` | Optional - GroupID  for volume permissions. You may need this depending on your host machine. |
-| `-e LOG_LEVEL` | Optional - Log information level. `INFO` or `DEBUG`                                           |
-| `-v /watch`    | Watch directory for torrent client.                                                           |
-| `-v /watcher`  | Directory for Nyaa Watcher files.                                                             |
+| Parameter      | Function                                                                     |
+|----------------|------------------------------------------------------------------------------|
+| `-e PUID=1000` | Optional (Depending on your host machine) - UserID for volume permissions.   |
+| `-e PGID=1000` | Optional (Depending on your host machine) - GroupID  for volume permissions. |
+| `-e LOG_LEVEL` | Optional - Log information level. `INFO` or `DEBUG`                          |
+| `-v /watch`    | Watch directory for your torrent client.                                     |
+| `-v /watcher`  | Directory for Nyaa Watcher files.                                            |
 
 ## Configuration
 
+### Startup
+
 The server will generate three files on startup: `config.json`, `history.json`, and `watchlist.json`.
-The server will regenerate these files if any are removed or deleted.
+These files will regenerate if any are removed or deleted.
+
+**To begin watching**, follow the instructions given by the log messages:
+
+* Add an entry including a title with tag(s) and/or regex(es) to `watchlist.json`.
+* Add a Nyaa RSS URL to `config.json`.
 
 The server will need to be restarted when making changes to `config.json` or `watchlist.json`.
+
+See [Files](#files) and [Example Watchlist](#example-watchlist) below for more information on getting started.
 
 ### Files
 
@@ -113,11 +131,11 @@ Used to prevent duplicate downloads, **do not modify**.
 
 
 #### `watchlist.json`
-Contains the tags and regular expressions that the server will search for in the RSS feed torrent titles.
-Each entry must have at least one tag or one regex value.
+Contains the tags and regular expressions that the server will search for in the torrent titles.
+**Each watchlist entry must have at least one tag or one regex value**.
 
 * `name` - Name for you to identify the entry. Not used when searching.
-* `tags` - Array to strings to search for in each torrent title. Only one tag needs to match.
+* `tags` - Array of strings to search for in each torrent title (No delimiters or flags). Only one tag needs to match.
 * `regex` - Array of regular expressions to search for in each torrent title. Only one expression needs to match.
 
 ```json
@@ -139,14 +157,15 @@ Below are some sample regular expressions that search for episodes numbers withi
 using the `S00E00`, `000`, or `0000` formats.
 If you have simpler regular expressions to use, then feel free to use those instead.
 
-* Each set of **square brackets** `[]` represents a single digit, with the number(s) inside being the range. Range hyphenated between two numbers (Inclusive) or can be single digit.
-* Each set of **parentheses** `()` represents a portion of the expression that can be used with a **pipe**.
-* Each **pipe** `|` represents an **OR** statement. Placed inside or outside of parentheses.
+* Each set of **square brackets** `[]` represents a single digit, with the number(s) inside being the range.
+  Range is hyphenated between two numbers (inclusive) or can be single a digit.
+* Each set of **parentheses** `()` represents a portion of the expression that can be selected using a **pipe**.
+* Each **pipe** `|` represents an **OR** statement. Can be placed inside or outside of parentheses.
 
 **Notes**: You may want to add additional information to the regex for episodes that are numbered numerically, 
 as a "***720p***" or "***1080p***" within the torrent title may interfere with the matching.
-Also, if you are using searching for episode numbers >0 in the `E00` format, then you will have to change/remove
-the regex once the season is over.
+Also, if a watchlist entry is using `regex` value(s) to search for **episode numbers >0** in the `E00` **format**,
+then you will have to change/remove those value(s) once the season is over.
 
 Visit [Regex101](https://regex101.com/) for more information on creating and testing regular expressions.
 
@@ -177,41 +196,41 @@ Sample expressions do not include episode numbers above 9999.
 
 #### `S00E00` Format
 
-The **season number >10** and **episode number >12** expression above is structured as such:
+The **season number >=11** and **episode number >=13** expression above is structured as such:
 
 * Season Group 1: `S[1-9][1-9]` **>=S11** - Represents the desired season number you are starting from.
-* Season Group 2: `S[2-9][0-9]` **>=S20** - Represents the remaining numbers in the **Tenth** position.
+* Season Group 2: `S[2-9][0-9]` **>=S20** - Represents the remaining numbers in the **Tens** and **Ones** positions.
 * Episode Group 1: `E[1-9][3-9]` **>=E13** - Represents the desired episode number you are starting from.
-* Episode Group 2: `E[2-9][0-9]` **>=E20** - Represents the remaining numbers in the **Tenth** position.
+* Episode Group 2: `E[2-9][0-9]` **>=E20** - Represents the remaining numbers in the **Tens** and **Ones** positions.
 
 #### `000` and `0000` Formats
 
 The **episode number >=1453** expression above is structured as such:
 
 * Group 1: `[1-9][4-9][5-9][3-9]` **>=1459** - Represents the desired episode number you are starting from.
-* Group 2: `[1-9][4-9][6-9][0-9]` **>=1460** - Represents the remaining numbers in the **Tenth** position.
-* Group 3: `[1-9][5-9][0-9][0-9]` **>=1500** - Represents the remaining numbers in the **Hundredth** position.
-* Group 4: `[2-9][0-9][0-9][0-9]` **>=2000** - Represents the remaining numbers in the **Thousandth** position.
+* Group 2: `[1-9][4-9][6-9][0-9]` **>=1460** - Represents the remaining numbers in the **Tens** and **Ones** positions.
+* Group 3: `[1-9][5-9][0-9][0-9]` **>=1500** - Represents the remaining numbers in the **Hundreds** position.
+* Group 4: `[2-9][0-9][0-9][0-9]` **>=2000** - Represents the remaining numbers in the **Thousands** position.
 
 ### Example Watchlist
 
-The example watchlist has two entries:
+Example watchlist with two entries:
 
 * `Demon Slayer` - Download triggers when a torrent title contains "***Demon Slayer***" or "***Kimetsu no Yaiba***".
-* `One Piece` - Download triggers when a torrent title contains "***One Piece***" and an episode number greater than ***1063***.
+* `One Piece` - Download triggers when a torrent title contains "***One Piece - XXXX***" with an **episode number greater than *1063***.
 
 ```json
 {
   "watchlist": [
     {
-      "name": "Nyaa Username - Demon Slayer",
+      "name": "Demon Slayer",
       "tags": ["Demon Slayer", "Kimetsu no Yaiba"],
       "regex": []
     },
     {
-      "name": "Nyaa Username - One Piece",
+      "name": "One Piece",
       "tags": [],
-      "regex": ["One Piece - [1-9][0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9][0-9]|[2-9][0-9][0-9][0-9]"]
+      "regex": ["One Piece - ([1-9][0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9][0-9]|[2-9][0-9][0-9][0-9])"]
     }
   ]
 }
@@ -219,5 +238,9 @@ The example watchlist has two entries:
 
 ## Versions
 
-* **1.0.0** (06/30/2023)
-  * Initial release.
+### 1.0.1 *(06/04/2023)*
+* Fixed *watchlist.json* file validation check.
+* Added log messages during startup when testing RSS URL.
+
+### 1.0.0 *(06/01/2023)*
+* Initial release.

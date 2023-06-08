@@ -110,7 +110,6 @@ class Watcher:
 
     def watchlist_is_valid(self) -> bool:
         for entry in self.watchlist['watchlist']:
-            if len(entry['tags']) == 0 and len(entry['regex']) == 0 \
-                    or entry['tags'][0] == "" and entry['regex'][0] == "":
+            if len(entry['tags']) == 0 and len(entry['regex']) == 0:
                 return False
         return True
