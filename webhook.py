@@ -109,3 +109,42 @@ class Webhook:
             except Exception as e:
                 log.info(f"Error sending Discord notification to webhook: {webhook_name}.")
                 log.debug(e, exc_info=True)
+
+    def webhooks_are_valid(self):
+        if len(self.webhooks['webhooks']) == 0:
+            return True
+
+        for webhook in self.webhooks:
+            notifications = webhook['notifications']
+
+            # Verifying range
+            if notifications['show_downloads'] < 0 or notifications['show_downloads'] > 6 \
+                    or notifications['show_seeders'] < 0 or notifications['show_seeders'] > 6 \
+                    or notifications['show_leechers'] < 0 or notifications['show_leechers'] > 6 \
+                    or notifications['show_published'] < 0 or notifications['show_published'] > 6 \
+                    or notifications['show_category'] < 0 or notifications['show_category'] > 6 \
+                    or notifications['show_size'] < 0 or notifications['show_size'] > 6:
+                return WebhookError(f"Webhook '{webhook['name']}' contains out of range integers "
+                                    f"for the 'show_' options.")
+
+            # Verifying no duplicates
+            values = list()
+
+            if notifications['show_downloads'] != 0:
+                values.append(notifications['show_downloads'])
+            if notifications['show_seeders'] != 0:
+                values.append(notifications['show_seeders'])
+            if notifications['show_leechers'] != 0:
+                values.append(notifications['show_leechers'])
+            if notifications['show_published'] != 0:
+                values.append(notifications['show_published'])
+            if notifications['show_category'] != 0:
+                values.append(notifications['show_category'])
+            if notifications['show_size'] != 0:
+                values.append(notifications['show_size'])
+
+            values_set = set(values)
+            if len(values_set) != len(values):
+                return WebhookError(f"Webhook '{webhook['name']}' contains duplicate integers "
+                                    f"for the 'show_' options.")
+        return True
