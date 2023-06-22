@@ -1,0 +1,18 @@
+{
+  "webhooks": [
+    {
+      "name": "General Chat",
+      "url": "https://discord.com/api/webhooks/1116556403029573764/zXdOZj8Y6aiGD1VPwO1_CLdcUTwabvT8GDGwYCX8V82zxA6klbd59YB1RNJM_cXcKN2C",
+      "notifications": {
+        "title": "",
+        "description": "",
+        "show_category": 3,
+        "show_downloads": 4,
+        "show_leechers": 6,
+        "show_published": 1,
+        "show_seeders": 5,
+        "show_size": 2
+      }
+    }
+  ]
+}
