@@ -32,6 +32,12 @@ class Webhook:
 
             connected = 0
             for webhook in self.webhooks['webhooks']:
+                if webhook['name'] == "":
+                    raise WebhookError("Webhook Error: Webhook entries must have a name.")
+
+                if webhook['url'] == "":
+                    raise WebhookError("Webhook Error: Webhook entries must have a URL.")
+
                 log.debug(f" - {webhook['name']} ({webhook['url']})")
                 id, token = _parse_url(webhook['url'])
                 try:
@@ -40,7 +46,7 @@ class Webhook:
                     self.discord_webhooks.append(discord_webhook)
                     connected += 1
                 except Exception as e:
-                    log.info(f"Error connecting to Discord webhook: {webhook['name']} ({webhook['url']}).")
+                    log.info(f"Webhook Error: Cannot connect to '{webhook['name']}' webhook at {webhook['url']}.")
                     log.debug(e, exc_info=True)
 
             log.info(f"Connected to 1 Discord webhook.") if connected == 1 \
@@ -63,7 +69,7 @@ class Webhook:
             return False
 
     def send_notification(self, webhook_name: str, torrent: dict) -> None:
-        # Finding webhook JSON object
+        # Finding webhook dict
         webhook_json = self.get_webhook_by_name(webhook_name)
         if webhook_json is False:
             log.info(f"Webhook Error: Cannot find '{webhook_name}' in webhooks.json.")
@@ -71,10 +77,15 @@ class Webhook:
 
         notification = discord.Embed()
 
-        # Title and Description
-        if webhook_json['notifications']["title"] == "":
+        # Title
+        if webhook_json['notifications']['title'] == "":
             notification.title = f"Downloading New Torrent: {torrent['title']}"
-        notification.description = webhook_json['notifications']["description"]
+        else:
+            notification.title = webhook_json['notifications']['title']
+
+        # Description
+        if webhook_json['notifications']['description'] != "":
+            notification.description = webhook_json['notifications']['description']
 
         # Custom Notification Details
         i = 1
@@ -99,33 +110,33 @@ class Webhook:
         # Send notification
         log.debug(f"Sending Discord notification to webhook: {webhook_name}...")
         discord_webhook = self.get_discord_webhook_by_name(webhook_name)
-
         if discord_webhook is False:
-            log.info(f"Cannot find Discord webhook: {webhook_name}.")
+            log.info(f"Webhook Error: Cannot find '{webhook_name}' in webhooks.json.")
         else:
             try:
                 discord_webhook.send(embed=notification)
                 log.debug("Done.")
             except Exception as e:
-                log.info(f"Error sending Discord notification to webhook: {webhook_name}.")
-                log.debug(e, exc_info=True)
+                log.info(f"Webhook Error: Failed to send notification to '{webhook_name}' webhook.")
+                log.debug(e)
 
     def webhooks_are_valid(self):
         if len(self.webhooks['webhooks']) == 0:
             return True
 
-        for webhook in self.webhooks:
+        for webhook in self.webhooks['webhooks']:
             notifications = webhook['notifications']
 
             # Verifying range
-            if notifications['show_downloads'] < 0 or notifications['show_downloads'] > 6 \
-                    or notifications['show_seeders'] < 0 or notifications['show_seeders'] > 6 \
-                    or notifications['show_leechers'] < 0 or notifications['show_leechers'] > 6 \
-                    or notifications['show_published'] < 0 or notifications['show_published'] > 6 \
-                    or notifications['show_category'] < 0 or notifications['show_category'] > 6 \
-                    or notifications['show_size'] < 0 or notifications['show_size'] > 6:
-                return WebhookError(f"Webhook '{webhook['name']}' contains out of range integers "
-                                    f"for the 'show_' options.")
+            if notifications['show_downloads'] not in range(0, 7) \
+                    or notifications['show_seeders'] not in range(0, 7) \
+                    or notifications['show_leechers'] not in range(0, 7) \
+                    or notifications['show_published'] not in range(0, 7) \
+                    or notifications['show_category'] not in range(0, 7) \
+                    or notifications['show_size'] not in range(0, 7):
+                raise WebhookError(f"Webhook Error: '{webhook['name']}' webhook contains one or more 'show_' "
+                                   f"properties out of range (0 to 6). Change the webhook properties in webhook.json "
+                                   f"and restart the server.")
 
             # Verifying no duplicates
             values = list()
@@ -145,6 +156,6 @@ class Webhook:
 
             values_set = set(values)
             if len(values_set) != len(values):
-                return WebhookError(f"Webhook '{webhook['name']}' contains duplicate integers "
-                                    f"for the 'show_' options.")
+                raise WebhookError(f"Webhook Error: '{webhook['name']}' webhook contains one or more duplicate "
+                                   f"'show_' properties. Change the webhook properties and restart the server.")
         return True
