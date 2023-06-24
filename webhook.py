@@ -72,7 +72,7 @@ class Webhook:
         # Finding webhook dict
         webhook_json = self.get_webhook_by_name(webhook_name)
         if webhook_json is False:
-            log.info(f"Webhook Error: Cannot find '{webhook_name}' in webhooks.json.")
+            log.info(f"Watchlist Error: Cannot find '{webhook_name}' in webhooks.json.")
             return
 
         notification = discord.Embed()

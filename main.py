@@ -80,7 +80,8 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
                 else log.info(f"Searching for matching torrents in {minutes} minutes.")
     # New torrents
     else:
-        log.info(f"{len(torrents)} new torrents:")
+        log.info("1 new torrent:") if len(torrents) == 1 \
+            else log.info(f"{len(torrents)} new torrents:")
 
         # Display torrents
         for torrent in torrents:
@@ -206,7 +207,6 @@ if __name__ == "__main__":
         exit(-1)
 
     log.info("Server started.")
-
     scheduler = sched.scheduler(time.time, time.sleep)
     scheduler.enter(1, 1, check_rss, (scheduler, watcher, WATCHER_INTERVAL, webhook))
     scheduler.run()
