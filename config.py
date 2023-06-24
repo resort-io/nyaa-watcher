@@ -141,7 +141,7 @@ class Config:
         except Exception as e:
             log.info("Cannot find watchlist.json.")
             file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "x")
-            watchlist = {"watchlist": [{'name': '', 'tags': [], 'regex': []}]}
+            watchlist = {"watchlist": [{'name': '', 'tags': [], 'regex': [], 'webhooks': []}]}
             file.write(json.dumps(watchlist, indent=2))
             file.close()
             log.info("Created file.")
