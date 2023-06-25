@@ -21,60 +21,78 @@ def is_integer(number) -> bool:
 
 
 def _verify_config_parse(config: dict) -> bool:
-    if config['nyaa_rss'] is None or config['watcher_interval_seconds'] is None:
-        return False
-    return True
+    try:
+        if 'nyaa_rss' not in config or 'watcher_interval_seconds' not in config:
+            raise ConfigError("Parse Error: nyaa_rss or watcher_interval_seconds is missing from config.json. "
+                              "Add the properties and restart the server.")
+        return True
+    except Exception as e:
+        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in config.json. Change "
+                          f"the property and restart the server.")
 
 
 def _verify_watchlist_parse(watchlist: dict) -> bool:
-    if "watchlist" in watchlist:
-        if len(watchlist["watchlist"]) >= 1:
-            for entry in watchlist["watchlist"]:
-                if entry["name"] is None \
-                        or entry["tags"] is None \
-                        or entry["regex"] is None:
-                    return False
-            return True
-    return False
+    try:
+        if 'watchlist' in watchlist:
+            if len(watchlist['watchlist']) >= 1:
+                for entry in watchlist['watchlist']:
+                    if 'name' not in entry \
+                            or 'tags' not in entry \
+                            or 'regex' not in entry:
+                        raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing or "
+                                          "invalid properties. Change the properties and restart the server. "
+                                          "('webhooks' is optional)")
+                return True
+            else:
+                raise ConfigError("Parse Error: watchlist.json contains no entries. Add entries and restart "
+                                  "the server.")
+        else:
+            raise ConfigError("Parse Error: watchlist.json contains no 'watchlist' array property. Add the property "
+                              "and restart the server.")
+    except Exception as e:
+        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in watchlist.json. Change "
+                          f"the property and restart the server.")
 
 
 def _verify_history_parse(history: dict) -> bool:
-    if "history" in history:
-        if len(history["history"]) == 0:
+    try:
+        if len(history['history']) == 0:
             return True
-        elif len(history["history"]) >= 1:
-            for entry in history["history"]:
-                if entry["torrent_title"] is None \
-                        or entry["date_downloaded"] is None \
-                        or entry["nyaa_page"] is None \
-                        or entry["nyaa_hash"] is None:
-                    return False
+        else:
+            for entry in history['history']:
+                if 'torrent_title' not in entry \
+                        or 'date_downloaded' not in entry \
+                        or 'nyaa_page' not in entry \
+                        or 'nyaa_hash' not in entry:
+                    raise ConfigError("Parse Error: One or more entries in history.json contains missing or "
+                                      "invalid properties. Revert the changes and restart the server.")
             return True
-    return False
+    except Exception as e:
+        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in history.json. Change "
+                          f"the property and restart the server.")
 
 
 def _verify_webhooks_parse(webhooks: dict) -> bool:
     try:
-        if len(webhooks["webhooks"]) == 0:
+        if len(webhooks['webhooks']) == 0:
             return True
         else:
-            for webhook in webhooks["webhooks"]:
-                notifications = webhook["notifications"]
-
-                if webhook["name"] is None \
-                        or webhook["url"] is None \
-                        or notifications is None \
-                        or notifications["title"] is None \
-                        or notifications["description"] is None \
-                        or notifications["show_downloads"] is None \
-                        or notifications["show_seeders"] is None \
-                        or notifications["show_leechers"] is None \
-                        or notifications["show_published"] is None \
-                        or notifications["show_category"] is None \
-                        or notifications["show_size"] is None:
+            for webhook in webhooks['webhooks']:
+                if 'name' not in webhook \
+                        or 'url' not in webhook \
+                        or 'notifications' not in webhook \
+                        or 'title' not in webhook['notifications'] \
+                        or 'description' not in webhook['notifications'] \
+                        or 'show_downloads' not in webhook['notifications'] \
+                        or 'show_seeders' not in webhook['notifications'] \
+                        or 'show_leechers' not in webhook['notifications'] \
+                        or 'show_published' not in webhook['notifications'] \
+                        or 'show_category' not in webhook['notifications'] \
+                        or 'show_size' not in webhook['notifications']:
                     raise ConfigError("Parse Error: One or more webhooks in webhooks.json contains "
                                       "missing or invalid properties.")
 
+                notifications = webhook['notifications']
                 if not is_integer(notifications['show_downloads']) \
                         or not is_integer(notifications['show_seeders']) \
                         or not is_integer(notifications['show_leechers']) \
@@ -83,7 +101,6 @@ def _verify_webhooks_parse(webhooks: dict) -> bool:
                         or not is_integer(notifications['show_size']):
                     raise ConfigError("Parse Error: One or more 'show_' properties in webhooks.json "
                                       "are not in range (0 to 6).")
-
             return True
     except Exception as e:
         raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in webhooks.json. Change "
@@ -128,10 +145,8 @@ class Config:
         config = json.loads(file.read())
         file.close()
 
-        if _verify_config_parse(config):
-            return config['nyaa_rss']
-        else:
-            raise ConfigError("config.json could not be parsed.")
+        _verify_config_parse(config)
+        return config['nyaa_rss']
 
     def get_watcher_watchlist(self) -> dict:
         try:
@@ -150,10 +165,8 @@ class Config:
         watchlist = json.loads(file.read())
         file.close()
 
-        if _verify_watchlist_parse(watchlist):
-            return watchlist
-        else:
-            raise ConfigError("watchlist.json could not be parsed.")
+        _verify_watchlist_parse(watchlist)
+        return watchlist
 
     def get_watcher_history(self) -> dict:
         try:
@@ -172,10 +185,8 @@ class Config:
         history = json.loads(file.read())
         file.close()
 
-        if _verify_history_parse(history):
-            return history
-        else:
-            raise ConfigError("history.json could not be parsed.")
+        _verify_history_parse(history)
+        return history
 
     def get_watcher_interval(self) -> int:
         # Using environment variable
