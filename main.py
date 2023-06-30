@@ -130,6 +130,7 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     log.info("~~~ Nyaa Watcher ~~~")
+    log.info("Version: 1.1.0")
     log.info("Starting server...")
 
     try:
