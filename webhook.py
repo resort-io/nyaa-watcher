@@ -19,6 +19,18 @@ def _parse_url(url: str) -> list:
     )
 
 
+def _insert_tags(string: str, webhook_name: str, torrent: dict) -> str:
+    string = string.replace("$webhook_name", webhook_name) \
+        .replace("$title", torrent['title']) \
+        .replace("$downloads", torrent['nyaa_downloads']) \
+        .replace("$seeders", torrent['nyaa_seeders']) \
+        .replace("$leechers", torrent['nyaa_leechers']) \
+        .replace("$size", torrent['nyaa_size']) \
+        .replace("$published", re.sub(r":\d\d -0000", "", torrent['published'])) \
+        .replace("$category", torrent['nyaa_downloads'])
+    return string
+
+
 class Webhook:
 
     def __init__(self, webhooks: dict) -> None:
@@ -78,14 +90,18 @@ class Webhook:
         notification = discord.Embed()
 
         # Title
-        if webhook_json['notifications']['title'] == "":
-            notification.title = f"Downloading New Torrent: {torrent['title']}"
+        if webhook_json['notifications']['title'] != "":
+            notification.title = _insert_tags(webhook_json['notifications']['title'],
+                                              webhook_json['name'],
+                                              torrent)
         else:
-            notification.title = webhook_json['notifications']['title']
+            notification.title = f"Downloading New Torrent: {torrent['title']}"
 
         # Description
         if webhook_json['notifications']['description'] != "":
-            notification.description = webhook_json['notifications']['description']
+            notification.description = _insert_tags(webhook_json['notifications']['description'],
+                                                    webhook_json['name'],
+                                                    torrent)
 
         # Custom Notification Details
         i = 1
