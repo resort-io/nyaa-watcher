@@ -29,7 +29,7 @@
       * [Regular Expression Samples](#regular-expression-samples)
       * [Regular Expression Samples Guide](#regular-expression-samples-guide)
    * [Issues](#issues)
-   * [Feature Request](#feature-requests)
+   * [Feature Requests](#feature-requests)
    * [Versions](#versions)
 
 ## Features
