@@ -2,15 +2,16 @@ name: Bug Report
 description: Create a new bug report.
 title: "[BUG]: <title>"
 labels: [bug]
+assignees: [resort-io]
 body:
-  - type: input
+  - type: textarea
     id: issue
     attributes:
       label: Bug/Issue
       description: What is the bug or issue?
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: log
     attributes:
       label: Log Message

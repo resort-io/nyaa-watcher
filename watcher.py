@@ -52,6 +52,12 @@ class Watcher:
                 tags = watchlist_entry["tags"]
                 regexes = watchlist_entry["regex"]
 
+                # Webhooks
+                if "webhooks" in watchlist_entry and len(watchlist_entry["webhooks"]) > 0:
+                    watchlist_webhooks = watchlist_entry["webhooks"]
+                else:
+                    watchlist_webhooks = []
+
                 # Tags
                 if len(tags) == 0:
                     tag_match = "N/A"
@@ -84,14 +90,15 @@ class Watcher:
                             break
 
                 log.debug(f" - Watchlist: {name}")
-                log.debug(f" - Tags (Match={tag_match}): {tags}")
+                log.debug(f" - Tags  (Match={tag_match}): {tags}")
                 log.debug(f" - RegEx (Match={regex_match}): {regexes}")
-                log.debug(f" - Hash (Match={hash_match}): {hash}")
+                log.debug(f" - Hash  (Match={hash_match}): {hash}")
 
                 # Add to download list
                 if tag_match is True and regex_match is True and not hash_match \
                         or tag_match == "N/A" and regex_match is True and not hash_match \
                         or tag_match is True and regex_match == "N/A" and not hash_match:
+                    torrent['webhooks'] = watchlist_webhooks
                     new_torrents.append(torrent)
                     log.debug("New torrent. Added to download list.")
                     log.debug("")
