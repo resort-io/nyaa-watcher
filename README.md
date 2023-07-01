@@ -28,8 +28,8 @@
             * [Example Notification Images](#example-notification-images)
       * [Regular Expression Samples](#regular-expression-samples)
       * [Regular Expression Samples Guide](#regular-expression-samples-guide)
-   * [Feature Request](#issues)
    * [Issues](#issues)
+   * [Feature Request](#feature-requests)
    * [Versions](#versions)
 
 ## Features
