@@ -34,8 +34,8 @@
 ## Features
 
 * Monitors any Nyaa RSS feed for titles, and downloads the torrent files into a torrent client watch directory.
-* Uses custom tags and/or regular expressions to search for specific titles.
-* Notifies Discord channels via webhooks when downloading a torrent file.
+* Uses custom tags and/or regular expressions to search and filter for specific titles.
+* Notifies Discord channels via webhooks when a torrent file downloads.
 * Maintains a history backlog to store torrent information and prevent duplicate downloads.
 
 ### Upcoming Updates
@@ -94,15 +94,16 @@ Volume parameter syntax is `<host>:<container>`.
 
 ## Startup
 
-The server will generate three files on startup: `config.json`, `history.json`, `watchlist.json`, and `webhooks.json`.
+The server will generate the following files on startup: `config.json`, `history.json`, `watchlist.json`, and `webhooks.json`.
 These files will regenerate if any are removed or deleted.
 
 **To begin watching**, follow the instructions given by the log messages:
 
 * Add an entry including a title with tag(s), and optional regex(es) values to filter the results in `watchlist.json`.
 * Add a Nyaa RSS URL to `config.json`.
+* Add optional Discord webhook(s) entry to `webhooks.json` and place the name(s) inside the `webhooks` array in `watchlist.json` entries.
 
-The server will need to be restarted when making changes to `config.json` or `watchlist.json`.
+The server will need to be restarted when making changes to any file.
 
 See [Files](#files) below for more information on getting started.
 
@@ -135,20 +136,21 @@ Used to prevent duplicate downloads, **do not modify**.
 
 
 #### `watchlist.json`
-Contains the tags and regular expressions that the server will search for in the torrent titles.
+Contains the tags and regular expressions that the server will search for in the torrent titles,
+as well as the names of the Discord webhook entries.
 
-To create a watchlist entry, enter a value in the `name` field, and one or more values in the `tags` and/or `regex` fields.
+**To create a watchlist entry**, enter a value in the `name` field, and one or more values in the `tags` and/or `regex` fields.
 
 The server will download a torrent file when **one of three scenarios** are true:
-1. When a `tag` value matches a string sequence within the torrent title, and there are **no** `regex` values in the watchlist entry.
-2. When a `regex` pattern matches a string sequence within the torrent title, and there are **no** `tag` values in the watchlist entry.
+1. When **one or more** `tag` values match a string sequence within the torrent title, and there are **no** `regex` values in the watchlist entry.
+2. When **one or more** `regex` patterns match a string sequence within the torrent title, and there are **no** `tag` values in the watchlist entry.
 3. When **both** a `tag` and `regex` value match a string sequence within the torrent title.
 
 **Each watchlist entry must have at least one `tag` or `regex` value**.
 
 * `name` - Name for you to identify the entry. Not used when searching.
 * `tags` - Array of strings to search for in each torrent title.
-* `regex` - Array of regular expression patterns to search for in each torrent title (No delimiters or flags).
+* `regex` - Array of regular expression patterns to filter results found from `tags`, or can be used independently (No delimiters or flags).
 * `webhooks` - **Optional**: Array of strings holding the `name` values of the Discord webhooks from `webhooks.json` that will
                be notified when a torrent file downloads.
 
@@ -168,7 +170,7 @@ The server will download a torrent file when **one of three scenarios** are true
 #### Example `watchlist.json`
 
 * `Demon Slayer` - Download triggers when a torrent title contains "***Demon Slayer***" or "***Kimetsu no Yaiba***",
-   and is a weekly release using the `S00E00` format.
+   and is a weekly release **using the `S00E00` format**.
 * `One Piece` - Download triggers when a torrent title contains "***One Piece - XXXX***" with an **episode number greater than *1063***.
 
 ```json
@@ -195,11 +197,17 @@ Contains the information for Discord webhooks.
 
 A single webhook URL can be used for multiple webhooks.
 
-The **`show_` properties** represent the placement of each of the property within the **3x2** slotted Discord notification message.
-The properties range from 0 to 6, with **0 == disabled**, **1 == top left**, and **6 == bottom right**.
+The **`show_` properties** represent the placement of each of the property Discord notification message.
+The properties are placed in a within the **3x2** grid that displays the information from **left to right**.
+The properties range from `0` to `6`:
+* **`0` == Disabled**
+* **`1` == Top Left**
+* **`6` == Bottom Right**
+
 See the [Example Notification Images](#example-notification-images) for samples of Discord notifications.
 
-Use **optional placeholders** in the `title` and `description` properties to customize the Discord notification message:
+**Optional**: Use placeholders in the `title` and `description` to customize the Discord notification message:
+
 `$webhook_name`, `$title`, `$downloads`, `$seeders`, `$leechers`, `$size`, `$published`, and `$category`.
 
 * `name` - Name to identify webhook. Values used in `watchlist.json`.
@@ -353,7 +361,7 @@ If you encounter any bugs or issues with the server, please create a [Bug Report
 ### 1.1.0 *(07/01/2023)*
 * Added Discord webhook support.
 * Created `webhooks.json` and added optional `webhooks` array property to `watchlist.json` entries.
-  * Server sends custom notification via specified Discord webhooks when a file downloads.
+  * Server sends custom notification via Discord webhook(s) when a file downloads.
 * Changed interval for 'searching for torrents' log message from seconds to minutes.
 * Added and changed startup log messages.
 * Added and changed error log messages to include more specific information and solutions.
