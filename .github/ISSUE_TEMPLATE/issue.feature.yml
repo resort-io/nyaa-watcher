@@ -1,0 +1,23 @@
+name: Feature Request
+description: Suggest a new feature for this project.
+title: "[FEAT] <title>"
+labels: [feature]
+body:
+  - type: textarea
+    attributes:
+      label: Suggested Feature
+      description: What feature would you like to see implemented?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reason for Feature
+      description: What are the benefits of your suggested feature?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Code Changes
+      description: If you have any code changes you would like to submit, please paste them here.
+    validations:
+      required: false

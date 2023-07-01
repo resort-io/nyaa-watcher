@@ -1,0 +1,26 @@
+name: Bug Report
+description: Create a new bug report.
+title: "[BUG]: <title>"
+labels: [bug]
+body:
+  - type: input
+    id: issue
+    attributes:
+      label: Bug/Issue
+      description: What is the bug or issue?
+    validations:
+      required: true
+  - type: input
+    id: log
+    attributes:
+      label: Log Message
+      description: What was the error message from the server log?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Information
+      description: Add any other context that may be relevant to the problem.
+    validations:
+      required: false
