@@ -2,6 +2,7 @@ name: Bug Report
 description: Create a new bug report.
 title: "[BUG]: <title>"
 labels: [bug]
+assignees: [resort-io]
 body:
   - type: textarea
     id: issue

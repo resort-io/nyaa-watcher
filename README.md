@@ -28,6 +28,7 @@
             * [Example Notification Images](#example-notification-images)
       * [Regular Expression Samples](#regular-expression-samples)
       * [Regular Expression Samples Guide](#regular-expression-samples-guide)
+   * [Feature Request](#issues)
    * [Issues](#issues)
    * [Versions](#versions)
 
@@ -354,14 +355,18 @@ The **episode number >=1453** sample expression above is structured as such:
 * Group 4: `[2-9][0-9][0-9][0-9]` **>=2000** - Represents the remaining numbers in the **Thousands** position.
 
 ## Issues
-If you encounter any bugs or issues with the server, please create a [Bug Report](https://github.com/resort-io/nyaa-watcher/issues) post.
+
+If you encounter any bugs or issues with the server, please create a new [Bug Report](https://github.com/resort-io/nyaa-watcher/issues/new/choose).
+
+## Feature Requests
+
+You can suggest a new feature by creating a new [Feature Request](https://github.com/resort-io/nyaa-watcher/issues/new/choose).
 
 ## Versions
 
 ### 1.1.0 *(07/01/2023)*
-* Added Discord webhook support.
+* Added Discord webhook support; server sends custom notification via Discord webhook(s) when a torrent file downloads.
 * Created `webhooks.json` and added optional `webhooks` array property to `watchlist.json` entries.
-  * Server sends custom notification via Discord webhook(s) when a file downloads.
 * Changed interval for 'searching for torrents' log message from seconds to minutes.
 * Added and changed startup log messages.
 * Added and changed error log messages to include more specific information and solutions.
