@@ -1,11 +1,11 @@
-![Nyaa Watcher Banner](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/banner.png)
+[![Nyaa Watcher Banner](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/banner.png)](https://github.com/resort-io/nyaa-watcher)
 
 [![resort-io GitHub Repositories](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=resort-io&message=all-repositories&logo=github)](https://github.com/resort-io "All GitHub repositories from resort-io")
-[![resort-io DockerHub Repositories](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=resortdocker&message=all-repositories&logo=docker)](https://hub.docker.com/u/resortdocker "All DockerHub repositories from resortdocker")
+[![resortdocker Docker Repositories](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=resortdocker&message=all-repositories&logo=docker)](https://hub.docker.com/u/resortdocker "All Docker repositories from resortdocker")
 
-[![GitHub Repository](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=github&message=nyaa-watcher&logo=github)](https://github.com/resort-io/nyaa-watcher "Source code of Nyaa Watcher")
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/resort-io/nyaa-watcher?color=0085ff&logo=github&style=for-the-badge)](https://github.com/resort-io/nyaa-watcher/releases "Latest GitHub release")
-[![Docker Image Version (latest by date)](https://img.shields.io/docker/v/resortdocker/nyaa-watcher?color=0085ff&logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags "All docker tags for Nyaa Watcher")
+[![Nyaa Watcher GitHub Repository](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=github&message=nyaa-watcher&logo=github)](https://github.com/resort-io/nyaa-watcher "Source code of Nyaa Watcher")
+[![Latest GitHub Release](https://img.shields.io/github/v/release/resort-io/nyaa-watcher?color=0085ff&logo=github&style=for-the-badge)](https://github.com/resort-io/nyaa-watcher/releases "Latest GitHub release")
+[![Latest Docker Image Tags](https://img.shields.io/docker/v/resortdocker/nyaa-watcher?color=0085ff&logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags "Latest Docker Image Tags")
 ![Docker Pulls](https://img.shields.io/docker/pulls/resortdocker/nyaa-watcher?color=0085ff&label=pulls&logo=docker&logoColor=white&style=for-the-badge)
 
 ## Table of Contents
@@ -16,26 +16,30 @@
       * [docker cli](#docker-cli)
       * [docker compose](#docker-compose)
       * [Parameters](#parameters)
+   * [Startup](#startup)
    * [Configuration](#configuration)
-      * [Startup](#startup)
       * [Files](#files)
-         * [config.json](#configjson)
-         * [history.json](#historyjson)
-         * [watchlist.json](#watchlistjson)
-      * [Regular Expressions](#regular-expressions)
-      * [Regular Expressions Guide](#regular-expressions-guide)
-      * [Example Watchlist](#example-watchlist)
+         * [*config.json*](#configjson)
+         * [*history.json*](#historyjson)
+         * [*watchlist.json*](#watchlistjson)
+            * [Example *watchlist.json*](#example-watchlistjson)
+         * [*webhooks.json*](#webhooksjson)
+            * [Example *webhooks.json*](#example-webhooksjson)
+            * [Example Notification Images](#example-notification-images)
+      * [Regular Expression Samples](#regular-expression-samples)
+      * [Regular Expression Samples Guide](#regular-expression-samples-guide)
+   * [Issues](#issues)
    * [Versions](#versions)
 
 ## Features
 
-* Monitors a Nyaa RSS feed for titles, and downloads the torrent files into a torrent client watch directory.
-* Uses custom tags and/or regular expressions to search for specific titles.
+* Monitors any Nyaa RSS feed for titles, and downloads the torrent files into a torrent client watch directory.
+* Uses custom tags and/or regular expressions to search and filter for specific titles.
+* Notifies Discord channels via webhooks when a torrent file downloads.
 * Maintains a history backlog to store torrent information and prevent duplicate downloads.
 
 ### Upcoming Updates
 
-* Discord webhook integration for sending download notifications.
 * Multiple Nyaa RSS feeds.
 * Unraid community app support.
 
@@ -82,27 +86,28 @@ Volume parameter syntax is `<host>:<container>`.
 
 | Parameter      | Function                                                                     |
 |----------------|------------------------------------------------------------------------------|
+| `-v /watch`    | Watch directory for your torrent client.                                     |
+| `-v /watcher`  | Directory for Nyaa Watcher files.                                            |
 | `-e PUID=1000` | Optional (Depending on your host machine) - UserID for volume permissions.   |
 | `-e PGID=1000` | Optional (Depending on your host machine) - GroupID  for volume permissions. |
 | `-e LOG_LEVEL` | Optional - Log information level. `INFO` or `DEBUG`                          |
-| `-v /watch`    | Watch directory for your torrent client.                                     |
-| `-v /watcher`  | Directory for Nyaa Watcher files.                                            |
 
-## Configuration
+## Startup
 
-### Startup
-
-The server will generate three files on startup: `config.json`, `history.json`, and `watchlist.json`.
+The server will generate the following files on startup: `config.json`, `history.json`, `watchlist.json`, and `webhooks.json`.
 These files will regenerate if any are removed or deleted.
 
 **To begin watching**, follow the instructions given by the log messages:
 
-* Add an entry including a title with tag(s) and/or regex(es) to `watchlist.json`.
+* Add an entry including a title with tag(s), and optional regex(es) values to filter the results in `watchlist.json`.
 * Add a Nyaa RSS URL to `config.json`.
+* Add optional Discord webhook(s) entry to `webhooks.json` and place the name(s) inside the `webhooks` array in `watchlist.json` entries.
 
-The server will need to be restarted when making changes to `config.json` or `watchlist.json`.
+The server will need to be restarted when making changes to any file.
 
-See [Files](#files) and [Example Watchlist](#example-watchlist) below for more information on getting started.
+See [Files](#files) below for more information on getting started.
+
+## Configuration
 
 ### Files
 
@@ -121,7 +126,7 @@ Contains the information necessary for the server.
 ```
 
 #### `history.json`
-Contains the list of information for each downloaded torrent.
+Contains a list of information for each downloaded torrent.
 Used to prevent duplicate downloads, **do not modify**.
 
 * `torrent_title` - Title of the torrent.
@@ -131,12 +136,23 @@ Used to prevent duplicate downloads, **do not modify**.
 
 
 #### `watchlist.json`
-Contains the tags and regular expressions that the server will search for in the torrent titles.
-**Each watchlist entry must have at least one tag or one regex value**.
+Contains the tags and regular expressions that the server will search for in the torrent titles,
+as well as the names of the Discord webhook entries.
+
+**To create a watchlist entry**, enter a value in the `name` field, and one or more values in the `tags` and/or `regex` fields.
+
+The server will download a torrent file when **one of three scenarios** are true:
+1. When **one or more** `tag` values match a string sequence within the torrent title, and there are **no** `regex` values in the watchlist entry.
+2. When **one or more** `regex` patterns match a string sequence within the torrent title, and there are **no** `tag` values in the watchlist entry.
+3. When **both** a `tag` and `regex` value match a string sequence within the torrent title.
+
+**Each watchlist entry must have at least one `tag` or `regex` value**.
 
 * `name` - Name for you to identify the entry. Not used when searching.
-* `tags` - Array of strings to search for in each torrent title (No delimiters or flags). Only one tag needs to match.
-* `regex` - Array of regular expressions to search for in each torrent title. Only one expression needs to match.
+* `tags` - Array of strings to search for in each torrent title.
+* `regex` - Array of regular expression patterns to filter results found from `tags`, or can be used independently (No delimiters or flags).
+* `webhooks` - **Optional**: Array of strings holding the `name` values of the Discord webhooks from `webhooks.json` that will
+               be notified when a torrent file downloads.
 
 ```json
 {
@@ -144,15 +160,140 @@ Contains the tags and regular expressions that the server will search for in the
     {
       "name": "",
       "tags": [],
-      "regex": []
+      "regex": [],
+      "webhooks": []
     }
   ]
 }
 ```
 
-See [Regular Expressions](#regular-expressions) and [Example Watchlist](#example-watchlist) below for more information.
+#### Example `watchlist.json`
 
-### Regular Expressions
+* `Demon Slayer` - Download triggers when a torrent title contains "***Demon Slayer***" or "***Kimetsu no Yaiba***",
+   and is a weekly release **using the `S00E00` format**.
+* `One Piece` - Download triggers when a torrent title contains "***One Piece - XXXX***" with an **episode number greater than *1063***.
+
+```json
+{
+  "watchlist": [
+    {
+      "name": "Nyaa Username - Demon Slayer",
+      "tags": ["Demon Slayer", "Kimetsu no Yaiba"],
+      "regex": ["S0[0-9]E[0-9][0-9]"]
+    },
+    {
+      "name": "Nyaa Username - One Piece",
+      "tags": [],
+      "regex": ["One Piece - ([1-9][0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9][0-9]|[2-9][0-9][0-9][0-9])"]
+    }
+  ]
+}
+```
+
+See [Regular Expressions](#regular-expression-samples) below for more information.
+
+#### `webhooks.json`
+Contains the information for Discord webhooks.
+
+A single webhook URL can be used for multiple webhooks.
+
+The **`show_` properties** represent the placement of each of the property Discord notification message.
+The properties are placed in a within the **3x2** grid that displays the information from **left to right**.
+The properties range from `0` to `6`:
+* **`0` == Disabled**
+* **`1` == Top Left**
+* **`6` == Bottom Right**
+
+See the [Example Notification Images](#example-notification-images) for samples of Discord notifications.
+
+**Optional**: Use placeholders in the `title` and `description` to customize the Discord notification message:
+
+`$webhook_name`, `$title`, `$downloads`, `$seeders`, `$leechers`, `$size`, `$published`, and `$category`.
+
+* `name` - Name to identify webhook. Values used in `watchlist.json`.
+* `url` - URL for the Discord webhook.
+* `notifications` - Torrent information included with the discord notification.
+  * `title` - Custom title of the Discord notification. **Leave blank for default message**.
+  * `description` - Custom description of the Discord notification. **Leave blank for no message**.
+  * `show_category` - Nyaa category for the torrent. (E.g., *Anime - English-translated*, *Literature - Non-English-translated*)
+  * `show_downloads` - Number of downloads for the torrent.
+  * `show_leechers` - Number of leechers for the torrent.
+  * `show_published` - Date and time the torrent was published. (E.g., *Fri, 21 Apr 2023 20:47*, *Mon, 21 Nov 2022 17:09*)
+  * `show_seeders` - Number of seeders for the torrent.
+  * `show_size` - Size of the torrent. (E.g., *178.2 MiB*, *32.1 GiB*)
+
+```json
+{
+  "webhooks": [
+    {
+      "name": "",
+      "url": "",
+      "notifications": {
+        "title": "",
+        "description": "",
+        "show_category": 0,
+        "show_downloads": 0,
+        "show_leechers": 0,
+        "show_published": 0,
+        "show_seeders": 0,
+        "show_size": 0
+      }
+    }
+  ]
+}
+```
+
+#### Example `webhooks.json`
+
+* `Friends Server` - Sends a notification with a **custom title and description**, along with the **size** and **published date** properties.
+* `Notifications Server` - Sends a notification with the **default title**, along with **all six** properties in a custom order.
+
+```json
+{
+  "webhooks": [
+    {
+      "name": "Friends Server",
+      "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+      "notifications": {
+        "title": "Nyaa User uploaded a new torrent!",
+        "description": "Starting download for $title.",
+        "show_category": 0,
+        "show_downloads": 0,
+        "show_leechers": 0,
+        "show_published": 2,
+        "show_seeders": 0,
+        "show_size": 1
+      }
+    },
+    {
+      "name": "Notifications Server",
+      "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+      "notifications": {
+        "title": "",
+        "description": "",
+        "show_category": 3,
+        "show_downloads": 4,
+        "show_leechers": 6,
+        "show_published": 1,
+        "show_seeders": 5,
+        "show_size": 2
+      }
+    }
+  ]
+}
+```
+
+#### Example Notification Images
+
+* `Friends Server`
+
+![Nyaa Watcher Webhook Notification Example #1](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/notification-example-1.png)
+
+* `Notifications Server`
+
+![Nyaa Watcher Webhook Notification Example #2](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/notification-example-2.png)
+
+### Regular Expression Samples
 Below are some sample regular expressions that search for episodes numbers within the torrent title
 using the `S00E00`, `000`, or `0000` formats.
 If you have simpler regular expressions to use, then feel free to use those instead.
@@ -192,11 +333,11 @@ Sample expressions do not include episode numbers above 9999.
 | `[1-9]([0-9][0-9][1-9]\|[0-9][1-9][0-9]\|[1-9][0-9][0-9])`                               | Matches any torrent with an **episode number >1000**.                 |
 | `[1-9][4-9][5-9][3-9]\|[1-9][4-9][6-9][0-9]\|[1-9][5-9][0-9][0-9]\|[2-9][0-9][0-9][0-9]` | Matches any torrent with an **episode number >=1453**.                |
 
-### Regular Expressions Guide
+### Regular Expression Samples Guide
 
 #### `S00E00` Format
 
-The **season number >=11** and **episode number >=13** expression above is structured as such:
+The **season number >=11** and **episode number >=13** sample expression above is structured as such:
 
 * Season Group 1: `S[1-9][1-9]` **>=S11** - Represents the desired season number you are starting from.
 * Season Group 2: `S[2-9][0-9]` **>=S20** - Represents the remaining numbers in the **Tens** and **Ones** positions.
@@ -205,38 +346,25 @@ The **season number >=11** and **episode number >=13** expression above is struc
 
 #### `000` and `0000` Formats
 
-The **episode number >=1453** expression above is structured as such:
+The **episode number >=1453** sample expression above is structured as such:
 
 * Group 1: `[1-9][4-9][5-9][3-9]` **>=1459** - Represents the desired episode number you are starting from.
 * Group 2: `[1-9][4-9][6-9][0-9]` **>=1460** - Represents the remaining numbers in the **Tens** and **Ones** positions.
 * Group 3: `[1-9][5-9][0-9][0-9]` **>=1500** - Represents the remaining numbers in the **Hundreds** position.
 * Group 4: `[2-9][0-9][0-9][0-9]` **>=2000** - Represents the remaining numbers in the **Thousands** position.
 
-### Example Watchlist
-
-Example watchlist with two entries:
-
-* `Demon Slayer` - Download triggers when a torrent title contains "***Demon Slayer***" or "***Kimetsu no Yaiba***".
-* `One Piece` - Download triggers when a torrent title contains "***One Piece - XXXX***" with an **episode number greater than *1063***.
-
-```json
-{
-  "watchlist": [
-    {
-      "name": "Demon Slayer",
-      "tags": ["Demon Slayer", "Kimetsu no Yaiba"],
-      "regex": []
-    },
-    {
-      "name": "One Piece",
-      "tags": [],
-      "regex": ["One Piece - ([1-9][0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9][0-9]|[2-9][0-9][0-9][0-9])"]
-    }
-  ]
-}
-```
+## Issues
+If you encounter any bugs or issues with the server, please create a [Bug Report](https://github.com/resort-io/nyaa-watcher/issues) post.
 
 ## Versions
+
+### 1.1.0 *(07/01/2023)*
+* Added Discord webhook support.
+* Created `webhooks.json` and added optional `webhooks` array property to `watchlist.json` entries.
+  * Server sends custom notification via Discord webhook(s) when a file downloads.
+* Changed interval for 'searching for torrents' log message from seconds to minutes.
+* Added and changed startup log messages.
+* Added and changed error log messages to include more specific information and solutions.
 
 ### 1.0.1 *(06/04/2023)*
 * Fixed *watchlist.json* file validation check.
