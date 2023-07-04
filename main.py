@@ -152,35 +152,14 @@ if __name__ == "__main__":
         log.debug(f"DISCORD WEBHOOKS: {len(WEBHOOKS['webhooks'])} entries.")
 
         webhook = Webhook(WEBHOOKS)
+
+        config.migrate_v101_to_v110()
     except Exception as e:
         log.info(e)
         log.info("Server exited.")
         exit(-1)
 
-    # Verifying Watchlist
-    if watcher.watchlist_is_empty():
-        log.info("Watchlist Error: No watchlist entries found. Add an entry including a title with tag(s) and/or "
-                 "regex(es) to watchlist.json and restart the server.")
-        log.info("Server exited.")
-        log.info("")
-        exit(-1)
-    if not watcher.watchlist_is_valid():
-        log.info("Watchlist Error: One or more watchlist entries does not have a tag or regex. Add the tag or regex "
-                 "to the entry/entries in watchlist.json and restart the server.")
-        log.info("Server exited.")
-        log.info("")
-        exit(-1)
-
-    # Verifying Webhooks
-    try:
-        webhook.webhooks_are_valid()
-    except Exception as e:
-        log.info(e)
-        log.info("Server exited.")
-        log.info("")
-        exit(-1)
-
-    # Verifying RSS URL
+    # Checking for new install
     if watcher.get_rss() == "https://nyaa.si/?page=rss&u=NYAA_USERNAME" \
             or watcher.get_rss() == "":
         log.info("Config Error: No Nyaa RSS found. Add a Nyaa RSS URL to config.json and restart the server.")
@@ -188,6 +167,7 @@ if __name__ == "__main__":
         log.info("")
         exit(-1)
 
+    # Testing RSS URL
     log.info("Attempting to reach RSS URL...")
     try:
         response = requests.get(NYAA_RSS)
