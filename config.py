@@ -166,6 +166,15 @@ class Config:
         file.close()
 
         _verify_watchlist_parse(watchlist)
+
+        # Checking for empty/invalid watchlist entries
+        for entry in watchlist['watchlist']:
+            if entry['name'] == "" and len(entry['tags']) == 0 and len(entry['regex']) == 0 \
+                    or len(entry['tags']) == 0 and len(entry['regex']) == 0:
+                raise ConfigError("Watchlist Error: One or more watchlist entries does not have a tag or regex. "
+                                  "Add an entry including a title with tag(s) and/or regex(es) to watchlist.json "
+                                  "and restart the server.")
+
         return watchlist
 
     def get_watcher_history(self) -> dict:
@@ -224,4 +233,56 @@ class Config:
         file.close()
 
         _verify_webhooks_parse(webhooks)
+
+        if len(webhooks['webhooks']) == 0:
+            return webhooks
+
+        for webhook in webhooks['webhooks']:
+            notifications = webhook['notifications']
+
+            # Verifying ranges
+            if notifications['show_downloads'] not in range(0, 7) \
+                    or notifications['show_seeders'] not in range(0, 7) \
+                    or notifications['show_leechers'] not in range(0, 7) \
+                    or notifications['show_published'] not in range(0, 7) \
+                    or notifications['show_category'] not in range(0, 7) \
+                    or notifications['show_size'] not in range(0, 7):
+                raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more 'show_' "
+                                  f"properties out of range (0 to 6). Change the webhook properties in webhook.json "
+                                  f"and restart the server.")
+
+            # Verifying no duplicates
+            values = list()
+            if notifications['show_downloads'] != 0:
+                values.append(notifications['show_downloads'])
+            if notifications['show_seeders'] != 0:
+                values.append(notifications['show_seeders'])
+            if notifications['show_leechers'] != 0:
+                values.append(notifications['show_leechers'])
+            if notifications['show_published'] != 0:
+                values.append(notifications['show_published'])
+            if notifications['show_category'] != 0:
+                values.append(notifications['show_category'])
+            if notifications['show_size'] != 0:
+                values.append(notifications['show_size'])
+
+            values_set = set(values)
+            if len(values_set) != len(values):
+                raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more duplicate "
+                                  f"'show_' properties. Change the webhook properties and restart the server.")
+
         return webhooks
+
+    def migrate_v101_to_v110() -> None:
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+        watchlist = json.loads(file.read())
+        file.close()
+
+        for entry in watchlist['watchlist']:
+            if 'webhooks' not in entry:
+                entry['webhooks'] = []
+                log.debug(f"Added 'webhooks' property to watchlist entry: {entry['name']}.")
+
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
+        file.write(json.dumps(watchlist, indent=2))
+        file.close()

@@ -106,17 +106,3 @@ class Watcher:
                 log.debug("")
 
         return new_torrents
-
-    def watchlist_is_empty(self) -> bool:
-        for entry in self.watchlist['watchlist']:
-            if entry['name'] == "" \
-                    and len(entry['tags']) == 0 \
-                    and len(entry['regex']) == 0:
-                return True
-        return False
-
-    def watchlist_is_valid(self) -> bool:
-        for entry in self.watchlist['watchlist']:
-            if len(entry['tags']) == 0 and len(entry['regex']) == 0:
-                return False
-        return True
