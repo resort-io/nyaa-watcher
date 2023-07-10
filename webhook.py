@@ -44,11 +44,8 @@ class Webhook:
 
             connected = 0
             for webhook in self.webhooks['webhooks']:
-                if webhook['name'] == "":
-                    raise WebhookError("Webhook Error: Webhook entries must have a name.")
-
-                if webhook['url'] == "":
-                    raise WebhookError("Webhook Error: Webhook entries must have a URL.")
+                if webhook['name'] == "" or webhook['url'] == "":
+                    raise WebhookError("Webhook Error: Webhook entries must have a name and URL.")
 
                 if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
                     continue
