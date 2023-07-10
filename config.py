@@ -273,7 +273,7 @@ class Config:
 
         return webhooks
 
-    def migrate_v101_to_v110() -> None:
+    def migrate_v101_to_v110(self) -> None:
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
         watchlist = json.loads(file.read())
         file.close()
