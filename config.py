@@ -38,10 +38,10 @@ def _verify_watchlist_parse(watchlist: dict) -> bool:
                 for entry in watchlist['watchlist']:
                     if 'name' not in entry \
                             or 'tags' not in entry \
-                            or 'regex' not in entry:
+                            or 'regex' not in entry \
+                            or 'webhooks' not in entry:
                         raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing or "
-                                          "invalid properties. Change the properties and restart the server. "
-                                          "('webhooks' is optional)")
+                                          "invalid properties. Change the properties and restart the server.")
                 return True
             else:
                 raise ConfigError("Parse Error: watchlist.json contains no entries. Add entries and restart "
@@ -110,6 +110,12 @@ def _verify_webhooks_parse(webhooks: dict) -> bool:
 class Config:
     def __init__(self) -> None:
         self.config = dict(os.environ)
+        try:
+            log.debug("Migrating files from v1.0.1 to v1.1.0...")
+            self.migrate_v101_to_v110()
+            log.debug("Migration complete.")
+        except Exception as e:
+            log.debug("Migration failed. " + str(e))
 
     def _get_key(self, key: str, default: str = None):
         if key in self.config:

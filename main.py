@@ -12,7 +12,6 @@ from webhook import Webhook
 
 load_dotenv()
 log = logging.getLogger("main")
-config = Config()
 
 
 def download_torrent(torrent: dict) -> str:
@@ -130,10 +129,12 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     log.info("~~~ Nyaa Watcher ~~~")
-    log.info("Version: 1.1.0")
+    log.info("Version: 1.1.1")
     log.info("Starting server...")
 
     try:
+        config = Config()
+
         NYAA_RSS = config.get_nyaa_rss()
         log.debug(f"NYAA RSS: {NYAA_RSS}")
 
@@ -152,8 +153,6 @@ if __name__ == "__main__":
         log.debug(f"DISCORD WEBHOOKS: {len(WEBHOOKS['webhooks'])} entries.")
 
         webhook = Webhook(WEBHOOKS)
-
-        config.migrate_v101_to_v110()
     except Exception as e:
         log.info(e)
         log.info("Server exited.")
