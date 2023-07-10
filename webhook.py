@@ -50,6 +50,9 @@ class Webhook:
                 if webhook['url'] == "":
                     raise WebhookError("Webhook Error: Webhook entries must have a URL.")
 
+                if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
+                    continue
+
                 log.debug(f" - {webhook['name']} ({webhook['url']})")
                 id, token = _parse_url(webhook['url'])
                 try:

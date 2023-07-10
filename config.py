@@ -223,7 +223,22 @@ class Config:
         except Exception as e:
             log.info("Cannot find webhooks.json.")
             file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "x")
-            webhooks = {"webhooks": []}
+            webhooks = {"webhooks": [
+                {
+                    "name": "Example Webhook Name",
+                    "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+                    "notifications": {
+                         "title": "",
+                         "description": "",
+                         "show_category": 3,
+                         "show_downloads": 4,
+                         "show_leechers": 6,
+                         "show_published": 1,
+                         "show_seeders": 5,
+                         "show_size": 2
+                     }
+                 }
+            ]}
             file.write(json.dumps(webhooks, indent=2))
             file.close()
             log.info("Created file.")
@@ -238,6 +253,11 @@ class Config:
             return webhooks
 
         for webhook in webhooks['webhooks']:
+            if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
+                log.info("Server Message: Enter a Discord webhook URL in webhooks.json to be notified when new "
+                         "torrents are downloaded.")
+                continue
+
             notifications = webhook['notifications']
 
             # Verifying ranges
