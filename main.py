@@ -9,10 +9,85 @@ from dotenv import load_dotenv
 from config import Config
 from watcher import Watcher
 from webhook import Webhook
+from math import floor
 
 load_dotenv()
 log = logging.getLogger("main")
 
+
+def get_interval_string(interval: int) -> str:
+    days = floor(interval / 86400)
+    if days > 0:
+        interval -= floor(days * 86400)
+
+    hours = floor(interval / 3600)
+    if hours > 0:
+        interval -= floor(hours * 3600)
+
+    minutes = floor(interval / 60)
+    if minutes > 0:
+        interval -= floor(minutes * 60)
+
+    seconds = interval
+
+    array = [days, hours, minutes, seconds]
+
+    # Find last non-zero index
+    last_index = -1
+    i = 0
+    while i <= 3:
+        if array[i] > 0:
+            last_index = i
+        i += 1
+
+    # Number of units to display
+    units = 0
+    for value in array:
+        if value > 0:
+            units += 1
+
+    # Build string
+    if units == 1:
+        if days > 0:
+            return f"{days} day" if days == 1 else f"{days} days"
+        elif hours > 0:
+            return f"{hours} hour" if hours == 1 else f"{hours} hours"
+        elif minutes > 0:
+            return f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+        else:
+            return f"{seconds} second" if seconds == 1 else f"{seconds} seconds"
+    else:
+        string = ""
+
+        # Days
+        if array[0] > 0:
+            string += f"{days} day" if days == 1 else f"{days} days"
+            if last_index != 0:
+                string += ", "
+            units -= 1
+        # Hours
+        if array[1] > 0:
+            if last_index == 1 and units == 1:
+                string += f"and {hours} hour" if hours == 1 else f"and {hours} hours"
+            else:
+                string += f"{hours} hour" if hours == 1 else f"{hours} hours"
+                if last_index != 1:
+                    string += ", "
+                units -= 1
+        # Minutes
+        if array[2] > 0:
+            if last_index == 2 and units == 1:
+                string += f"and {minutes} minute" if minutes == 1 else f"and {minutes} minutes"
+            else:
+                string += f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+                if last_index != 2:
+                    string += ", "
+                units -= 1
+        # Seconds
+        if array[3] > 0:
+            string += f"and {seconds} second" if seconds == 1 else f"and {seconds} seconds"
+
+        return string
 
 def download_torrent(torrent: dict) -> str:
     torrent_title = torrent['title'] + ".torrent"
@@ -71,12 +146,13 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
     # No new torrents
     if len(torrents) == 0:
         log.info("No new torrents found.")
-        if interval < 60:
-            log.info(f"Searching for matching torrents in 1 second.") if interval == 1 \
-                else log.info(f"Searching for matching torrents in {interval} seconds.")
-        else:
-            log.info("Searching for matching torrents in 1 minute.") if interval == 60 \
-                else log.info(f"Searching for matching torrents in {minutes} minutes.")
+        log.info(f"Searching for matching torrents in {get_interval_string(interval)}.")
+        # if interval < 60:
+        #     log.info(f"Searching for matching torrents in 1 second.") if interval == 1 \
+        #         else log.info(f"Searching for matching torrents in {interval} seconds.")
+        # else:
+        #     log.info("Searching for matching torrents in 1 minute.") if interval == 60 \
+        #         else log.info(f"Searching for matching torrents in {minutes} minutes.")
     # New torrents
     else:
         log.info("1 new torrent:") if len(torrents) == 1 \
