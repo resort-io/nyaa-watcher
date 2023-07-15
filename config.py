@@ -218,10 +218,10 @@ class Config:
         file.close()
 
         interval = int(config['watcher_interval_seconds'])
-        if interval >= 30:
+        if interval >= 60:
             return interval
-        elif interval < 30:
-            raise ConfigError("WATCHER_INTERVAL_SEC must be equal to or greater than 30.")
+        elif interval < 60:
+            raise ConfigError("WATCHER_INTERVAL_SEC must be equal to or greater than 60 seconds.")
         else:
             raise ConfigError("WATCHER_INTERVAL_SEC must be an integer.")
 
