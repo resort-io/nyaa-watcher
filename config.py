@@ -152,6 +152,10 @@ class Config:
         file.close()
 
         _verify_config_parse(config)
+
+        if config['nyaa_rss'] == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
+            raise ConfigError("Config Error: No Nyaa RSS found. Add a Nyaa RSS URL to config.json and "
+                              "restart the server.")
         return config['nyaa_rss']
 
     def get_watcher_watchlist(self) -> dict:

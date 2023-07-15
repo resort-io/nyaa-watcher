@@ -89,6 +89,7 @@ def get_interval_string(interval: int) -> str:
 
         return string
 
+
 def download_torrent(torrent: dict) -> str:
     torrent_title = torrent['title'] + ".torrent"
     torrent_url = torrent['link']
@@ -232,14 +233,6 @@ if __name__ == "__main__":
     except Exception as e:
         log.info(e)
         log.info("Server exited.")
-        exit(-1)
-
-    # Checking for new install
-    if watcher.get_rss() == "https://nyaa.si/?page=rss&u=NYAA_USERNAME" \
-            or watcher.get_rss() == "":
-        log.info("Config Error: No Nyaa RSS found. Add a Nyaa RSS URL to config.json and restart the server.")
-        log.info("Server exited.")
-        log.info("")
         exit(-1)
 
     # Testing RSS URL
