@@ -256,6 +256,11 @@ if __name__ == "__main__":
         exit(-1)
 
     log.info("Server started.")
-    scheduler = sched.scheduler(time.time, time.sleep)
-    scheduler.enter(1, 1, check_rss, (scheduler, watcher, WATCHER_INTERVAL, webhook))
-    scheduler.run()
+    try:
+        scheduler = sched.scheduler(time.time, time.sleep)
+        scheduler.enter(1, 1, check_rss, (scheduler, watcher, WATCHER_INTERVAL, webhook))
+        scheduler.run()
+    except KeyboardInterrupt:
+        log.info("Server exited.")
+        log.info("")
+        exit(0)
