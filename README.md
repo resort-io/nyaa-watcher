@@ -8,6 +8,9 @@
 [![Latest Docker Image Tags](https://img.shields.io/docker/v/resortdocker/nyaa-watcher?color=0085ff&logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags "Latest Docker Image Tags")
 ![Docker Pulls](https://img.shields.io/docker/pulls/resortdocker/nyaa-watcher?color=0085ff&label=pulls&logo=docker&logoColor=white&style=for-the-badge)
 
+**Disclaimer!** Do not use this application if peer-to-peer content sharing is illegal in your country.
+This application is intended for educational purposes only.
+
 ## Table of Contents
 
    * [Features](#features)
@@ -42,7 +45,6 @@
 ### Upcoming Updates
 
 * Multiple Nyaa RSS feeds.
-* Unraid community app support.
 
 ## Usage
 
@@ -117,7 +119,7 @@ See [Files](#files) below for more information on getting started.
 Contains the information necessary for the server.
 
 * `nyaa_rss` - URL for a Nyaa user's RSS feed.
-* `watcher_interval_seconds` - Interval between each RSS torrent fetch.
+* `watcher_interval_seconds` - Interval between each RSS torrent fetch. Must be equal to or greater than 60 seconds.
 
 ```json
 {
@@ -180,12 +182,14 @@ The server will download a torrent file when **one of three scenarios** are true
     {
       "name": "Nyaa Username - Demon Slayer",
       "tags": ["Demon Slayer", "Kimetsu no Yaiba"],
-      "regex": ["S0[0-9]E[0-9][0-9]"]
+      "regex": ["S0[0-9]E[0-9][0-9]"],
+      "webhooks": ["Friends Server"]
     },
     {
       "name": "Nyaa Username - One Piece",
       "tags": [],
-      "regex": ["One Piece - ([1-9][0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9][0-9]|[2-9][0-9][0-9][0-9])"]
+      "regex": ["One Piece - ([1-9][0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9][0-9]|[2-9][0-9][0-9][0-9])"],
+      "webhooks": ["Notification Server"]
     }
   ]
 }
@@ -363,6 +367,11 @@ If you encounter any bugs or issues with the server, please create a new [Bug Re
 You can suggest a new feature by creating a new [Feature Request](https://github.com/resort-io/nyaa-watcher/issues/new/choose).
 
 ## Versions
+
+### 1.1.1 *(07/16/2023)*
+* Added missing `webhooks` array property to `watchlist.json` entries.
+* Changed interval for 'searching for torrents' log message into a full sentence.
+* Set `watcher_interval_seconds` value to a minimum of **60** seconds.
 
 ### 1.1.0 *(07/01/2023)*
 * Added Discord webhook support; server sends custom notification via Discord webhook(s) when a torrent file downloads.
