@@ -9,10 +9,85 @@ from dotenv import load_dotenv
 from config import Config
 from watcher import Watcher
 from webhook import Webhook
+from math import floor
 
 load_dotenv()
 log = logging.getLogger("main")
-config = Config()
+
+
+def get_interval_string(interval: int) -> str:
+    days = floor(interval / 86400)
+    if days > 0:
+        interval -= floor(days * 86400)
+
+    hours = floor(interval / 3600)
+    if hours > 0:
+        interval -= floor(hours * 3600)
+
+    minutes = floor(interval / 60)
+    if minutes > 0:
+        interval -= floor(minutes * 60)
+
+    seconds = interval
+
+    array = [days, hours, minutes, seconds]
+
+    # Find last non-zero index
+    last_index = -1
+    i = 0
+    while i <= 3:
+        if array[i] > 0:
+            last_index = i
+        i += 1
+
+    # Number of units to display
+    units = 0
+    for value in array:
+        if value > 0:
+            units += 1
+
+    # Build string
+    if units == 1:
+        if days > 0:
+            return f"{days} day" if days == 1 else f"{days} days"
+        elif hours > 0:
+            return f"{hours} hour" if hours == 1 else f"{hours} hours"
+        elif minutes > 0:
+            return f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+        else:
+            return f"{seconds} second" if seconds == 1 else f"{seconds} seconds"
+    else:
+        string = ""
+
+        # Days
+        if array[0] > 0:
+            string += f"{days} day" if days == 1 else f"{days} days"
+            if last_index != 0:
+                string += ", "
+            units -= 1
+        # Hours
+        if array[1] > 0:
+            if last_index == 1 and units == 1:
+                string += f"and {hours} hour" if hours == 1 else f"and {hours} hours"
+            else:
+                string += f"{hours} hour" if hours == 1 else f"{hours} hours"
+                if last_index != 1:
+                    string += ", "
+                units -= 1
+        # Minutes
+        if array[2] > 0:
+            if last_index == 2 and units == 1:
+                string += f"and {minutes} minute" if minutes == 1 else f"and {minutes} minutes"
+            else:
+                string += f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+                if last_index != 2:
+                    string += ", "
+                units -= 1
+        # Seconds
+        if array[3] > 0:
+            string += f"and {seconds} second" if seconds == 1 else f"and {seconds} seconds"
+
+        return string
 
 
 def download_torrent(torrent: dict) -> str:
@@ -72,12 +147,13 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
     # No new torrents
     if len(torrents) == 0:
         log.info("No new torrents found.")
-        if interval < 60:
-            log.info(f"Searching for matching torrents in 1 second.") if interval == 1 \
-                else log.info(f"Searching for matching torrents in {interval} seconds.")
-        else:
-            log.info("Searching for matching torrents in 1 minute.") if interval == 60 \
-                else log.info(f"Searching for matching torrents in {minutes} minutes.")
+        log.info(f"Searching for matching torrents in {get_interval_string(interval)}.")
+        # if interval < 60:
+        #     log.info(f"Searching for matching torrents in 1 second.") if interval == 1 \
+        #         else log.info(f"Searching for matching torrents in {interval} seconds.")
+        # else:
+        #     log.info("Searching for matching torrents in 1 minute.") if interval == 60 \
+        #         else log.info(f"Searching for matching torrents in {minutes} minutes.")
     # New torrents
     else:
         log.info("1 new torrent:") if len(torrents) == 1 \
@@ -130,10 +206,12 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     log.info("~~~ Nyaa Watcher ~~~")
-    log.info("Version: 1.1.0")
+    log.info("Version: 1.1.1")
     log.info("Starting server...")
 
     try:
+        config = Config()
+
         NYAA_RSS = config.get_nyaa_rss()
         log.debug(f"NYAA RSS: {NYAA_RSS}")
 
@@ -157,37 +235,7 @@ if __name__ == "__main__":
         log.info("Server exited.")
         exit(-1)
 
-    # Verifying Watchlist
-    if watcher.watchlist_is_empty():
-        log.info("Watchlist Error: No watchlist entries found. Add an entry including a title with tag(s) and/or "
-                 "regex(es) to watchlist.json and restart the server.")
-        log.info("Server exited.")
-        log.info("")
-        exit(-1)
-    if not watcher.watchlist_is_valid():
-        log.info("Watchlist Error: One or more watchlist entries does not have a tag or regex. Add the tag or regex "
-                 "to the entry/entries in watchlist.json and restart the server.")
-        log.info("Server exited.")
-        log.info("")
-        exit(-1)
-
-    # Verifying Webhooks
-    try:
-        webhook.webhooks_are_valid()
-    except Exception as e:
-        log.info(e)
-        log.info("Server exited.")
-        log.info("")
-        exit(-1)
-
-    # Verifying RSS URL
-    if watcher.get_rss() == "https://nyaa.si/?page=rss&u=NYAA_USERNAME" \
-            or watcher.get_rss() == "":
-        log.info("Config Error: No Nyaa RSS found. Add a Nyaa RSS URL to config.json and restart the server.")
-        log.info("Server exited.")
-        log.info("")
-        exit(-1)
-
+    # Testing RSS URL
     log.info("Attempting to reach RSS URL...")
     try:
         response = requests.get(NYAA_RSS)
@@ -208,6 +256,11 @@ if __name__ == "__main__":
         exit(-1)
 
     log.info("Server started.")
-    scheduler = sched.scheduler(time.time, time.sleep)
-    scheduler.enter(1, 1, check_rss, (scheduler, watcher, WATCHER_INTERVAL, webhook))
-    scheduler.run()
+    try:
+        scheduler = sched.scheduler(time.time, time.sleep)
+        scheduler.enter(1, 1, check_rss, (scheduler, watcher, WATCHER_INTERVAL, webhook))
+        scheduler.run()
+    except KeyboardInterrupt:
+        log.info("Server exited.")
+        log.info("")
+        exit(0)

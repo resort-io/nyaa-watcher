@@ -1,3 +1,4 @@
+import os
 import re
 import logging
 import feedparser
@@ -44,7 +45,8 @@ class Watcher:
             title = torrent['title']
             hash = torrent['nyaa_infohash']
 
-            log.debug(f"Checking: {title}")
+            if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
+                log.debug(f"Checking: {title}")
 
             # Check if user is watching this title
             for watchlist_entry in self.watchlist["watchlist"]:
@@ -89,10 +91,11 @@ class Watcher:
                             hash_match = True
                             break
 
-                log.debug(f" - Watchlist: {name}")
-                log.debug(f" - Tags  (Match={tag_match}): {tags}")
-                log.debug(f" - RegEx (Match={regex_match}): {regexes}")
-                log.debug(f" - Hash  (Match={hash_match}): {hash}")
+                if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
+                    log.debug(f" - Watchlist: {name}")
+                    log.debug(f" - Tags  (Match={tag_match}): {tags}")
+                    log.debug(f" - RegEx (Match={regex_match}): {regexes}")
+                    log.debug(f" - Hash  (Match={hash_match}): {hash}")
 
                 # Add to download list
                 if tag_match is True and regex_match is True and not hash_match \
@@ -100,23 +103,11 @@ class Watcher:
                         or tag_match is True and regex_match == "N/A" and not hash_match:
                     torrent['webhooks'] = watchlist_webhooks
                     new_torrents.append(torrent)
-                    log.debug("New torrent. Added to download list.")
-                    log.debug("")
+                    if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
+                        log.debug("New torrent. Added to download list.")
+                        log.debug("")
                     break
-                log.debug("")
+                if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
+                    log.debug("")
 
         return new_torrents
-
-    def watchlist_is_empty(self) -> bool:
-        for entry in self.watchlist['watchlist']:
-            if entry['name'] == "" \
-                    and len(entry['tags']) == 0 \
-                    and len(entry['regex']) == 0:
-                return True
-        return False
-
-    def watchlist_is_valid(self) -> bool:
-        for entry in self.watchlist['watchlist']:
-            if len(entry['tags']) == 0 and len(entry['regex']) == 0:
-                return False
-        return True
