@@ -238,16 +238,16 @@ class Config:
                     "name": "Example Webhook Name",
                     "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
                     "notifications": {
-                         "title": "",
-                         "description": "",
-                         "show_category": 3,
-                         "show_downloads": 4,
-                         "show_leechers": 6,
-                         "show_published": 1,
-                         "show_seeders": 5,
-                         "show_size": 2
-                     }
-                 }
+                        "title": "",
+                        "description": "",
+                        "show_category": 3,
+                        "show_downloads": 4,
+                        "show_leechers": 6,
+                        "show_published": 1,
+                        "show_seeders": 5,
+                        "show_size": 2
+                    }
+                }
             ]}
             file.write(json.dumps(webhooks, indent=2))
             file.close()
@@ -304,6 +304,7 @@ class Config:
         return webhooks
 
     def migrate_v101_to_v110(self) -> None:
+        # Adding missing 'webhooks' property to 'watchlist.json'
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
         watchlist = json.loads(file.read())
         file.close()
@@ -316,3 +317,29 @@ class Config:
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
         file.write(json.dumps(watchlist, indent=2))
         file.close()
+
+        # Adding sample webhook entry to 'webhooks.json', if empty
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
+        webhooks = json.loads(file.read())
+        file.close()
+
+        if len(webhooks['webhooks']) == 0:
+            sample_webhook = {
+                        "name": "Example Webhook Name",
+                        "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+                        "notifications": {
+                            "title": "",
+                            "description": "",
+                            "show_category": 3,
+                            "show_downloads": 4,
+                            "show_leechers": 6,
+                            "show_published": 1,
+                            "show_seeders": 5,
+                            "show_size": 2
+                        }
+                    }
+            webhooks['webhooks'].append(sample_webhook)
+
+            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "w")
+            file.write(json.dumps(webhooks, indent=2))
+            file.close()
