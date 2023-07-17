@@ -368,15 +368,17 @@ You can suggest a new feature by creating a new [Feature Request](https://github
 
 ## Versions
 
-### 1.1.1 *(07/16/2023)*
-* Added missing `webhooks` array property to `watchlist.json` entries.
-* Changed interval for 'searching for torrents' log message into a full sentence.
-* Set `watcher_interval_seconds` value to a minimum of **60** seconds.
+### 1.1.1 *(07/17/2023)*
+* Created function that adds missing `webhooks` property to entries in `watchlist.json`.
+* Created function that adds a sample entry in `webhooks.json` when the file is empty.
+* Added sample webhook entry in `webhooks.json` for new installations.
+* Changed `watcher_interval_seconds` property in `config.json` to a minimum of **60** seconds.
+* Changed *searching for torrents* log message from minutes into a complete sentence.
 
 ### 1.1.0 *(07/01/2023)*
 * Added Discord webhook support; server sends custom notification via Discord webhook(s) when a torrent file downloads.
-* Created `webhooks.json` and added optional `webhooks` array property to `watchlist.json` entries.
-* Changed interval for 'searching for torrents' log message from seconds to minutes.
+* Created `webhooks.json` and added optional `webhooks` property to `watchlist.json` entries.
+* Changed *searching for torrents* log message from seconds into minutes.
 * Added and changed startup log messages.
 * Added and changed error log messages to include more specific information and solutions.
 
