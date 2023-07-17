@@ -135,3 +135,43 @@ class Webhook:
             except Exception as e:
                 log.info(f"Webhook Error: Failed to send notification to '{webhook_name}' webhook.")
                 log.debug(e)
+
+    def webhooks_are_valid(self):
+        if len(self.webhooks['webhooks']) == 0:
+            return True
+
+        for webhook in self.webhooks['webhooks']:
+            notifications = webhook['notifications']
+
+            # Verifying range
+            if notifications['show_downloads'] not in range(0, 7) \
+                    or notifications['show_seeders'] not in range(0, 7) \
+                    or notifications['show_leechers'] not in range(0, 7) \
+                    or notifications['show_published'] not in range(0, 7) \
+                    or notifications['show_category'] not in range(0, 7) \
+                    or notifications['show_size'] not in range(0, 7):
+                raise WebhookError(f"Webhook Error: '{webhook['name']}' webhook contains one or more 'show_' "
+                                   f"properties out of range (0 to 6). Change the webhook properties in webhook.json "
+                                   f"and restart the server.")
+
+            # Verifying no duplicates
+            values = list()
+
+            if notifications['show_downloads'] != 0:
+                values.append(notifications['show_downloads'])
+            if notifications['show_seeders'] != 0:
+                values.append(notifications['show_seeders'])
+            if notifications['show_leechers'] != 0:
+                values.append(notifications['show_leechers'])
+            if notifications['show_published'] != 0:
+                values.append(notifications['show_published'])
+            if notifications['show_category'] != 0:
+                values.append(notifications['show_category'])
+            if notifications['show_size'] != 0:
+                values.append(notifications['show_size'])
+
+            values_set = set(values)
+            if len(values_set) != len(values):
+                raise WebhookError(f"Webhook Error: '{webhook['name']}' webhook contains one or more duplicate "
+                                   f"'show_' properties. Change the webhook properties and restart the server.")
+        return True

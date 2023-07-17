@@ -136,24 +136,13 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
     log.info("Searching for matching torrents...")
     torrents = watcher.fetch_new_torrents()
     torrents = sort_torrents(torrents)
-
-    if float(interval / 60) % 1 == 0:
-        minutes = "%.0f" % float(interval / 60)
-    elif (float(interval / 60) * 10) % 1 == 0:
-        minutes = "%.1f" % float(interval / 60)
-    else:
-        minutes = "%.2f" % float(interval / 60)
+        
+    interval_string = get_interval_string(interval)
 
     # No new torrents
     if len(torrents) == 0:
         log.info("No new torrents found.")
-        log.info(f"Searching for matching torrents in {get_interval_string(interval)}.")
-        # if interval < 60:
-        #     log.info(f"Searching for matching torrents in 1 second.") if interval == 1 \
-        #         else log.info(f"Searching for matching torrents in {interval} seconds.")
-        # else:
-        #     log.info("Searching for matching torrents in 1 minute.") if interval == 60 \
-        #         else log.info(f"Searching for matching torrents in {minutes} minutes.")
+        log.info(f"Searching for matching torrents in {interval_string}.")
     # New torrents
     else:
         log.info("1 new torrent:") if len(torrents) == 1 \
@@ -191,12 +180,7 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
         log.debug("Updated history.json.")
 
         log.info(f"Done. Finished with {errors} errors.")
-        if interval < 60:
-            log.info(f"Searching for matching torrents in 1 second.") if interval == 1 \
-                else log.info(f"Searching for matching torrents in {interval} seconds.")
-        else:
-            log.info("Searching for matching torrents in 1 minute.") if interval == 60 \
-                else log.info(f"Searching for matching torrents in {minutes} minutes.")
+        log.info(f"Searching for matching torrents in {interval_string}.")
 
 
 if __name__ == "__main__":
