@@ -113,7 +113,17 @@ class Config:
         try:
             log.debug("Migrating files from v1.0.1 to v1.1.0...")
             self.migrate_v101_to_v110()
-            log.debug("Migration complete.")
+            log.debug("Done.")
+
+            # Checking for file version < v1.2.0
+            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+            watchlist = json.loads(file.read())
+            file.close()
+
+            if 'interval_seconds' not in watchlist:
+                log.debug("Migrating files from v1.1.1 to v1.2.0...")
+                self.migrate_v111_to_v120()
+                log.debug("Done.")
         except Exception as e:
             log.debug("Migration failed. " + str(e))
 
@@ -325,21 +335,46 @@ class Config:
 
         if len(webhooks['webhooks']) == 0:
             sample_webhook = {
-                        "name": "Example Webhook Name",
-                        "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-                        "notifications": {
-                            "title": "",
-                            "description": "",
-                            "show_category": 3,
-                            "show_downloads": 4,
-                            "show_leechers": 6,
-                            "show_published": 1,
-                            "show_seeders": 5,
-                            "show_size": 2
-                        }
-                    }
+                "name": "Example Webhook Name",
+                "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+                "notifications": {
+                    "title": "",
+                    "description": "",
+                    "show_category": 3,
+                    "show_downloads": 4,
+                    "show_leechers": 6,
+                    "show_published": 1,
+                    "show_seeders": 5,
+                    "show_size": 2
+                }
+            }
             webhooks['webhooks'].append(sample_webhook)
 
             file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "w")
             file.write(json.dumps(webhooks, indent=2))
             file.close()
+
+    def migrate_v111_to_v120(self) -> None:
+        # Getting watchlist and config properties from files
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+        watchlist = json.loads(file.read())
+        file.close()
+
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
+        config = json.loads(file.read())
+        file.close()
+
+        # Writing new watchlist properties to file
+        new_watchlist = {
+            "interval_seconds": config['watcher_interval_seconds'],
+            "feeds": [
+                {
+                    "nyaa_rss": config['nyaa_rss'],
+                    "watchlist": watchlist['watchlist']
+                }
+            ]
+        }
+
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
+        file.write(json.dumps(new_watchlist, indent=2))
+        file.close()
