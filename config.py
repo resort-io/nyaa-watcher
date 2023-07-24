@@ -195,7 +195,7 @@ def _verify_webhooks_parse() -> bool:
                           f"the property and restart the server.")
 
 
-def verify_files_parse() -> bool:
+def _verify_files_parse() -> bool:
     try:
         _check_for_config()
         _verify_watchlist_parse()
@@ -206,27 +206,90 @@ def verify_files_parse() -> bool:
         raise ConfigError(e)
 
 
+def _migrate_v101_to_v110() -> None:
+    # Watchlist
+    file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+    watchlist = json.loads(file.read())
+    file.close()
+
+    # Adding missing 'webhooks' property to 'watchlist.json'
+    for entry in watchlist['watchlist']:
+        if 'webhooks' not in entry:
+            entry['webhooks'] = []
+            log.debug(f"Adding 'webhooks' property to watchlist entry: {entry['name']}...")
+
+    file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
+    file.write(json.dumps(watchlist, indent=2))
+    file.close()
+
+    # Webhooks
+    file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
+    webhooks = json.loads(file.read())
+    file.close()
+
+    # Adding sample webhook entry to 'webhooks.json', if empty
+    if len(webhooks['webhooks']) == 0:
+        sample_webhook = {
+            "name": "Example Webhook Name",
+            "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+            "notifications": {
+                "title": "",
+                "description": "",
+                "show_category": 3,
+                "show_downloads": 4,
+                "show_leechers": 6,
+                "show_published": 1,
+                "show_seeders": 5,
+                "show_size": 2
+            }
+        }
+        webhooks['webhooks'].append(sample_webhook)
+
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "w")
+        file.write(json.dumps(webhooks, indent=2))
+        file.close()
+
+
+def _migrate_v111_to_v120() -> None:
+    file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+    watchlist = json.loads(file.read())
+    file.close()
+
+    # Checking for versions < 1.2.0
+    if 'interval_seconds' not in watchlist:
+        log.debug("Updating watchlist.json to version 1.2.0...")
+
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
+        config = json.loads(file.read())
+        file.close()
+
+        new_watchlist = {
+            "interval_seconds": config['watcher_interval_seconds'],
+            "feeds": [
+                {
+                    "nyaa_rss": config['nyaa_rss'],
+                    "watchlist": watchlist['watchlist']
+                }
+            ]
+        }
+
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
+        file.write(json.dumps(new_watchlist, indent=2))
+        file.close()
+
+
 class Config:
     def __init__(self) -> None:
         self.config = dict(os.environ)
         try:
-            log.debug("Migrating files from v1.0.1 to v1.1.0...")
-            self.migrate_v101_to_v110()
+            log.info("Checking for updates...")
+            _migrate_v101_to_v110()
+            _migrate_v111_to_v120()
             log.debug("Done.")
-
-            # Checking for file version < v1.2.0
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
-            watchlist = json.loads(file.read())
-            file.close()
-
-            if 'interval_seconds' not in watchlist:
-                log.debug("Migrating files from v1.1.1 to v1.2.0...")
-                self.migrate_v111_to_v120()
-                log.debug("Done.")
         except Exception as e:
             log.debug("Server Error: Migration failed. " + str(e))
 
-        verify_files_parse()
+        _verify_files_parse()
 
     def get_nyaa_rss(self) -> str:
         try:
@@ -329,69 +392,3 @@ class Config:
                                   f"'show_' properties. Change the webhook properties and restart the server.")
 
         return webhooks
-
-    def migrate_v101_to_v110(self) -> None:
-        # Adding missing 'webhooks' property to 'watchlist.json'
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
-        watchlist = json.loads(file.read())
-        file.close()
-
-        for entry in watchlist['watchlist']:
-            if 'webhooks' not in entry:
-                entry['webhooks'] = []
-                log.debug(f"Added 'webhooks' property to watchlist entry: {entry['name']}.")
-
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
-        file.write(json.dumps(watchlist, indent=2))
-        file.close()
-
-        # Adding sample webhook entry to 'webhooks.json', if empty
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
-        webhooks = json.loads(file.read())
-        file.close()
-
-        if len(webhooks['webhooks']) == 0:
-            sample_webhook = {
-                "name": "Example Webhook Name",
-                "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-                "notifications": {
-                    "title": "",
-                    "description": "",
-                    "show_category": 3,
-                    "show_downloads": 4,
-                    "show_leechers": 6,
-                    "show_published": 1,
-                    "show_seeders": 5,
-                    "show_size": 2
-                }
-            }
-            webhooks['webhooks'].append(sample_webhook)
-
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "w")
-            file.write(json.dumps(webhooks, indent=2))
-            file.close()
-
-    def migrate_v111_to_v120(self) -> None:
-        # Getting watchlist and config properties from files
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
-        watchlist = json.loads(file.read())
-        file.close()
-
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
-        config = json.loads(file.read())
-        file.close()
-
-        # Writing new watchlist properties to file
-        new_watchlist = {
-            "interval_seconds": config['watcher_interval_seconds'],
-            "feeds": [
-                {
-                    "nyaa_rss": config['nyaa_rss'],
-                    "watchlist": watchlist['watchlist']
-                }
-            ]
-        }
-
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
-        file.write(json.dumps(new_watchlist, indent=2))
-        file.close()
