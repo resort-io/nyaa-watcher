@@ -12,7 +12,7 @@ class ConfigError(Exception):
     pass
 
 
-def is_integer(number) -> bool:
+def _is_integer(number) -> bool:
     try:
         int(number)
         return True
@@ -64,7 +64,7 @@ def _verify_watchlist_parse() -> bool:
         if 'interval_seconds' not in watchlist or 'feeds' not in watchlist:
             raise ConfigError("Parse Error: 'interval_seconds' or 'feeds' properties are missing from watchlist.json. "
                               "Add the properties and restart the server.")
-        if not is_integer(watchlist['interval_seconds']):
+        if not _is_integer(watchlist['interval_seconds']):
             raise ConfigError("Parse Error: interval_seconds must be an integer. Change the property and restart "
                               "the server.")
         if int(watchlist['interval_seconds']) < 60:
@@ -181,12 +181,12 @@ def _verify_webhooks_parse() -> bool:
                                       "missing or invalid properties.")
 
                 notifications = webhook['notifications']
-                if not is_integer(notifications['show_downloads']) \
-                        or not is_integer(notifications['show_seeders']) \
-                        or not is_integer(notifications['show_leechers']) \
-                        or not is_integer(notifications['show_published']) \
-                        or not is_integer(notifications['show_category']) \
-                        or not is_integer(notifications['show_size']):
+                if not _is_integer(notifications['show_downloads']) \
+                        or not _is_integer(notifications['show_seeders']) \
+                        or not _is_integer(notifications['show_leechers']) \
+                        or not _is_integer(notifications['show_published']) \
+                        or not _is_integer(notifications['show_category']) \
+                        or not _is_integer(notifications['show_size']):
                     raise ConfigError("Parse Error: One or more 'show_' properties in webhooks.json "
                                       "are not in range (0 to 6).")
             return True
