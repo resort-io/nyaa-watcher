@@ -20,15 +20,13 @@ def is_integer(number) -> bool:
         return False
 
 
-def _verify_config_parse(config: dict) -> bool:
+def _check_for_config() -> None:
     try:
-        if 'nyaa_rss' not in config or 'watcher_interval_seconds' not in config:
-            raise ConfigError("Parse Error: nyaa_rss or watcher_interval_seconds is missing from config.json. "
-                              "Add the properties and restart the server.")
-        return True
-    except Exception as e:
-        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in config.json. Change "
-                          f"the property and restart the server.")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
+        file.close()
+        log.info("Server Message: config.json has been deprecated in v1.2.0 and can safely be deleted.")
+    except Exception:
+        log.debug("config.json has been deleted.")
 
 
 def _verify_watchlist_parse() -> bool:
@@ -70,8 +68,8 @@ def _verify_watchlist_parse() -> bool:
             raise ConfigError("Parse Error: interval_seconds must be an integer. Change the property and restart "
                               "the server.")
         if int(watchlist['interval_seconds']) < 60:
-            raise ConfigError("Parse Error: interval_seconds must be greater than 60. Change the property and restart "
-                              "the server.")
+            raise ConfigError("Parse Error: interval_seconds must be equal to or greater than 60. Change the property "
+                              "and restart the server.")
         if len(watchlist['feeds']) >= 1:
             for entry in watchlist['feeds']:
                 if 'nyaa_rss' not in entry or 'watchlist' not in entry:
@@ -199,13 +197,7 @@ def _verify_webhooks_parse() -> bool:
 
 def verify_files_parse() -> bool:
     try:
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
-        file.close()
-        log.info("Server Message: config.json has been deprecated in v1.2.0 and can safely be deleted.")
-    except Exception:
-        log.debug("config.json has been deleted.")
-
-    try:
+        _check_for_config()
         _verify_watchlist_parse()
         _verify_history_parse()
         _verify_webhooks_parse()
@@ -257,8 +249,6 @@ class Config:
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
         config = json.loads(file.read())
         file.close()
-
-        _verify_config_parse(config)
 
         if config['nyaa_rss'] == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
             raise ConfigError("Config Error: No Nyaa RSS found. Add a Nyaa RSS URL to config.json and "
