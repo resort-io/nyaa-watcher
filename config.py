@@ -69,6 +69,9 @@ def _verify_watchlist_parse() -> bool:
         if not is_integer(watchlist['interval_seconds']):
             raise ConfigError("Parse Error: interval_seconds must be an integer. Change the property and restart "
                               "the server.")
+        if int(watchlist['interval_seconds']) < 60:
+            raise ConfigError("Parse Error: interval_seconds must be greater than 60. Change the property and restart "
+                              "the server.")
         if len(watchlist['feeds']) >= 1:
             for entry in watchlist['feeds']:
                 if 'nyaa_rss' not in entry or 'watchlist' not in entry:
@@ -81,6 +84,11 @@ def _verify_watchlist_parse() -> bool:
                         or 'webhooks' not in entry:
                     raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing or "
                                       "invalid properties. Change the properties and restart the server.")
+                if entry['name'] == "" and len(entry['tags']) == 0 and len(entry['regex']) == 0 \
+                        or len(entry['tags']) == 0 and len(entry['regex']) == 0:
+                    raise ConfigError("Watchlist Error: One or more watchlist entries does not have a tag or regex. "
+                                      "Add an entry including a title with tag(s) and/or regex(es) to watchlist.json "
+                                      "and restart the server.")
                 return True
         else:
             raise ConfigError("Parse Error: watchlist.json contains an 'feeds' empty property. Add an entry to the "
@@ -262,14 +270,6 @@ class Config:
         watchlist = json.loads(file.read())
         file.close()
 
-        # Checking for empty/invalid watchlist entries
-        for entry in watchlist['watchlist']:
-            if entry['name'] == "" and len(entry['tags']) == 0 and len(entry['regex']) == 0 \
-                    or len(entry['tags']) == 0 and len(entry['regex']) == 0:
-                raise ConfigError("Watchlist Error: One or more watchlist entries does not have a tag or regex. "
-                                  "Add an entry including a title with tag(s) and/or regex(es) to watchlist.json "
-                                  "and restart the server.")
-
         return watchlist
 
     def get_watcher_history(self) -> dict:
@@ -280,22 +280,16 @@ class Config:
         return history
 
     def get_watcher_interval(self) -> int:
-        # Using environment variable
+        # Environment variable
         if os.environ.get("WATCHER_INTERVAL_SEC"):
             return int(os.environ.get("WATCHER_INTERVAL_SEC"))
 
-        # File has already been verified by get_nyaa_rss()
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
-        config = json.loads(file.read())
+        # File
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+        watchlist = json.loads(file.read())
         file.close()
 
-        interval = int(config['watcher_interval_seconds'])
-        if interval >= 60:
-            return interval
-        elif interval < 60:
-            raise ConfigError("WATCHER_INTERVAL_SEC must be equal to or greater than 60 seconds.")
-        else:
-            raise ConfigError("WATCHER_INTERVAL_SEC must be an integer.")
+        return int(watchlist['interval_seconds'])
 
     def get_discord_webhooks(self) -> dict:
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
