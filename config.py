@@ -281,14 +281,13 @@ def _migrate_v111_to_v120() -> None:
 
 class Config:
     def __init__(self) -> None:
-        self.config = dict(os.environ)
+        log.info("Checking for updates...")
         try:
-            log.info("Checking for updates...")
             _migrate_v101_to_v110()
             _migrate_v111_to_v120()
-            log.debug("Done.")
         except Exception as e:
             log.debug("Server Error: Migration failed. " + str(e))
+        log.info("Done.")
 
         _verify_files_parse()
 
