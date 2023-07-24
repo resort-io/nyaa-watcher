@@ -1,10 +1,16 @@
 {
-  "watchlist": [
+  "interval_seconds": 600,
+  "feeds": [
     {
-      "name": "",
-      "tags": [],
-      "regex": [],
-      "webhooks": []
-    }
+      "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
+	  "watchlist": [
+	    {
+		  "name": "",
+		  "tags": [],
+		  "regex": [],
+		  "webhooks": []
+		}
+	  ]
+	}
   ]
 }
