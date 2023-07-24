@@ -31,30 +31,82 @@ def _verify_config_parse(config: dict) -> bool:
                           f"the property and restart the server.")
 
 
-def _verify_watchlist_parse(watchlist: dict) -> bool:
+def _verify_watchlist_parse() -> bool:
+    # Verifying file
     try:
-        if 'watchlist' in watchlist:
-            if len(watchlist['watchlist']) >= 1:
-                for entry in watchlist['watchlist']:
-                    if 'name' not in entry \
-                            or 'tags' not in entry \
-                            or 'regex' not in entry \
-                            or 'webhooks' not in entry:
-                        raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing or "
-                                          "invalid properties. Change the properties and restart the server.")
-                return True
-            else:
-                raise ConfigError("Parse Error: watchlist.json contains no entries. Add entries and restart "
-                                  "the server.")
-        else:
-            raise ConfigError("Parse Error: watchlist.json contains no 'watchlist' array property. Add the property "
-                              "and restart the server.")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+        watchlist = json.loads(file.read())
+        file.close()
+        log.info("Found watchlist.json.")
     except Exception as e:
-        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in watchlist.json. Change "
+        log.info("Cannot find watchlist.json.")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "x")
+        watchlist = {
+            "interval_seconds": 600,
+            "feeds": [
+                {
+                    "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
+                    "watchlist": [
+                        {
+                            "name": "",
+                            "tags": [],
+                            "regex": [],
+                            "webhooks": []
+                        }
+                    ]
+                }
+            ]
+        }
+        file.write(json.dumps(watchlist, indent=2))
+        file.close()
+        log.info("Created file.")
+
+    # Verifying parse
+    try:
+        if 'interval_seconds' not in watchlist or 'feeds' not in watchlist:
+            raise ConfigError("Parse Error: 'interval_seconds' or 'feeds' properties are missing from watchlist.json. "
+                              "Add the properties and restart the server.")
+        if not is_integer(watchlist['interval_seconds']):
+            raise ConfigError("Parse Error: interval_seconds must be an integer. Change the property and restart "
+                              "the server.")
+        if len(watchlist['feeds']) >= 1:
+            for entry in watchlist['feeds']:
+                if 'nyaa_rss' not in entry or 'watchlist' not in entry:
+                    raise ConfigError("Parse Error: One or more 'feed' entries in watchlist.json contains missing or "
+                                      "invalid 'nyaa_rss' or 'watchlist' properties. Change the properties and "
+                                      "restart the server.")
+                if 'name' not in entry \
+                        or 'tags' not in entry \
+                        or 'regex' not in entry \
+                        or 'webhooks' not in entry:
+                    raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing or "
+                                      "invalid properties. Change the properties and restart the server.")
+                return True
+        else:
+            raise ConfigError("Parse Error: watchlist.json contains an 'feeds' empty property. Add an entry to the "
+                              "property and restart the server.")
+
+    except Exception as e:
+        raise ConfigError(f"Parse Error: '{str(e)}' property is invalid or misspelled in watchlist.json. Change "
                           f"the property and restart the server.")
 
 
-def _verify_history_parse(history: dict) -> bool:
+def _verify_history_parse() -> bool:
+    # Verifying file
+    try:
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json", "r")
+        history = json.loads(file.read())
+        file.close()
+        log.info("Found history.json.")
+    except Exception:
+        log.info("Cannot find history.json.")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json", "x")
+        history = {"history": []}
+        file.write(json.dumps(history, indent=2))
+        file.close()
+        log.info("Created file.")
+
+    # Verifying parse
     try:
         if len(history['history']) == 0:
             return True
@@ -72,7 +124,37 @@ def _verify_history_parse(history: dict) -> bool:
                           f"the property and restart the server.")
 
 
-def _verify_webhooks_parse(webhooks: dict) -> bool:
+def _verify_webhooks_parse() -> bool:
+    # Verifying file
+    try:
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
+        webhooks = json.loads(file.read())
+        file.close()
+        log.info("Found webhooks.json.")
+    except Exception:
+        log.info("Cannot find webhooks.json.")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "x")
+        webhooks = {"webhooks": [
+            {
+                "name": "Example Webhook Name",
+                "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+                "notifications": {
+                    "title": "",
+                    "description": "",
+                    "show_category": 3,
+                    "show_downloads": 4,
+                    "show_leechers": 6,
+                    "show_published": 1,
+                    "show_seeders": 5,
+                    "show_size": 2
+                }
+            }
+        ]}
+        file.write(json.dumps(webhooks, indent=2))
+        file.close()
+        log.info("Created file.")
+
+    # Verifying parse
     try:
         if len(webhooks['webhooks']) == 0:
             return True
@@ -107,6 +189,23 @@ def _verify_webhooks_parse(webhooks: dict) -> bool:
                           f"the property and restart the server.")
 
 
+def verify_files_parse() -> bool:
+    try:
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
+        file.close()
+        log.info("Server Message: config.json has been deprecated in v1.2.0 and can safely be deleted.")
+    except Exception:
+        log.debug("config.json has been deleted.")
+
+    try:
+        _verify_watchlist_parse()
+        _verify_history_parse()
+        _verify_webhooks_parse()
+        return True
+    except Exception as e:
+        raise ConfigError(e)
+
+
 class Config:
     def __init__(self) -> None:
         self.config = dict(os.environ)
@@ -125,7 +224,9 @@ class Config:
                 self.migrate_v111_to_v120()
                 log.debug("Done.")
         except Exception as e:
-            log.debug("Migration failed. " + str(e))
+            log.debug("Server Error: Migration failed. " + str(e))
+
+        verify_files_parse()
 
     def get_nyaa_rss(self) -> str:
         try:
@@ -157,23 +258,9 @@ class Config:
         return config['nyaa_rss']
 
     def get_watcher_watchlist(self) -> dict:
-        try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
-            file.close()
-            log.info("Found watchlist.json.")
-        except Exception as e:
-            log.info("Cannot find watchlist.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "x")
-            watchlist = {"watchlist": [{'name': '', 'tags': [], 'regex': [], 'webhooks': []}]}
-            file.write(json.dumps(watchlist, indent=2))
-            file.close()
-            log.info("Created file.")
-
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
         watchlist = json.loads(file.read())
         file.close()
-
-        _verify_watchlist_parse(watchlist)
 
         # Checking for empty/invalid watchlist entries
         for entry in watchlist['watchlist']:
@@ -186,23 +273,10 @@ class Config:
         return watchlist
 
     def get_watcher_history(self) -> dict:
-        try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json", "r")
-            file.close()
-            log.info("Found history.json.")
-        except Exception as e:
-            log.info("Cannot find history.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json", "x")
-            history = {"history": []}
-            file.write(json.dumps(history, indent=2))
-            file.close()
-            log.info("Created file.")
-
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json", "r")
         history = json.loads(file.read())
         file.close()
 
-        _verify_history_parse(history)
         return history
 
     def get_watcher_interval(self) -> int:
@@ -224,38 +298,9 @@ class Config:
             raise ConfigError("WATCHER_INTERVAL_SEC must be an integer.")
 
     def get_discord_webhooks(self) -> dict:
-        try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
-            file.close()
-            log.info("Found webhooks.json.")
-        except Exception as e:
-            log.info("Cannot find webhooks.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "x")
-            webhooks = {"webhooks": [
-                {
-                    "name": "Example Webhook Name",
-                    "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-                    "notifications": {
-                        "title": "",
-                        "description": "",
-                        "show_category": 3,
-                        "show_downloads": 4,
-                        "show_leechers": 6,
-                        "show_published": 1,
-                        "show_seeders": 5,
-                        "show_size": 2
-                    }
-                }
-            ]}
-            file.write(json.dumps(webhooks, indent=2))
-            file.close()
-            log.info("Created file.")
-
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
         webhooks = json.loads(file.read())
         file.close()
-
-        _verify_webhooks_parse(webhooks)
 
         if len(webhooks['webhooks']) == 0:
             return webhooks
