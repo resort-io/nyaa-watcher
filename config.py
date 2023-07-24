@@ -213,14 +213,15 @@ def _migrate_v101_to_v110() -> None:
     file.close()
 
     # Adding missing 'webhooks' property to 'watchlist.json'
-    for entry in watchlist['watchlist']:
-        if 'webhooks' not in entry:
-            entry['webhooks'] = []
-            log.debug(f"Adding 'webhooks' property to watchlist entry: {entry['name']}...")
+    if 'interval_seconds' not in watchlist:
+        for entry in watchlist['watchlist']:
+            if 'webhooks' not in entry:
+                entry['webhooks'] = []
+                log.debug(f"Adding 'webhooks' property to watchlist entry: {entry['name']}...")
 
-    file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
-    file.write(json.dumps(watchlist, indent=2))
-    file.close()
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
+        file.write(json.dumps(watchlist, indent=2))
+        file.close()
 
     # Webhooks
     file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
