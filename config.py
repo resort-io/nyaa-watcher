@@ -127,18 +127,6 @@ class Config:
         except Exception as e:
             log.debug("Migration failed. " + str(e))
 
-    def _get_key(self, key: str, default: str = None):
-        if key in self.config:
-            return self.config[key]
-        elif key.upper() in self.config:
-            return self.config[key.upper()]
-        elif key.lower() in self.config:
-            return self.config[key.lower()]
-        elif default is not None:
-            return default
-        else:
-            return False
-
     def get_nyaa_rss(self) -> str:
         try:
             file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
