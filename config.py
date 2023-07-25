@@ -166,6 +166,7 @@ def _verify_webhooks_parse() -> bool:
             return True
         else:
             for webhook in webhooks['webhooks']:
+                # Verifying properties
                 if 'name' not in webhook \
                         or 'url' not in webhook \
                         or 'notifications' not in webhook \
@@ -189,6 +190,43 @@ def _verify_webhooks_parse() -> bool:
                         or not _is_integer(notifications['show_size']):
                     raise ConfigError("Parse Error: One or more 'show_' properties in webhooks.json "
                                       "are not in range (0 to 6).")
+
+                # Checking for default URL
+                if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
+                    log.info("Server Message: Enter a Discord webhook URL in webhooks.json to be notified when new "
+                             "torrents are downloaded.")
+                    continue
+
+                # Verifying ranges
+                if notifications['show_downloads'] not in range(0, 7) \
+                        or notifications['show_seeders'] not in range(0, 7) \
+                        or notifications['show_leechers'] not in range(0, 7) \
+                        or notifications['show_published'] not in range(0, 7) \
+                        or notifications['show_category'] not in range(0, 7) \
+                        or notifications['show_size'] not in range(0, 7):
+                    raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more 'show_' "
+                                      f"properties out of range (0 to 6). Change the webhook properties in webhook.json "
+                                      f"and restart the server.")
+
+                # Verifying no duplicates
+                values = list()
+                if notifications['show_downloads'] != 0:
+                    values.append(notifications['show_downloads'])
+                if notifications['show_seeders'] != 0:
+                    values.append(notifications['show_seeders'])
+                if notifications['show_leechers'] != 0:
+                    values.append(notifications['show_leechers'])
+                if notifications['show_published'] != 0:
+                    values.append(notifications['show_published'])
+                if notifications['show_category'] != 0:
+                    values.append(notifications['show_category'])
+                if notifications['show_size'] != 0:
+                    values.append(notifications['show_size'])
+
+                values_set = set(values)
+                if len(values_set) != len(values):
+                    raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more duplicate "
+                                      f"'show_' properties. Change the webhook properties and restart the server.")
             return True
     except Exception as e:
         raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in webhooks.json. Change "
@@ -348,47 +386,5 @@ class Config:
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
         webhooks = json.loads(file.read())
         file.close()
-
-        if len(webhooks['webhooks']) == 0:
-            return webhooks
-
-        for webhook in webhooks['webhooks']:
-            if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-                log.info("Server Message: Enter a Discord webhook URL in webhooks.json to be notified when new "
-                         "torrents are downloaded.")
-                continue
-
-            notifications = webhook['notifications']
-
-            # Verifying ranges
-            if notifications['show_downloads'] not in range(0, 7) \
-                    or notifications['show_seeders'] not in range(0, 7) \
-                    or notifications['show_leechers'] not in range(0, 7) \
-                    or notifications['show_published'] not in range(0, 7) \
-                    or notifications['show_category'] not in range(0, 7) \
-                    or notifications['show_size'] not in range(0, 7):
-                raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more 'show_' "
-                                  f"properties out of range (0 to 6). Change the webhook properties in webhook.json "
-                                  f"and restart the server.")
-
-            # Verifying no duplicates
-            values = list()
-            if notifications['show_downloads'] != 0:
-                values.append(notifications['show_downloads'])
-            if notifications['show_seeders'] != 0:
-                values.append(notifications['show_seeders'])
-            if notifications['show_leechers'] != 0:
-                values.append(notifications['show_leechers'])
-            if notifications['show_published'] != 0:
-                values.append(notifications['show_published'])
-            if notifications['show_category'] != 0:
-                values.append(notifications['show_category'])
-            if notifications['show_size'] != 0:
-                values.append(notifications['show_size'])
-
-            values_set = set(values)
-            if len(values_set) != len(values):
-                raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more duplicate "
-                                  f"'show_' properties. Change the webhook properties and restart the server.")
 
         return webhooks
