@@ -14,8 +14,7 @@ class WatcherError(Exception):
 
 class Watcher:
 
-    def __init__(self, rss: str, watchlist: dict, history: dict) -> None:
-        self.rss = rss
+    def __init__(self, watchlist: dict, history: dict) -> None:
         self.watchlist = watchlist
         self.history = history
 
@@ -24,9 +23,6 @@ class Watcher:
 
     def get_watchlist(self) -> dict:
         return self.watchlist
-
-    def get_rss(self) -> str:
-        return self.rss
 
     def add_to_history(self, torrent: dict) -> None:
         entry = {
@@ -37,8 +33,8 @@ class Watcher:
         }
         self.history["history"].append(entry)
 
-    def fetch_new_torrents(self) -> list:
-        feed = feedparser.parse(self.rss)
+    def fetch_new_torrents(self, nyaa_rss: str) -> list:
+        feed = feedparser.parse(nyaa_rss)
 
         new_torrents = []
         for torrent in feed.entries:
@@ -109,5 +105,15 @@ class Watcher:
                     break
                 if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
                     log.debug("")
+
+        return new_torrents
+
+    def fetch_all_feeds(self) -> list:
+        new_torrents = []
+
+        for feed_entry in self.watchlist['feeds']:
+            log.info(f"Checking feed: {feed_entry['name']}")
+
+            new_torrents.append(self.fetch_new_torrents(feed_entry['nyaa_rss']))
 
         return new_torrents
