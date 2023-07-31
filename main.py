@@ -134,7 +134,7 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
     # Reading torrents
     log.info("")
     log.info("Searching for matching torrents...")
-    torrents = watcher.fetch_new_torrents()
+    torrents = watcher.fetch_all_feeds()
     torrents = sort_torrents(torrents)
         
     interval_string = get_interval_string(interval)
@@ -190,25 +190,22 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     log.info("~~~ Nyaa Watcher ~~~")
-    log.info("Version: 1.1.1")
+    log.info("Version: 1.2.0")
     log.info("Starting server...")
 
     try:
         config = Config()
 
-        NYAA_RSS = config.get_nyaa_rss()
-        log.debug(f"NYAA RSS: {NYAA_RSS}")
-
         WATCHER_INTERVAL = config.get_watcher_interval()
         log.debug(f"WATCHER INTERVAL: {WATCHER_INTERVAL} seconds.")
 
         WATCHER_WATCHLIST = config.get_watcher_watchlist()
-        log.debug(f"WATCHER WATCHLIST: {len(WATCHER_WATCHLIST['watchlist'])} entries.")
+        log.debug(f"WATCHER WATCHLIST: {len(WATCHER_WATCHLIST['feeds'])} feed entries.")
 
         WATCHER_HISTORY = config.get_watcher_history()
         log.debug(f"WATCHER HISTORY: {len(WATCHER_HISTORY['history'])} entries.")
 
-        watcher = Watcher(NYAA_RSS, WATCHER_WATCHLIST, WATCHER_HISTORY)
+        watcher = Watcher(WATCHER_WATCHLIST, WATCHER_HISTORY)
 
         WEBHOOKS = config.get_discord_webhooks()
         log.debug(f"DISCORD WEBHOOKS: {len(WEBHOOKS['webhooks'])} entries.")
@@ -220,24 +217,28 @@ if __name__ == "__main__":
         exit(-1)
 
     # Testing RSS URL
-    log.info("Attempting to reach RSS URL...")
+    log.info("Attempting to reach feed URLs...") if len(WATCHER_WATCHLIST['feeds']) > 1 \
+        else log.info("Attempting to reach feed URL...")
     try:
-        response = requests.get(NYAA_RSS)
+        for feed in WATCHER_WATCHLIST['feeds']:
+            response = requests.get(feed['nyaa_rss'])
+
+            if response.status_code != 200:
+                log.info(
+                    f"Connection Error: Could not read {str(response.status_code)}'s RSS URL; received "
+                    f"HTTPS Status Code: {str(response.status_code)}. Add a valid Nyaa RSS URL to the feed "
+                    f"in watchlist.json and restart the server.")
+                log.info("Server exited.")
+                log.info("")
+                exit(-1)
     except Exception as e:
-        log.info("Connection Error: Cannot connect to RSS URL. Your internet provider may be blocking the server.")
+        log.info("Connection Error: Cannot connect to one or more URLs. Your internet provider may be "
+                 "blocking the server.")
         log.info(e, exc_info=True)
         log.info("Server exited.")
         log.info("")
         exit(-1)
-
-    if response.status_code == 200:
-        log.info("Success. HTTPS Status Code: 200.")
-    else:
-        log.info(f"Connection Error: Could not read RSS URL; received HTTPS Status Code: {str(response.status_code)}. "
-                 "Add a valid Nyaa RSS URL to config.json and restart the server.")
-        log.info("Server exited.")
-        log.info("")
-        exit(-1)
+    log.info("Success.")
 
     log.info("Server started.")
     try:
