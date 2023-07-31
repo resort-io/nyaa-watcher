@@ -296,8 +296,12 @@ def _migrate_v111_to_v120() -> None:
 
     # Checking for versions < 1.2.0
     if 'interval_seconds' not in watchlist:
-        log.debug("Updating watchlist.json to version 1.2.0...")
+        log.info("Backing up watchlist.json...")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist-v111-archive.json", "x")
+        file.write(json.dumps(watchlist, indent=2))
+        file.close()
 
+        log.info("Updating watchlist.json to version 1.2.0...")
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
         config = json.loads(file.read())
         file.close()
