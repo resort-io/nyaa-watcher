@@ -329,33 +329,6 @@ class Config:
 
         _verify_files_parse()
 
-    def get_nyaa_rss(self) -> str:
-        try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
-            file.close()
-            log.info("Found config.json.")
-        except Exception as e:
-            log.info("Cannot find config.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "x")
-            config = {"nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
-                      "watcher_interval_seconds": 600}  # 10 minutes
-            file.write(json.dumps(config, indent=2))
-            file.close()
-            log.info("Created file.")
-
-        # Using environment variable
-        if os.environ.get("NYAA_RSS"):
-            return os.environ.get("NYAA_RSS")
-
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
-        config = json.loads(file.read())
-        file.close()
-
-        if config['nyaa_rss'] == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
-            raise ConfigError("Config Error: No Nyaa RSS found. Add a Nyaa RSS URL to config.json and "
-                              "restart the server.")
-        return config['nyaa_rss']
-
     def get_watcher_watchlist(self) -> dict:
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
         watchlist = json.loads(file.read())
