@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import re
 import requests
 import sched
 import time
@@ -136,7 +137,7 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
     log.info("Searching for matching torrents...")
     torrents = watcher.fetch_all_feeds()
     torrents = sort_torrents(torrents)
-        
+
     interval_string = get_interval_string(interval)
 
     # No new torrents
@@ -221,8 +222,10 @@ if __name__ == "__main__":
         else log.info("Attempting to reach feed URL...")
     try:
         for feed in WATCHER_WATCHLIST['feeds']:
-            response = requests.get(feed['nyaa_rss'])
+            nyaa_user = feed['nyaa_user'].replace("https://nyaa.si/?page=rss&u=", "")
+            log.info(f" - Nyaa User: {nyaa_user} ({feed['nyaa_rss']})")
 
+            response = requests.get(feed['nyaa_rss'])
             if response.status_code != 200:
                 log.info(
                     f"Connection Error: Could not read {str(response.status_code)}'s RSS URL; received "
@@ -231,6 +234,8 @@ if __name__ == "__main__":
                 log.info("Server exited.")
                 log.info("")
                 exit(-1)
+            log.info(" - Success.")
+            log.info("")
     except Exception as e:
         log.info("Connection Error: Cannot connect to one or more URLs. Your internet provider may be "
                  "blocking the server.")
@@ -238,7 +243,7 @@ if __name__ == "__main__":
         log.info("Server exited.")
         log.info("")
         exit(-1)
-    log.info("Success.")
+    log.info("Done.")
 
     log.info("Server started.")
     try:
