@@ -36,7 +36,7 @@ def _verify_watchlist_parse() -> bool:
         watchlist = json.loads(file.read())
         file.close()
         log.info("Found watchlist.json.")
-    except Exception as e:
+    except Exception:
         log.info("Cannot find watchlist.json.")
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "x")
         watchlist = {
@@ -60,41 +60,36 @@ def _verify_watchlist_parse() -> bool:
         log.info("Created file.")
 
     # Verifying parse
-    try:
-        if 'interval_seconds' not in watchlist or 'feeds' not in watchlist:
-            raise ConfigError("Parse Error: 'interval_seconds' or 'feeds' properties are missing from watchlist.json. "
-                              "Add the properties and restart the server.")
-        if not _is_integer(watchlist['interval_seconds']):
-            raise ConfigError("Parse Error: interval_seconds must be an integer. Change the property and restart "
-                              "the server.")
-        if int(watchlist['interval_seconds']) < 60:
-            raise ConfigError("Parse Error: interval_seconds must be equal to or greater than 60. Change the property "
-                              "and restart the server.")
-        if len(watchlist['feeds']) >= 1:
-            for entry in watchlist['feeds']:
-                if 'nyaa_rss' not in entry or 'watchlist' not in entry:
-                    raise ConfigError("Parse Error: One or more 'feed' entries in watchlist.json contains missing or "
-                                      "invalid 'nyaa_rss' or 'watchlist' properties. Change the properties and "
-                                      "restart the server.")
-                if 'name' not in entry \
-                        or 'tags' not in entry \
-                        or 'regex' not in entry \
-                        or 'webhooks' not in entry:
-                    raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing or "
-                                      "invalid properties. Change the properties and restart the server.")
-                if entry['name'] == "" and len(entry['tags']) == 0 and len(entry['regex']) == 0 \
-                        or len(entry['tags']) == 0 and len(entry['regex']) == 0:
-                    raise ConfigError("Watchlist Error: One or more watchlist entries does not have a tag or regex. "
-                                      "Add an entry including a title with tag(s) and/or regex(es) to watchlist.json "
-                                      "and restart the server.")
-                return True
-        else:
-            raise ConfigError("Parse Error: watchlist.json contains an 'feeds' empty property. Add an entry to the "
-                              "property and restart the server.")
-
-    except Exception as e:
-        raise ConfigError(f"Parse Error: '{str(e)}' property is invalid or misspelled in watchlist.json. Change "
-                          f"the property and restart the server.")
+    if 'interval_seconds' not in watchlist or 'feeds' not in watchlist:
+        raise ConfigError("Parse Error: 'interval_seconds' or 'feeds' properties are missing from watchlist.json. "
+                          "Add the properties and restart the server.")
+    if not _is_integer(watchlist['interval_seconds']):
+        raise ConfigError("Parse Error: interval_seconds must be an integer. Change the property and restart "
+                          "the server.")
+    if int(watchlist['interval_seconds']) < 60:
+        raise ConfigError("Parse Error: interval_seconds must be equal to or greater than 60. Change the property "
+                          "and restart the server.")
+    if len(watchlist['feeds']) >= 1:
+        for entry in watchlist['feeds']:
+            if 'nyaa_rss' not in entry or 'watchlist' not in entry:
+                raise ConfigError("Parse Error: One or more 'feed' entries in watchlist.json contains missing or "
+                                  "invalid 'nyaa_rss' or 'watchlist' properties. Change the properties and "
+                                  "restart the server.")
+            if 'name' not in entry \
+                    or 'tags' not in entry \
+                    or 'regex' not in entry \
+                    or 'webhooks' not in entry:
+                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing or "
+                                  "invalid properties. Change the properties and restart the server.")
+            if entry['name'] == "" and len(entry['tags']) == 0 and len(entry['regex']) == 0 \
+                    or len(entry['tags']) == 0 and len(entry['regex']) == 0:
+                raise ConfigError("Watchlist Error: One or more watchlist entries does not have a tag or regex. "
+                                  "Add an entry including a title with tag(s) and/or regex(es) to watchlist.json "
+                                  "and restart the server.")
+            return True
+    else:
+        raise ConfigError("Parse Error: watchlist.json contains an 'feeds' empty property. Add an entry to the "
+                          "property and restart the server.")
 
 
 def _verify_history_parse() -> bool:
@@ -113,21 +108,17 @@ def _verify_history_parse() -> bool:
         log.info("Created file.")
 
     # Verifying parse
-    try:
-        if len(history['history']) == 0:
-            return True
-        else:
-            for entry in history['history']:
-                if 'torrent_title' not in entry \
-                        or 'date_downloaded' not in entry \
-                        or 'nyaa_page' not in entry \
-                        or 'nyaa_hash' not in entry:
-                    raise ConfigError("Parse Error: One or more entries in history.json contains missing or "
-                                      "invalid properties. Revert the changes and restart the server.")
-            return True
-    except Exception as e:
-        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in history.json. Change "
-                          f"the property and restart the server.")
+    if len(history['history']) == 0:
+        return True
+    else:
+        for entry in history['history']:
+            if 'torrent_title' not in entry \
+                    or 'date_downloaded' not in entry \
+                    or 'nyaa_page' not in entry \
+                    or 'nyaa_hash' not in entry:
+                raise ConfigError("Parse Error: One or more entries in history.json contains missing or "
+                                  "invalid properties. Revert the changes and restart the server.")
+        return True
 
 
 def _verify_webhooks_parse() -> bool:
@@ -161,76 +152,72 @@ def _verify_webhooks_parse() -> bool:
         log.info("Created file.")
 
     # Verifying parse
-    try:
-        if len(webhooks['webhooks']) == 0:
-            return True
-        else:
-            for webhook in webhooks['webhooks']:
-                # Verifying properties
-                if 'name' not in webhook \
-                        or 'url' not in webhook \
-                        or 'notifications' not in webhook \
-                        or 'title' not in webhook['notifications'] \
-                        or 'description' not in webhook['notifications'] \
-                        or 'show_downloads' not in webhook['notifications'] \
-                        or 'show_seeders' not in webhook['notifications'] \
-                        or 'show_leechers' not in webhook['notifications'] \
-                        or 'show_published' not in webhook['notifications'] \
-                        or 'show_category' not in webhook['notifications'] \
-                        or 'show_size' not in webhook['notifications']:
-                    raise ConfigError("Parse Error: One or more webhooks in webhooks.json contains "
-                                      "missing or invalid properties.")
+    if len(webhooks['webhooks']) == 0:
+        return True
+    else:
+        for webhook in webhooks['webhooks']:
+            # Verifying properties
+            if 'name' not in webhook \
+                    or 'url' not in webhook \
+                    or 'notifications' not in webhook \
+                    or 'title' not in webhook['notifications'] \
+                    or 'description' not in webhook['notifications'] \
+                    or 'show_downloads' not in webhook['notifications'] \
+                    or 'show_seeders' not in webhook['notifications'] \
+                    or 'show_leechers' not in webhook['notifications'] \
+                    or 'show_published' not in webhook['notifications'] \
+                    or 'show_category' not in webhook['notifications'] \
+                    or 'show_size' not in webhook['notifications']:
+                raise ConfigError("Parse Error: One or more webhooks in webhooks.json contains "
+                                  "missing or invalid properties.")
 
-                notifications = webhook['notifications']
-                if not _is_integer(notifications['show_downloads']) \
-                        or not _is_integer(notifications['show_seeders']) \
-                        or not _is_integer(notifications['show_leechers']) \
-                        or not _is_integer(notifications['show_published']) \
-                        or not _is_integer(notifications['show_category']) \
-                        or not _is_integer(notifications['show_size']):
-                    raise ConfigError("Parse Error: One or more 'show_' properties in webhooks.json "
-                                      "are not in range (0 to 6).")
+            notifications = webhook['notifications']
+            if not _is_integer(notifications['show_downloads']) \
+                    or not _is_integer(notifications['show_seeders']) \
+                    or not _is_integer(notifications['show_leechers']) \
+                    or not _is_integer(notifications['show_published']) \
+                    or not _is_integer(notifications['show_category']) \
+                    or not _is_integer(notifications['show_size']):
+                raise ConfigError("Parse Error: One or more 'show_' properties in webhooks.json "
+                                  "are not in range (0 to 6).")
 
-                # Checking for default URL
-                if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-                    log.info("Server Message: Enter a Discord webhook URL in webhooks.json to be notified when new "
-                             "torrents are downloaded.")
-                    continue
+            # Checking for default URL
+            if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
+                log.info("Server Message: Enter a Discord webhook URL in webhooks.json to be notified when new "
+                         "torrents are downloaded.")
+                continue
 
-                # Verifying ranges
-                if notifications['show_downloads'] not in range(0, 7) \
-                        or notifications['show_seeders'] not in range(0, 7) \
-                        or notifications['show_leechers'] not in range(0, 7) \
-                        or notifications['show_published'] not in range(0, 7) \
-                        or notifications['show_category'] not in range(0, 7) \
-                        or notifications['show_size'] not in range(0, 7):
-                    raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more 'show_' "
-                                      f"properties out of range (0 to 6). Change the webhook properties in webhook.json "
-                                      f"and restart the server.")
+            # Verifying ranges
+            if notifications['show_downloads'] not in range(0, 7) \
+                    or notifications['show_seeders'] not in range(0, 7) \
+                    or notifications['show_leechers'] not in range(0, 7) \
+                    or notifications['show_published'] not in range(0, 7) \
+                    or notifications['show_category'] not in range(0, 7) \
+                    or notifications['show_size'] not in range(0, 7):
+                raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more 'show_' "
+                                  f"properties out of range (0 to 6). Change the webhook properties in webhook.json "
+                                  f"and restart the server.")
 
-                # Verifying no duplicates
-                values = list()
-                if notifications['show_downloads'] != 0:
-                    values.append(notifications['show_downloads'])
-                if notifications['show_seeders'] != 0:
-                    values.append(notifications['show_seeders'])
-                if notifications['show_leechers'] != 0:
-                    values.append(notifications['show_leechers'])
-                if notifications['show_published'] != 0:
-                    values.append(notifications['show_published'])
-                if notifications['show_category'] != 0:
-                    values.append(notifications['show_category'])
-                if notifications['show_size'] != 0:
-                    values.append(notifications['show_size'])
+            # Verifying no duplicates
+            values = list()
+            if notifications['show_downloads'] != 0:
+                values.append(notifications['show_downloads'])
+            if notifications['show_seeders'] != 0:
+                values.append(notifications['show_seeders'])
+            if notifications['show_leechers'] != 0:
+                values.append(notifications['show_leechers'])
+            if notifications['show_published'] != 0:
+                values.append(notifications['show_published'])
+            if notifications['show_category'] != 0:
+                values.append(notifications['show_category'])
+            if notifications['show_size'] != 0:
+                values.append(notifications['show_size'])
 
-                values_set = set(values)
-                if len(values_set) != len(values):
-                    raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more duplicate "
-                                      f"'show_' properties. Change the webhook properties and restart the server.")
-            return True
-    except Exception as e:
-        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in webhooks.json. Change "
-                          f"the property and restart the server.")
+            values_set = set(values)
+            if len(values_set) != len(values):
+                raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more duplicate "
+                                  f"'show_' properties. Change the webhook properties and restart the server.")
+        return True
 
 
 def _verify_files_parse() -> bool:
