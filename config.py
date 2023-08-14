@@ -71,27 +71,32 @@ def _verify_watchlist_parse() -> bool:
                           "and restart the server.")
     if len(watchlist['feeds']) >= 1:
         for entry in watchlist['feeds']:
-            if 'nyaa_rss' not in entry or 'watchlist' not in entry:
-                raise ConfigError("Parse Error: One or more 'feed' entries in watchlist.json contains missing or "
-                                  "invalid 'nyaa_rss' or 'watchlist' properties. Change the properties and "
-                                  "restart the server.")
-            if 'name' not in entry:
-                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
-                                  "invalid 'name' property. Change the property and restart the server.")
-            if 'tags' not in entry:
-                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
-                                  "invalid 'tags' property. Change the property and restart the server.")
-            if 'regex' not in entry:
-                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
-                                  "invalid 'regex' property. Change the property and restart the server.")
-            if 'tags' not in entry:
-                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
-                                  "invalid 'webhooks' property. Change the property and restart the server.")
-            if entry['name'] == "" and len(entry['tags']) == 0 and len(entry['regex']) == 0 \
-                    or len(entry['tags']) == 0 and len(entry['regex']) == 0:
-                raise ConfigError("Watchlist Error: One or more watchlist entries does not have a tag or regex. "
-                                  "Add an entry including a title with tag(s) and/or regex(es) to watchlist.json "
-                                  "and restart the server.")
+            if 'nyaa_rss' not in entry:
+                raise ConfigError("Parse Error: One or more 'feed' entries in watchlist.json contains a missing or "
+                                  "invalid 'nyaa_rss' property. Change the property and restart the server.")
+            if 'watchlist' not in entry:
+                raise ConfigError("Parse Error: One or more 'feed' entries in watchlist.json contains a missing or "
+                                  "invalid 'watchlist' property. Change the property and restart the server.")
+
+            for watchlist_entry in entry['watchlist']:
+                if 'name' not in watchlist_entry:
+                    raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
+                                      "invalid 'name' property. Change the property and restart the server.")
+                if 'tags' not in watchlist_entry:
+                    raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
+                                      "invalid 'tags' property. Change the property and restart the server.")
+                if 'regex' not in watchlist_entry:
+                    raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
+                                      "invalid 'regex' property. Change the property and restart the server.")
+                if 'tags' not in watchlist_entry:
+                    raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
+                                      "invalid 'webhooks' property. Change the property and restart the server.")
+                if watchlist_entry['name'] == "" and len(watchlist_entry['tags']) == 0 \
+                        and len(watchlist_entry['regex']) == 0 \
+                        or len(watchlist_entry['tags']) == 0 and len(watchlist_entry['regex']) == 0:
+                    raise ConfigError("Watchlist Error: One or more watchlist entries does not have a tag or regex. "
+                                      "Add an entry including a title with tag(s) and/or regex(es) to watchlist.json "
+                                      "and restart the server.")
             return True
     else:
         raise ConfigError("Parse Error: watchlist.json contains an 'feeds' empty property. Add an entry to the "
