@@ -75,12 +75,18 @@ def _verify_watchlist_parse() -> bool:
                 raise ConfigError("Parse Error: One or more 'feed' entries in watchlist.json contains missing or "
                                   "invalid 'nyaa_rss' or 'watchlist' properties. Change the properties and "
                                   "restart the server.")
-            if 'name' not in entry \
-                    or 'tags' not in entry \
-                    or 'regex' not in entry \
-                    or 'webhooks' not in entry:
-                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing or "
-                                  "invalid properties. Change the properties and restart the server.")
+            if 'name' not in entry:
+                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
+                                  "invalid 'name' property. Change the property and restart the server.")
+            if 'tags' not in entry:
+                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
+                                  "invalid 'tags' property. Change the property and restart the server.")
+            if 'regex' not in entry:
+                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
+                                  "invalid 'regex' property. Change the property and restart the server.")
+            if 'tags' not in entry:
+                raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing a "
+                                  "invalid 'webhooks' property. Change the property and restart the server.")
             if entry['name'] == "" and len(entry['tags']) == 0 and len(entry['regex']) == 0 \
                     or len(entry['tags']) == 0 and len(entry['regex']) == 0:
                 raise ConfigError("Watchlist Error: One or more watchlist entries does not have a tag or regex. "
