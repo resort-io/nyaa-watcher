@@ -175,6 +175,10 @@ def _verify_webhooks_parse() -> bool:
         return True
     else:
         for webhook in webhooks['webhooks']:
+            # Checking for default URL
+            if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
+                continue
+
             # Verifying properties
             if 'name' not in webhook \
                     or 'url' not in webhook \
@@ -199,12 +203,6 @@ def _verify_webhooks_parse() -> bool:
                     or not _is_integer(notifications['show_size']):
                 raise ConfigError("Parse Error: One or more 'show_' properties in webhooks.json "
                                   "are not in range (0 to 6).")
-
-            # Checking for default URL
-            if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-                log.info("Server Message: Enter a Discord webhook URL in webhooks.json to be notified when new "
-                         "torrents are downloaded.")
-                continue
 
             # Verifying ranges
             if notifications['show_downloads'] not in range(0, 7) \

@@ -48,6 +48,8 @@ class Webhook:
                     raise WebhookError("Webhook Error: Webhook entries must have a name and URL.")
 
                 if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
+                    log.info("Server Message: Enter a name and Discord webhook URL to be notified when new "
+                             "torrents are downloaded.")
                     continue
 
                 log.debug(f" - {webhook['name']} ({webhook['url']})")
@@ -63,6 +65,9 @@ class Webhook:
 
             log.info(f"Connected to 1 Discord webhook.") if connected == 1 \
                 else log.info(f"Connected to {connected} Discord webhooks.")
+        else:
+            log.info("No Discord webhooks found in webhooks.json. Enter a name and Discord webhook URL to be "
+                     "notified when new torrents are downloaded.")
 
     def get_webhooks(self) -> dict:
         return self.webhooks
