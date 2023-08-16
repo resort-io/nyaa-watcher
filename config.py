@@ -250,7 +250,9 @@ def _verify_files_parse() -> bool:
         raise ConfigError(e)
 
 
-def _migrate_v101_to_v110() -> None:
+def _migrate_v101_to_v110() -> int:
+    migrated = 0
+
     # Watchlist
     file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
     watchlist = json.loads(file.read())
@@ -266,6 +268,7 @@ def _migrate_v101_to_v110() -> None:
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
         file.write(json.dumps(watchlist, indent=2))
         file.close()
+        migrated += 1
 
     # Webhooks
     file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
@@ -293,9 +296,14 @@ def _migrate_v101_to_v110() -> None:
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "w")
         file.write(json.dumps(webhooks, indent=2))
         file.close()
+        migrated += 1
+
+    return migrated
 
 
-def _migrate_v111_to_v120() -> None:
+def _migrate_v111_to_v120() -> int:
+    migrated = 0
+
     file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
     watchlist = json.loads(file.read())
     file.close()
@@ -325,17 +333,27 @@ def _migrate_v111_to_v120() -> None:
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
         file.write(json.dumps(new_watchlist, indent=2))
         file.close()
+        migrated += 1
+
+    return migrated
 
 
 class Config:
     def __init__(self) -> None:
         log.info("Checking for updates...")
+
+        updated = 0
         try:
-            _migrate_v101_to_v110()
-            _migrate_v111_to_v120()
+            updated += _migrate_v101_to_v110()
+            updated += _migrate_v111_to_v120()
         except Exception as e:
             log.debug("Server Error: Migration failed. " + str(e))
-        log.info("Done.")
+
+        if updated > 0:
+            log.info("Updates complete.")
+        else:
+            log.info("No updates found.")
+        log.info("")
 
         _verify_files_parse()
 
