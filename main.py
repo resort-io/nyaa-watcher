@@ -134,7 +134,7 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
 
     # Reading torrents
     log.info("")
-    log.info("Searching for matching torrents...")
+    log.info("Searching for matching torrents:")
     torrents = watcher.fetch_all_feeds()
     torrents = sort_torrents(torrents)
 
@@ -211,18 +211,21 @@ if __name__ == "__main__":
         WEBHOOKS = config.get_discord_webhooks()
         log.debug(f"DISCORD WEBHOOKS: {len(WEBHOOKS['webhooks'])} entries.")
 
+        log.info("")
+
         webhook = Webhook(WEBHOOKS)
     except Exception as e:
         log.info(e)
         log.info("Server exited.")
         exit(-1)
+    log.info("")
 
     # Testing RSS URL
     log.info("Attempting to reach feed URLs...") if len(WATCHER_WATCHLIST['feeds']) > 1 \
         else log.info("Attempting to reach feed URL...")
     try:
         for feed in WATCHER_WATCHLIST['feeds']:
-            nyaa_user = feed['nyaa_user'].replace("https://nyaa.si/?page=rss&u=", "")
+            nyaa_user = feed['nyaa_rss'].replace("https://nyaa.si/?page=rss&u=", "")
             log.info(f" - Nyaa User: {nyaa_user} ({feed['nyaa_rss']})")
 
             response = requests.get(feed['nyaa_rss'])
@@ -234,8 +237,7 @@ if __name__ == "__main__":
                 log.info("Server exited.")
                 log.info("")
                 exit(-1)
-            log.info(" - Success.")
-            log.info("")
+            log.info("   Success.")
     except Exception as e:
         log.info("Connection Error: Cannot connect to one or more URLs. Your internet provider may be "
                  "blocking the server.")
