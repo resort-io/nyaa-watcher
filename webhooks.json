@@ -5,6 +5,7 @@
       "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
       "notifications": {
         "title": "",
+        "exclude_regex": [],
         "description": "",
         "show_category": 3,
         "show_downloads": 4,
