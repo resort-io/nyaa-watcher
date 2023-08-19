@@ -156,6 +156,7 @@ def _verify_webhooks_parse() -> bool:
                 "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
                 "notifications": {
                     "title": "",
+                    "exclude_regex": [],
                     "description": "",
                     "show_category": 3,
                     "show_downloads": 4,
@@ -184,6 +185,7 @@ def _verify_webhooks_parse() -> bool:
                     or 'url' not in webhook \
                     or 'notifications' not in webhook \
                     or 'title' not in webhook['notifications'] \
+                    or 'exclude_regex' not in webhook['notifications'] \
                     or 'description' not in webhook['notifications'] \
                     or 'show_downloads' not in webhook['notifications'] \
                     or 'show_seeders' not in webhook['notifications'] \
@@ -194,6 +196,7 @@ def _verify_webhooks_parse() -> bool:
                 raise ConfigError("Parse Error: One or more webhooks in webhooks.json contains "
                                   "missing or invalid properties.")
 
+            # Verifying integers
             notifications = webhook['notifications']
             if not _is_integer(notifications['show_downloads']) \
                     or not _is_integer(notifications['show_seeders']) \
@@ -306,7 +309,7 @@ def _migrate_v111_to_v120() -> int:
     watchlist = json.loads(file.read())
     file.close()
 
-    # Checking for versions < 1.2.0
+    # Changing to new watchlist
     if 'interval_seconds' not in watchlist:
         log.info("Backing up watchlist.json...")
         file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist-v111-archive.json", "x")
@@ -332,6 +335,34 @@ def _migrate_v111_to_v120() -> int:
         file.write(json.dumps(new_watchlist, indent=2))
         file.close()
         migrated += 1
+
+    file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
+    webhooks = json.loads(file.read())
+    file.close()
+
+    # Adding 'exclude_regex' property to webhooks
+    webhook_changed = False
+    for webhook in webhooks['webhooks']:
+        if 'exclude_regex' not in webhook['notifications']:
+            webhook['notifications'] = {
+                "title": webhook['notifications']['title'],
+                "exclude_regex": [],
+                "description": webhook['notifications']['description'],
+                "show_category": webhook['notifications']['show_category'],
+                "show_downloads": webhook['notifications']['show_downloads'],
+                "show_leechers": webhook['notifications']['show_leechers'],
+                "show_published": webhook['notifications']['show_published'],
+                "show_seeders": webhook['notifications']['show_seeders'],
+                "show_size": webhook['notifications']['show_size']
+            }
+
+            webhook_changed = True
+            migrated += 1
+
+    if webhook_changed:
+        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "w")
+        file.write(json.dumps(webhooks, indent=2))
+        file.close()
 
     return migrated
 
