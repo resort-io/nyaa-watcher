@@ -223,8 +223,10 @@ if __name__ == "__main__":
     # Testing RSS URL
     log.info("Attempting to reach feed URLs...") if len(WATCHER_WATCHLIST['feeds']) > 1 \
         else log.info("Attempting to reach feed URL...")
+    url = "one or more URLs"
     try:
         for feed in WATCHER_WATCHLIST['feeds']:
+            url = feed['nyaa_rss']
             nyaa_user = feed['nyaa_rss'].replace("https://nyaa.si/?page=rss&u=", "")
             log.info(f" - Nyaa User: {nyaa_user} ({feed['nyaa_rss']})")
 
@@ -238,10 +240,9 @@ if __name__ == "__main__":
                 log.info("")
                 exit(-1)
             log.info("   Success.")
-    except Exception as e:
-        log.info("Connection Error: Cannot connect to one or more URLs. Your internet provider may be "
-                 "blocking the server.")
-        log.info(e, exc_info=True)
+    except Exception:
+        log.info(f"   Error: Cannot connect to {url}. Your internet provider may be "
+                 "blocking the connection.")
         log.info("Server exited.")
         log.info("")
         exit(-1)
