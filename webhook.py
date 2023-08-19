@@ -95,12 +95,15 @@ class Webhook:
         notification = discord.Embed()
 
         # Title
+        title = torrent['title']
+        if len(webhook_json['notifications']['exclude_regex']) > 0:
+            for regex in webhook_json['notifications']['exclude_regex']:
+                title = re.sub(regex, "", title)
+
         if webhook_json['notifications']['title'] != "":
-            notification.title = _insert_tags(webhook_json['notifications']['title'],
-                                              webhook_json['name'],
-                                              torrent)
+            notification.title = _insert_tags(title, webhook_json['name'], torrent)
         else:
-            notification.title = f"Downloading New Torrent: {torrent['title']}"
+            notification.title = f"Downloading New Torrent: {title}"
 
         # Description
         if webhook_json['notifications']['description'] != "":
