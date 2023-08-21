@@ -19,9 +19,9 @@ def _parse_url(url: str) -> list:
     )
 
 
-def _insert_tags(string: str, webhook_name: str, torrent: dict) -> str:
+def _insert_tags(string: str, webhook_name: str, torrent: dict, torrent_title: str) -> str:
     string = string.replace("$webhook_name", webhook_name) \
-        .replace("$title", torrent['title']) \
+        .replace("$title", torrent_title) \
         .replace("$downloads", torrent['nyaa_downloads']) \
         .replace("$seeders", torrent['nyaa_seeders']) \
         .replace("$leechers", torrent['nyaa_leechers']) \
@@ -101,7 +101,7 @@ class Webhook:
                 title = re.sub(regex, "", title)
 
         if webhook_json['notifications']['title'] != "":
-            notification.title = _insert_tags(title, webhook_json['name'], torrent)
+            notification.title = _insert_tags(title, webhook_json['name'], torrent, title)
         else:
             notification.title = f"Downloading New Torrent: {title}"
 
@@ -109,7 +109,8 @@ class Webhook:
         if webhook_json['notifications']['description'] != "":
             notification.description = _insert_tags(webhook_json['notifications']['description'],
                                                     webhook_json['name'],
-                                                    torrent)
+                                                    torrent,
+                                                    title)
 
         # Custom Notification Details
         i = 1
