@@ -134,7 +134,7 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
 
     # Reading torrents
     log.info("")
-    log.info("Searching for matching torrents:")
+    log.info("Searching for matching torrents...")
     torrents = watcher.fetch_all_feeds()
     torrents = sort_torrents(torrents)
 
@@ -146,14 +146,6 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
         log.info(f"Searching for matching torrents in {interval_string}.")
     # New torrents
     else:
-        log.info("1 new torrent:") if len(torrents) == 1 \
-            else log.info(f"{len(torrents)} new torrents:")
-
-        # Display torrents
-        for torrent in torrents:
-            log.info(f" - {torrent['title']}")
-
-        # Download torrents
         log.info("Downloading...")
         log.debug("")
         errors = 0

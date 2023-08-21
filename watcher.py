@@ -114,11 +114,14 @@ class Watcher:
 
         for feed_entry in self.watchlist['feeds']:
             nyaa_user = feed_entry['nyaa_rss'].replace("https://nyaa.si/?page=rss&u=", "")
-            log.info(f" - Reading {nyaa_user}'s feed...")
+            log.info(f" - Reading {nyaa_user}'s feed:")
 
             new_torrents = self.fetch_new_torrents(feed_entry['nyaa_rss'])
             log.info(f"   {len(new_torrents)} new torrents.")
 
-            torrents += new_torrents
+            if len(new_torrents) > 0:
+                for torrent in new_torrents:
+                    log.info(f"   - {torrent['title']}")
+                torrents += new_torrents
 
         return torrents
