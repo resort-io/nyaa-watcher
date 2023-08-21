@@ -129,9 +129,6 @@ def update_history_file(watcher: Watcher) -> None:
 
 
 def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -> None:
-    # Schedule next check
-    scheduler.enter(interval, 1, check_rss, (scheduler, watcher, interval, webhook))
-
     # Reading torrents
     log.info("")
     log.info("Searching for matching torrents...")
@@ -174,6 +171,9 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
 
         log.info(f"Done. Finished with {errors} errors.")
         log.info(f"Searching for matching torrents in {interval_string}.")
+
+    # Schedule next check
+    scheduler.enter(interval, 1, check_rss, (scheduler, watcher, interval, webhook))
 
 
 if __name__ == "__main__":
