@@ -223,6 +223,7 @@ if __name__ == "__main__":
             log.info(f" - Nyaa User: {nyaa_user} ({feed['nyaa_rss']})")
 
             response = requests.get(feed['nyaa_rss'])
+            time.sleep(0.1)  # Wait for response to finish
             if response.status_code != 200:
                 log.info(
                     f"Connection Error: Could not read {str(response.status_code)}'s RSS URL; received "
