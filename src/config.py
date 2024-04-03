@@ -131,12 +131,12 @@ class Config:
 
     def get_nyaa_rss(self) -> str:
         try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
+            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/config.json", "r")
             file.close()
             log.info("Found config.json.")
         except Exception as e:
             log.info("Cannot find config.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "x")
+            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/config.json", "x")
             config = {"nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
                       "watcher_interval_seconds": 600}  # 10 minutes
             file.write(json.dumps(config, indent=2))
@@ -147,7 +147,7 @@ class Config:
         if os.environ.get("NYAA_RSS"):
             return os.environ.get("NYAA_RSS")
 
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/config.json", "r")
         config = json.loads(file.read())
         file.close()
 
@@ -160,18 +160,18 @@ class Config:
 
     def get_watcher_watchlist(self) -> dict:
         try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
             file.close()
             log.info("Found watchlist.json.")
         except Exception as e:
             log.info("Cannot find watchlist.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "x")
+            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "x")
             watchlist = {"watchlist": [{'name': '', 'tags': [], 'regex': [], 'webhooks': []}]}
             file.write(json.dumps(watchlist, indent=2))
             file.close()
             log.info("Created file.")
 
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
         watchlist = json.loads(file.read())
         file.close()
 
@@ -189,18 +189,18 @@ class Config:
 
     def get_watcher_history(self) -> dict:
         try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json", "r")
+            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/history.json", "r")
             file.close()
             log.info("Found history.json.")
         except Exception as e:
             log.info("Cannot find history.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json", "x")
+            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/history.json", "x")
             history = {"history": []}
             file.write(json.dumps(history, indent=2))
             file.close()
             log.info("Created file.")
 
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json", "r")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/history.json", "r")
         history = json.loads(file.read())
         file.close()
 
@@ -213,7 +213,7 @@ class Config:
             return int(os.environ.get("WATCHER_INTERVAL_SEC"))
 
         # File has already been verified by get_nyaa_rss()
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/config.json", "r")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/config.json", "r")
         config = json.loads(file.read())
         file.close()
 
@@ -227,12 +227,12 @@ class Config:
 
     def get_discord_webhooks(self) -> dict:
         try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
+            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
             file.close()
             log.info("Found webhooks.json.")
         except Exception as e:
             log.info("Cannot find webhooks.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "x")
+            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "x")
             webhooks = {"webhooks": [
                 {
                     "name": "Example Webhook Name",
@@ -253,7 +253,7 @@ class Config:
             file.close()
             log.info("Created file.")
 
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
         webhooks = json.loads(file.read())
         file.close()
 
@@ -305,7 +305,7 @@ class Config:
 
     def migrate_v101_to_v110(self) -> None:
         # Adding missing 'webhooks' property to 'watchlist.json'
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "r")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
         watchlist = json.loads(file.read())
         file.close()
 
@@ -314,12 +314,12 @@ class Config:
                 entry['webhooks'] = []
                 log.debug(f"Added 'webhooks' property to watchlist entry: {entry['name']}.")
 
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/watchlist.json", "w")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "w")
         file.write(json.dumps(watchlist, indent=2))
         file.close()
 
         # Adding sample webhook entry to 'webhooks.json', if empty
-        file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "r")
+        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
         webhooks = json.loads(file.read())
         file.close()
 
@@ -340,6 +340,6 @@ class Config:
                     }
             webhooks['webhooks'].append(sample_webhook)
 
-            file = open(os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/webhooks.json", "w")
+            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "w")
             file.write(json.dumps(webhooks, indent=2))
             file.close()

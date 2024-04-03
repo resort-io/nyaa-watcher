@@ -94,7 +94,7 @@ def download_torrent(torrent: dict) -> str:
     torrent_title = torrent['title'] + ".torrent"
     torrent_url = torrent['link']
 
-    file_path = os.path.join(os.environ.get("WATCH_DIRECTORY", "/watch"), torrent_title)
+    file_path = os.path.join(os.environ.get("WATCH_DIRECTORY", "../watch"), torrent_title)
     try:
         response = requests.get(torrent_url)
         # Success
@@ -121,7 +121,7 @@ def sort_torrents(torrents: list) -> list:
 def update_history_file(watcher: Watcher) -> None:
     history = watcher.get_history()
 
-    file_directory = os.environ.get("WATCHER_DIRECTORY", "/watcher") + "/history.json"
+    file_directory = os.environ.get("WATCHER_DIRECTORY", "") + "/history.json"
     file = open(file_directory, "w")
     file.write(json.dumps(history, indent=2))
     file.close()
