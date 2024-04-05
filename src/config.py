@@ -45,6 +45,13 @@ def _log(message: str, is_hint: bool = False, log_type: str = "info") -> None:
             log.debug(message)
 
 
+def _new_config_json() -> dict:
+    return {
+        "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
+        "watcher_interval_seconds": 600
+    }
+
+
 def _new_webhook_entry_sample() -> dict:
     return {
         "name": "Example Webhook Name",
@@ -84,8 +91,10 @@ def _new_webhook_file_json() -> dict:
 
 
 def _migrate_v101_to_v110() -> None:
+    log.debug("Migrating files from v1.0.1 to v1.1.0...")
+
     # Adding missing 'webhooks' property to 'watchlist.json'
-    file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
+    file = open(_env("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
     watchlist = json.loads(file.read())
     file.close()
 
@@ -94,36 +103,55 @@ def _migrate_v101_to_v110() -> None:
             entry['webhooks'] = []
             log.debug(f"Added 'webhooks' property to watchlist entry: {entry['name']}.")
 
-    file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "w")
+    file = open(_env("WATCHER_DIRECTORY", "") + "/watchlist.json", "w")
     file.write(json.dumps(watchlist, indent=4))
     file.close()
 
     # Adding sample webhook entry to 'webhooks.json', if empty
-    file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
+    file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
     webhooks = json.loads(file.read())
     file.close()
 
     if len(webhooks['webhooks']) == 0:
         webhooks['webhooks'].append(_new_webhook_entry_sample())
-        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "w")
+        file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "w")
         file.write(json.dumps(webhooks, indent=4))
         file.close()
 
+    log.debug("Migrated to v1.1.0.")
+
 
 def _migrate_v110_to_v111() -> None:
+    log.debug("Migrating files from v1.1.0 to v1.1.1...")
+
     # TODO: Add 'version' to json file.
-    return None
+
+    log.debug("Migrated to v1.1.1.")
 
 
-def _verify_config_parse(config: dict) -> bool:
-    try:
-        if 'nyaa_rss' not in config or 'watcher_interval_seconds' not in config:
-            raise ConfigError("Parse Error: nyaa_rss or watcher_interval_seconds is missing from config.json. "
-                              "Add the properties and restart the server.")
-        return True
-    except Exception as e:
-        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in config.json. Change "
-                          f"the property and restart the server.")
+def _verify_config_parse() -> None:
+    path = _env("WATCHER_DIRECTORY", "") + "/config.json"
+
+    if os.path.exists(path) is False:
+        log.info("Cannot find 'config.json'. Creating file...")
+        file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "x")
+        file.write(json.dumps(_new_config_json(), indent=4))
+        file.close()
+        log.info("Created 'config.json'.")
+        return
+
+    file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+    config = json.loads(file.read())
+    file.close()
+
+    if ['nyaa_rss', 'watcher_interval_seconds'] not in config:
+        raise ConfigError("Parse Error: 'nyaa_rss' and/or 'watcher_interval_seconds' is missing from config.json. Change the properties and restart the watcher.")
+
+    if config['nyaa_rss'] == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
+        raise ConfigError("Parse Error: No Nyaa RSS found. Add a Nyaa RSS URL to 'config.json' and restart the watcher.")
+
+    if int(config['watcher_interval_seconds']) % 1 != 0 or int(config['watcher_interval_seconds']) < 60:
+        raise ConfigError("Parse Error: WATCHER_INTERVAL_SEC must be an integer equal to or greater than 60 seconds.")
 
 
 def _verify_watchlist_parse(watchlist: dict) -> bool:
@@ -193,8 +221,6 @@ def _verify_webhooks_parse() -> None:
         if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
             _log("Watcher Message: Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", True)
 
-    return
-
 
 def _verify_webhook_entry(webhook: dict) -> bool:
     properties = ['name', 'url', 'notifications']
@@ -240,45 +266,28 @@ class Config:
             log.debug("Files verified.")
 
             # TODO: Create check for v1.0.1 to v1.1.0
-            log.debug("Migrating files from v1.0.1 to v1.1.0...")
             _migrate_v101_to_v110()
-            log.debug("Migrated to v1.1.0.")
 
             # TODO: Create check for v1.1.0 to v1.1.1
-            log.debug("Migrating files from v1.1.0 to v1.1.1...")
-            _migrate_v110_to_v111()
-            log.debug("Migrated to v1.1.1.")
+            # _migrate_v110_to_v111()
         except Exception as e:
             log.info(e, exc_info=True)
 
     @staticmethod
-    def get_nyaa_rss() -> str:
-        try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/config.json", "r")
-            file.close()
-            log.info("Found config.json.")
-        except Exception as e:
-            log.info("Cannot find config.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/config.json", "x")
-            config = {"nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
-                      "watcher_interval_seconds": 600}  # 10 minutes
-            file.write(json.dumps(config, indent=2))
-            file.close()
-            log.info("Created file.")
+    def get_config() -> dict:
+        file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+        config = json.loads(file.read())
+        file.close()
+        return config
 
-        # Using environment variable
+    @staticmethod
+    def get_nyaa_rss() -> str:
         if os.environ.get("NYAA_RSS"):
             return os.environ.get("NYAA_RSS")
 
-        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/config.json", "r")
+        file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
         config = json.loads(file.read())
         file.close()
-
-        _verify_config_parse(config)
-
-        if config['nyaa_rss'] == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
-            raise ConfigError("Config Error: No Nyaa RSS found. Add a Nyaa RSS URL to config.json and "
-                              "restart the server.")
         return config['nyaa_rss']
 
     @staticmethod
@@ -334,22 +343,13 @@ class Config:
 
     @staticmethod
     def get_watcher_interval() -> int:
-        # Using environment variable
         if os.environ.get("WATCHER_INTERVAL_SEC"):
             return int(os.environ.get("WATCHER_INTERVAL_SEC"))
 
-        # File has already been verified by get_nyaa_rss()
-        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/config.json", "r")
+        file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
         config = json.loads(file.read())
         file.close()
-
-        interval = int(config['watcher_interval_seconds'])
-        if interval >= 60:
-            return interval
-        elif interval < 60:
-            raise ConfigError("WATCHER_INTERVAL_SEC must be equal to or greater than 60 seconds.")
-        else:
-            raise ConfigError("WATCHER_INTERVAL_SEC must be an integer.")
+        return int(config['watcher_interval_seconds'])
 
     @staticmethod
     def get_discord_webhooks() -> dict:
