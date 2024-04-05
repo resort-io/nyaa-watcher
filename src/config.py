@@ -5,19 +5,114 @@ import json
 from dotenv import load_dotenv
 
 load_dotenv()
-log = logging.getLogger("config")
+log = logging.getLogger()
 
 
 class ConfigError(Exception):
     pass
 
 
-def is_integer(number) -> bool:
+def _env(key: str, default: str = None) -> str:
+    if os.environ.get(key) is not None:
+        return os.environ.get(key)
+    if os.environ.get(key.lower()) is not None:
+        return os.environ.get(key.lower())
+    if os.environ.get(key.upper()) is not None:
+        return os.environ.get(key.upper())
+    if default is not None:
+        return default
+    raise ConfigError(f"Environment Error: The '{key}' environment variable does not exist.")
+
+
+def _is_integer(number) -> bool:
     try:
         int(number)
         return True
     except ValueError:
         return False
+
+
+def _log(message: str, is_hint: bool = False, log_type: str = "info") -> None:
+    if log_type == "info":
+        if is_hint and _env("SHOW_HINTS", "true") == "true":
+            log.info(message)
+        else:
+            log.info(message)
+    elif log_type == "debug":
+        if is_hint and _env("SHOW_HINTS", "true") == "true":
+            log.debug(message)
+        else:
+            log.debug(message)
+
+
+def _new_webhook_entry_sample() -> dict:
+    return {
+        "name": "Example Webhook Name",
+        "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+        "notifications": {
+            "title": "",
+            "description": "",
+            "show_category": 3,
+            "show_downloads": 4,
+            "show_leechers": 6,
+            "show_published": 1,
+            "show_seeders": 5,
+            "show_size": 2
+        }
+    }
+
+
+def _new_webhook_file_json() -> dict:
+    return {
+        "webhooks": [
+            {
+                "name": "Example Webhook Name",
+                "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+                "notifications": {
+                    "title": "",
+                    "description": "",
+                    "show_category": 3,
+                    "show_downloads": 4,
+                    "show_leechers": 6,
+                    "show_published": 1,
+                    "show_seeders": 5,
+                    "show_size": 2
+                }
+            }
+        ]
+    }
+
+
+def _migrate_v101_to_v110() -> None:
+    # Adding missing 'webhooks' property to 'watchlist.json'
+    file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
+    watchlist = json.loads(file.read())
+    file.close()
+
+    for entry in watchlist['watchlist']:
+        if 'webhooks' not in entry:
+            entry['webhooks'] = []
+            log.debug(f"Added 'webhooks' property to watchlist entry: {entry['name']}.")
+
+    file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "w")
+    file.write(json.dumps(watchlist, indent=4))
+    file.close()
+
+    # Adding sample webhook entry to 'webhooks.json', if empty
+    file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
+    webhooks = json.loads(file.read())
+    file.close()
+
+    if len(webhooks['webhooks']) == 0:
+        webhooks['webhooks'].append(_new_webhook_entry_sample())
+        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "w")
+        file.write(json.dumps(webhooks, indent=4))
+        file.close()
+
+
+def _migrate_v110_to_v111() -> None:
+    # TODO: Add 'version' to json file.
+    return None
 
 
 def _verify_config_parse(config: dict) -> bool:
@@ -72,64 +167,92 @@ def _verify_history_parse(history: dict) -> bool:
                           f"the property and restart the server.")
 
 
-def _verify_webhooks_parse(webhooks: dict) -> bool:
-    try:
-        if len(webhooks['webhooks']) == 0:
-            return True
-        else:
-            for webhook in webhooks['webhooks']:
-                if 'name' not in webhook \
-                        or 'url' not in webhook \
-                        or 'notifications' not in webhook \
-                        or 'title' not in webhook['notifications'] \
-                        or 'description' not in webhook['notifications'] \
-                        or 'show_downloads' not in webhook['notifications'] \
-                        or 'show_seeders' not in webhook['notifications'] \
-                        or 'show_leechers' not in webhook['notifications'] \
-                        or 'show_published' not in webhook['notifications'] \
-                        or 'show_category' not in webhook['notifications'] \
-                        or 'show_size' not in webhook['notifications']:
-                    raise ConfigError("Parse Error: One or more webhooks in webhooks.json contains "
-                                      "missing or invalid properties.")
+def _verify_webhooks_parse() -> None:
+    path = _env("WATCHER_DIRECTORY", "") + "/webhooks.json"
 
-                notifications = webhook['notifications']
-                if not is_integer(notifications['show_downloads']) \
-                        or not is_integer(notifications['show_seeders']) \
-                        or not is_integer(notifications['show_leechers']) \
-                        or not is_integer(notifications['show_published']) \
-                        or not is_integer(notifications['show_category']) \
-                        or not is_integer(notifications['show_size']):
-                    raise ConfigError("Parse Error: One or more 'show_' properties in webhooks.json "
-                                      "are not in range (0 to 6).")
-            return True
-    except Exception as e:
-        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in webhooks.json. Change "
-                          f"the property and restart the server.")
+    if os.path.exists(path) is False:
+        log.info("Cannot find 'webhooks.json'. Creating file...")
+        file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "x")
+        file.write(json.dumps(_new_webhook_file_json(), indent=4))
+        file.close()
+        log.info("Created 'webhooks.json'.")
+        return
+
+    file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
+    webhooks = json.loads(file.read())
+    file.close()
+
+    for webhook in webhooks['webhooks']:
+        if _verify_webhook_entry(webhook) is False:
+            raise ConfigError("Parse Error: One or more webhooks in webhooks.json contains missing or invalid properties. Change the properties and restart the watcher.")
+
+        notifications_check = _verify_webhook_notifications(webhook['notifications'], webhook['name'])
+        if notifications_check['result'] is False:
+            raise ConfigError(f"Parse Error: {notifications_check['message']}. Change the properties and restart the watcher.")
+
+        if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
+            _log("Watcher Message: Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", True)
+
+    return
+
+
+def _verify_webhook_entry(webhook: dict) -> bool:
+    properties = ['name', 'url', 'notifications']
+    if not all(key in webhook for key in properties):
+        return False
+    return True
+
+
+def _verify_webhook_notifications(webhook_notifications: dict, webhook_name: str) -> dict:
+    properties = ['title', 'description', 'show_downloads', 'show_seeders', 'show_leechers', 'show_published',
+                  'show_category', 'show_size']
+    if not all(key in webhook_notifications for key in properties):
+        return {
+            "result": False,
+            "message": f"'{webhook_name}' webhook contains one or more 'show_' properties that are missing or invalid. Change the webhook properties and restart the watcher"
+        }
+
+    if not all(value in range(0, 7) for value in webhook_notifications):
+        return {
+            "result": False,
+            "message": f"'{webhook_name}' webhook contains one or more 'show_' properties out of range (0 to 6). Change the webhook properties and restart the watcher"
+        }
+
+    values = [value for value in webhook_notifications if value != 0]
+    if len(values) != len(set(values)):
+        return {
+            "result": False,
+            "message": f"'{webhook_name}' webhook contains one or more duplicate 'show_' properties. Change the webhook properties and restart the watcher"
+        }
+
+    return {"result": True}
 
 
 class Config:
     def __init__(self) -> None:
         self.config = dict(os.environ)
         try:
+            log.debug("Verifying files...")
+            _verify_config_parse()
+            _verify_watchlist_parse()
+            _verify_history_parse()
+            _verify_webhooks_parse()
+            log.debug("Files verified.")
+
+            # TODO: Create check for v1.0.1 to v1.1.0
             log.debug("Migrating files from v1.0.1 to v1.1.0...")
-            self.migrate_v101_to_v110()
-            log.debug("Migration complete.")
+            _migrate_v101_to_v110()
+            log.debug("Migrated to v1.1.0.")
+
+            # TODO: Create check for v1.1.0 to v1.1.1
+            log.debug("Migrating files from v1.1.0 to v1.1.1...")
+            _migrate_v110_to_v111()
+            log.debug("Migrated to v1.1.1.")
         except Exception as e:
-            log.debug("Migration failed. " + str(e))
+            log.info(e, exc_info=True)
 
-    def _get_key(self, key: str, default: str = None):
-        if key in self.config:
-            return self.config[key]
-        elif key.upper() in self.config:
-            return self.config[key.upper()]
-        elif key.lower() in self.config:
-            return self.config[key.lower()]
-        elif default is not None:
-            return default
-        else:
-            return False
-
-    def get_nyaa_rss(self) -> str:
+    @staticmethod
+    def get_nyaa_rss() -> str:
         try:
             file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/config.json", "r")
             file.close()
@@ -158,7 +281,8 @@ class Config:
                               "restart the server.")
         return config['nyaa_rss']
 
-    def get_watcher_watchlist(self) -> dict:
+    @staticmethod
+    def get_watcher_watchlist() -> dict:
         try:
             file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
             file.close()
@@ -187,7 +311,8 @@ class Config:
 
         return watchlist
 
-    def get_watcher_history(self) -> dict:
+    @staticmethod
+    def get_watcher_history() -> dict:
         try:
             file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/history.json", "r")
             file.close()
@@ -207,7 +332,8 @@ class Config:
         _verify_history_parse(history)
         return history
 
-    def get_watcher_interval(self) -> int:
+    @staticmethod
+    def get_watcher_interval() -> int:
         # Using environment variable
         if os.environ.get("WATCHER_INTERVAL_SEC"):
             return int(os.environ.get("WATCHER_INTERVAL_SEC"))
@@ -225,121 +351,9 @@ class Config:
         else:
             raise ConfigError("WATCHER_INTERVAL_SEC must be an integer.")
 
-    def get_discord_webhooks(self) -> dict:
-        try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
-            file.close()
-            log.info("Found webhooks.json.")
-        except Exception as e:
-            log.info("Cannot find webhooks.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "x")
-            webhooks = {"webhooks": [
-                {
-                    "name": "Example Webhook Name",
-                    "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-                    "notifications": {
-                        "title": "",
-                        "description": "",
-                        "show_category": 3,
-                        "show_downloads": 4,
-                        "show_leechers": 6,
-                        "show_published": 1,
-                        "show_seeders": 5,
-                        "show_size": 2
-                    }
-                }
-            ]}
-            file.write(json.dumps(webhooks, indent=2))
-            file.close()
-            log.info("Created file.")
-
-        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
+    @staticmethod
+    def get_discord_webhooks() -> dict:
+        file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
         webhooks = json.loads(file.read())
         file.close()
-
-        _verify_webhooks_parse(webhooks)
-
-        if len(webhooks['webhooks']) == 0:
-            return webhooks
-
-        for webhook in webhooks['webhooks']:
-            if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-                log.info("Server Message: Enter a Discord webhook URL in webhooks.json to be notified when new "
-                         "torrents are downloaded.")
-                continue
-
-            notifications = webhook['notifications']
-
-            # Verifying ranges
-            if notifications['show_downloads'] not in range(0, 7) \
-                    or notifications['show_seeders'] not in range(0, 7) \
-                    or notifications['show_leechers'] not in range(0, 7) \
-                    or notifications['show_published'] not in range(0, 7) \
-                    or notifications['show_category'] not in range(0, 7) \
-                    or notifications['show_size'] not in range(0, 7):
-                raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more 'show_' "
-                                  f"properties out of range (0 to 6). Change the webhook properties in webhook.json "
-                                  f"and restart the server.")
-
-            # Verifying no duplicates
-            values = list()
-            if notifications['show_downloads'] != 0:
-                values.append(notifications['show_downloads'])
-            if notifications['show_seeders'] != 0:
-                values.append(notifications['show_seeders'])
-            if notifications['show_leechers'] != 0:
-                values.append(notifications['show_leechers'])
-            if notifications['show_published'] != 0:
-                values.append(notifications['show_published'])
-            if notifications['show_category'] != 0:
-                values.append(notifications['show_category'])
-            if notifications['show_size'] != 0:
-                values.append(notifications['show_size'])
-
-            values_set = set(values)
-            if len(values_set) != len(values):
-                raise ConfigError(f"Webhook Error: '{webhook['name']}' webhook contains one or more duplicate "
-                                  f"'show_' properties. Change the webhook properties and restart the server.")
-
         return webhooks
-
-    def migrate_v101_to_v110(self) -> None:
-        # Adding missing 'webhooks' property to 'watchlist.json'
-        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
-        watchlist = json.loads(file.read())
-        file.close()
-
-        for entry in watchlist['watchlist']:
-            if 'webhooks' not in entry:
-                entry['webhooks'] = []
-                log.debug(f"Added 'webhooks' property to watchlist entry: {entry['name']}.")
-
-        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "w")
-        file.write(json.dumps(watchlist, indent=2))
-        file.close()
-
-        # Adding sample webhook entry to 'webhooks.json', if empty
-        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
-        webhooks = json.loads(file.read())
-        file.close()
-
-        if len(webhooks['webhooks']) == 0:
-            sample_webhook = {
-                        "name": "Example Webhook Name",
-                        "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-                        "notifications": {
-                            "title": "",
-                            "description": "",
-                            "show_category": 3,
-                            "show_downloads": 4,
-                            "show_leechers": 6,
-                            "show_published": 1,
-                            "show_seeders": 5,
-                            "show_size": 2
-                        }
-                    }
-            webhooks['webhooks'].append(sample_webhook)
-
-            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/webhooks.json", "w")
-            file.write(json.dumps(webhooks, indent=2))
-            file.close()
