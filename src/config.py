@@ -1,11 +1,10 @@
 import os
 import logging
 import json
-
 from dotenv import load_dotenv
+from logger import Logger
 
 load_dotenv()
-log = logging.getLogger()
 
 
 class ConfigError(Exception):
@@ -22,20 +21,6 @@ def _env(key: str, default: str = None) -> str:
     if default is not None:
         return default
     raise ConfigError(f"Environment Error: The '{key}' environment variable does not exist.")
-
-
-# TODO: Change and implement
-def _log(message: str, is_hint: bool = False, log_type: str = "info") -> None:
-    if log_type == "info":
-        if is_hint and _env("SHOW_HINTS", "true") == "true":
-            log.info(message)
-        else:
-            log.info(message)
-    elif log_type == "debug":
-        if is_hint and _env("SHOW_HINTS", "true") == "true":
-            log.debug(message)
-        else:
-            log.debug(message)
 
 
 def _new_config_json() -> dict:
@@ -98,7 +83,7 @@ def _new_webhook_json() -> dict:
 
 
 def _migrate_v101_to_v110() -> None:
-    log.debug("Migrating files from v1.0.1 to v1.1.0...")
+    Logger.log("Migrating files from v1.0.1 to v1.1.0...", {"level": "debug"})
 
     # Adding missing 'webhooks' property to 'watchlist.json'
     file = open(_env("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
@@ -108,7 +93,7 @@ def _migrate_v101_to_v110() -> None:
     for entry in watchlist['watchlist']:
         if 'webhooks' not in entry:
             entry['webhooks'] = []
-            log.debug(f"Added 'webhooks' property to watchlist entry: {entry['name']}.")
+            Logger.log(f"Added 'webhooks' property to watchlist entry: {entry['name']}.", {"level": "debug"})
 
     file = open(_env("WATCHER_DIRECTORY", "") + "/watchlist.json", "w")
     file.write(json.dumps(watchlist, indent=4))
@@ -125,11 +110,11 @@ def _migrate_v101_to_v110() -> None:
         file.write(json.dumps(webhooks, indent=4))
         file.close()
 
-    log.debug("Migrated to v1.1.0.")
+    Logger.log("Migrated to v1.1.0.", {"level": "debug"})
 
 
 def _migrate_v111_to_v112() -> None:
-    log.debug("Migrating files from v1.1.1 to v1.1.2...")
+    Logger.log("Migrating files from v1.1.1 to v1.1.2...", {"level": "debug"})
 
     # Adding 'version' property to 'config.json'
     file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
@@ -142,18 +127,18 @@ def _migrate_v111_to_v112() -> None:
     file.write(json.dumps(config, indent=4))
     file.close()
 
-    log.debug("Migrated to v1.1.2.")
+    Logger.log("Migrated to v1.1.2.", {"level": "debug"})
 
 
 def _verify_config_parse() -> None:
     path = _env("WATCHER_DIRECTORY", "") + "/config.json"
 
     if os.path.exists(path) is False:
-        log.info("Cannot find 'config.json'. Creating file...")
+        Logger.log("Cannot find 'config.json'. Creating file...")
         file = open(path, "x")
         file.write(json.dumps(_new_config_json(), indent=4))
         file.close()
-        log.info("Created 'config.json'.")
+        Logger.log("Created 'config.json'.")
         return
 
     file = open(path, "r")
@@ -174,11 +159,11 @@ def _verify_watchlist_parse() -> None:
     path = _env("WATCHER_DIRECTORY", "") + "/watchlist.json"
 
     if os.path.exists(path) is False:
-        log.info("Cannot find 'watchlist.json'. Creating file...")
+        Logger.log("Cannot find 'watchlist.json'. Creating file...")
         file = open(path, "x")
         file.write(json.dumps(_new_watchlist_json(), indent=4))
         file.close()
-        log.info("Created 'watchlist.json'.")
+        Logger.log("Created 'watchlist.json'.")
 
     file = open(path, "r")
     watchlist = json.loads(file.read())
@@ -201,12 +186,12 @@ def _verify_history_parse() -> None:
     path = _env("WATCHER_DIRECTORY", "") + "/history.json"
 
     if os.path.exists(path) is False:
-        log.info("Cannot find 'history.json'. Creating file...")
+        Logger.log("Cannot find 'history.json'. Creating file...")
         file = open(path, "x")
         history = {"history": []}
         file.write(json.dumps(history, indent=4))
         file.close()
-        log.info("Created 'history.json'.")
+        Logger.log("Created 'history.json'.")
         return
 
     file = open(path, "r")
@@ -222,11 +207,11 @@ def _verify_webhooks_parse() -> None:
     path = _env("WATCHER_DIRECTORY", "") + "/webhooks.json"
 
     if os.path.exists(path) is False:
-        log.info("Cannot find 'webhooks.json'. Creating file...")
+        Logger.log("Cannot find 'webhooks.json'. Creating file...")
         file = open(path, "x")
         file.write(json.dumps(_new_webhook_json(), indent=4))
         file.close()
-        log.info("Created 'webhooks.json'.")
+        Logger.log("Created 'webhooks.json'.")
         return
 
     file = open(path, "r")
@@ -242,7 +227,7 @@ def _verify_webhooks_parse() -> None:
             raise ConfigError(f"Parse Error: {notifications_check['message']}. Change the properties and restart the watcher.")
 
         if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-            _log("Watcher Message: Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", True)
+            Logger.log("Watcher Message: Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", {"hint": True})
 
 
 def _verify_webhook_entry(webhook: dict) -> bool:
@@ -279,12 +264,12 @@ def _verify_webhook_notifications(webhook_notifications: dict, webhook_name: str
 
 class Config:
     def __init__(self) -> None:
-        log.debug("Verifying files...")
+        Logger.log("Verifying files...", {"level": "debug"})
         _verify_config_parse()
         _verify_watchlist_parse()
         _verify_history_parse()
         _verify_webhooks_parse()
-        log.debug("Files verified.")
+        Logger.log("Files verified.", {"level": "debug"})
 
         version = self.get_config()['version'] if 'version' in self.get_config() else "1.0.1"
         if version == "1.0.1":
@@ -293,7 +278,7 @@ class Config:
         if version == "1.1.1":
             _migrate_v111_to_v112()
             version = "1.1.2"
-        log.debug(f"Watcher version: {version}")
+        Logger.log(f"Watcher version: {version}", {"level": "debug"})
 
     @staticmethod
     def append_to_history(torrents: dict | list) -> None:
@@ -306,7 +291,7 @@ class Config:
         file = open(_env("WATCHER_DIRECTORY", "") + "/history.json", "w")
         file.write(json.dumps(history, indent=4))
         file.close()
-        log.debug(f"Appended '{len(torrents)}' torrents to 'history.json'.")
+        Logger.log(f"Appended '{len(torrents)}' torrents to 'history.json'.", {"level": "debug"})
 
     @staticmethod
     def get_config() -> dict:
