@@ -183,15 +183,14 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
         log.info(f"Searching for matching torrents in {interval_string}.")
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
         level=os.environ.get("LOG_LEVEL", "INFO"),
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     log.info("~~~ Nyaa Watcher ~~~")
-    log.info("Version: 1.1.1")
-    log.info("Starting server...")
+    log.info("Starting watcher...")
 
     try:
         config = Config()
@@ -215,8 +214,8 @@ if __name__ == "__main__":
 
         webhook = Webhook(WEBHOOKS)
     except Exception as e:
-        log.info(e)
-        log.info("Server exited.")
+        log.info(e, exc_info=True)
+        log.info("Watcher exited.")
         exit(-1)
 
     # Testing RSS URL
@@ -224,27 +223,30 @@ if __name__ == "__main__":
     try:
         response = requests.get(NYAA_RSS)
     except Exception as e:
-        log.info("Connection Error: Cannot connect to RSS URL. Your internet provider may be blocking the server.")
+        log.info("Connection Error: Cannot connect to RSS URL. Your internet provider could be blocking requests to nyaa domains.")
         log.info(e, exc_info=True)
-        log.info("Server exited.")
+        log.info("Watcher exited.")
         log.info("")
         exit(-1)
 
-    if response.status_code == 200:
-        log.info("Success. HTTPS Status Code: 200.")
-    else:
+    if response.status_code != 200:
         log.info(f"Connection Error: Could not read RSS URL; received HTTPS Status Code: {str(response.status_code)}. "
                  "Add a valid Nyaa RSS URL to config.json and restart the server.")
-        log.info("Server exited.")
+        log.info("Watcher exited.")
         log.info("")
         exit(-1)
 
-    log.info("Server started.")
+    log.info("Success!")
+    log.info("Watcher started.")
     try:
         scheduler = sched.scheduler(time.time, time.sleep)
         scheduler.enter(1, 1, check_rss, (scheduler, watcher, WATCHER_INTERVAL, webhook))
         scheduler.run()
     except KeyboardInterrupt:
-        log.info("Server exited.")
+        log.info("Watcher exited.")
         log.info("")
         exit(0)
+
+
+if __name__ == "__main__":
+    main()
