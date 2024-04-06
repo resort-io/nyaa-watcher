@@ -24,6 +24,7 @@ def _env(key: str, default: str = None) -> str:
     raise ConfigError(f"Environment Error: The '{key}' environment variable does not exist.")
 
 
+# TODO: Change and implement
 def _log(message: str, is_hint: bool = False, log_type: str = "info") -> None:
     if log_type == "info":
         if is_hint and _env("SHOW_HINTS", "true") == "true":
@@ -40,7 +41,8 @@ def _log(message: str, is_hint: bool = False, log_type: str = "info") -> None:
 def _new_config_json() -> dict:
     return {
         "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
-        "watcher_interval_seconds": 600
+        "watcher_interval_seconds": 600,
+        "version": "1.1.2"
     }
 
 
@@ -48,10 +50,10 @@ def _new_watchlist_json() -> dict:
     return {
         "watchlist": [
             {
-                'name': '',
-                'tags': [],
-                'regex': [],
-                'webhooks': []
+                "name": "",
+                "tags": [],
+                "regex": [],
+                "webhooks": []
             }
         ]
     }
@@ -74,7 +76,7 @@ def _new_webhook_entry_sample() -> dict:
     }
 
 
-def _new_webhook_file_json() -> dict:
+def _new_webhook_json() -> dict:
     return {
         "webhooks": [
             {
@@ -126,12 +128,21 @@ def _migrate_v101_to_v110() -> None:
     log.debug("Migrated to v1.1.0.")
 
 
-def _migrate_v110_to_v111() -> None:
-    log.debug("Migrating files from v1.1.0 to v1.1.1...")
+def _migrate_v111_to_v112() -> None:
+    log.debug("Migrating files from v1.1.1 to v1.1.2...")
 
-    # TODO: Add 'version' to json file.
+    # Adding 'version' property to 'config.json'
+    file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+    config = json.loads(file.read())
+    file.close()
 
-    log.debug("Migrated to v1.1.1.")
+    config['version'] = "1.1.2"
+
+    file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "w")
+    file.write(json.dumps(config, indent=4))
+    file.close()
+
+    log.debug("Migrated to v1.1.2.")
 
 
 def _verify_config_parse() -> None:
@@ -213,7 +224,7 @@ def _verify_webhooks_parse() -> None:
     if os.path.exists(path) is False:
         log.info("Cannot find 'webhooks.json'. Creating file...")
         file = open(path, "x")
-        file.write(json.dumps(_new_webhook_file_json(), indent=4))
+        file.write(json.dumps(_new_webhook_json(), indent=4))
         file.close()
         log.info("Created 'webhooks.json'.")
         return
@@ -268,22 +279,34 @@ def _verify_webhook_notifications(webhook_notifications: dict, webhook_name: str
 
 class Config:
     def __init__(self) -> None:
-        self.config = dict(os.environ)
-        try:
-            log.debug("Verifying files...")
-            _verify_config_parse()
-            _verify_watchlist_parse()
-            _verify_history_parse()
-            _verify_webhooks_parse()
-            log.debug("Files verified.")
+        log.debug("Verifying files...")
+        _verify_config_parse()
+        _verify_watchlist_parse()
+        _verify_history_parse()
+        _verify_webhooks_parse()
+        log.debug("Files verified.")
 
-            # TODO: Create check for v1.0.1 to v1.1.0
+        version = self.get_config()['version'] if 'version' in self.get_config() else "1.0.1"
+        if version == "1.0.1":
             _migrate_v101_to_v110()
+            version = "1.1.1"  # Skips v1.1.0
+        if version == "1.1.1":
+            _migrate_v111_to_v112()
+            version = "1.1.2"
+        log.debug(f"Watcher version: {version}")
 
-            # TODO: Create check for v1.1.0 to v1.1.1
-            # _migrate_v110_to_v111()
-        except Exception as e:
-            log.info(e, exc_info=True)
+    @staticmethod
+    def append_to_history(torrents: dict | list) -> None:
+        file = open(_env("WATCHER_DIRECTORY", "") + "/history.json", "r")
+        history = json.loads(file.read())
+        file.close()
+
+        history['history'].append(torrents)
+
+        file = open(_env("WATCHER_DIRECTORY", "") + "/history.json", "w")
+        file.write(json.dumps(history, indent=4))
+        file.close()
+        log.debug(f"Appended '{len(torrents)}' torrents to 'history.json'.")
 
     @staticmethod
     def get_config() -> dict:
