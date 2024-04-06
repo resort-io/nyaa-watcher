@@ -44,6 +44,19 @@ def _new_config_json() -> dict:
     }
 
 
+def _new_watchlist_json() -> dict:
+    return {
+        "watchlist": [
+            {
+                'name': '',
+                'tags': [],
+                'regex': [],
+                'webhooks': []
+            }
+        ]
+    }
+
+
 def _new_webhook_entry_sample() -> dict:
     return {
         "name": "Example Webhook Name",
@@ -146,27 +159,31 @@ def _verify_config_parse() -> None:
         raise ConfigError("Parse Error: WATCHER_INTERVAL_SEC must be an integer equal to or greater than 60 seconds.")
 
 
-def _verify_watchlist_parse(watchlist: dict) -> bool:
-    try:
-        if 'watchlist' in watchlist:
-            if len(watchlist['watchlist']) >= 1:
-                for entry in watchlist['watchlist']:
-                    if 'name' not in entry \
-                            or 'tags' not in entry \
-                            or 'regex' not in entry \
-                            or 'webhooks' not in entry:
-                        raise ConfigError("Parse Error: One or more entries in watchlist.json contains missing or "
-                                          "invalid properties. Change the properties and restart the server.")
-                return True
-            else:
-                raise ConfigError("Parse Error: watchlist.json contains no entries. Add entries and restart "
-                                  "the server.")
-        else:
-            raise ConfigError("Parse Error: watchlist.json contains no 'watchlist' array property. Add the property "
-                              "and restart the server.")
-    except Exception as e:
-        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in watchlist.json. Change "
-                          f"the property and restart the server.")
+def _verify_watchlist_parse() -> None:
+    path = _env("WATCHER_DIRECTORY", "") + "/watchlist.json"
+
+    if os.path.exists(path) is False:
+        log.info("Cannot find 'watchlist.json'. Creating file...")
+        file = open(path, "x")
+        file.write(json.dumps(_new_watchlist_json(), indent=4))
+        file.close()
+        log.info("Created 'watchlist.json'.")
+
+    file = open(path, "r")
+    watchlist = json.loads(file.read())
+    file.close()
+
+    if len(watchlist['watchlist']) == 0:
+        raise ConfigError("Parse Error: watchlist.json contains no entries. Add entries and restart the watcher.")
+
+    for entry in watchlist['watchlist']:
+        if ['name', 'tags', 'regex', 'webhooks'] not in entry:
+            raise ConfigError("Parse Error: One or more entries in 'watchlist.json' contains missing or invalid properties. Change the properties and restart the watcher.")
+
+        if entry['name'] == "" and len(entry['tags']) + len(entry['regex']) == 0 \
+                or len(entry['tags']) + len(entry['regex']) == 0:
+            raise ConfigError("Parse Error: One or more entries in 'watchlist.json' does not have a tag or regex. "
+                              "Change the entries to have at least one 'tag' or 'regex' value and restart the watcher.")
 
 
 def _verify_history_parse() -> None:
@@ -287,32 +304,9 @@ class Config:
 
     @staticmethod
     def get_watcher_watchlist() -> dict:
-        try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
-            file.close()
-            log.info("Found watchlist.json.")
-        except Exception as e:
-            log.info("Cannot find watchlist.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "x")
-            watchlist = {"watchlist": [{'name': '', 'tags': [], 'regex': [], 'webhooks': []}]}
-            file.write(json.dumps(watchlist, indent=2))
-            file.close()
-            log.info("Created file.")
-
-        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
+        file = open(_env("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
         watchlist = json.loads(file.read())
         file.close()
-
-        _verify_watchlist_parse(watchlist)
-
-        # Checking for empty/invalid watchlist entries
-        for entry in watchlist['watchlist']:
-            if entry['name'] == "" and len(entry['tags']) == 0 and len(entry['regex']) == 0 \
-                    or len(entry['tags']) == 0 and len(entry['regex']) == 0:
-                raise ConfigError("Watchlist Error: One or more watchlist entries does not have a tag or regex. "
-                                  "Add an entry including a title with tag(s) and/or regex(es) to watchlist.json "
-                                  "and restart the server.")
-
         return watchlist
 
     @staticmethod
