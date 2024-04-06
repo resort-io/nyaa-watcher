@@ -24,14 +24,6 @@ def _env(key: str, default: str = None) -> str:
     raise ConfigError(f"Environment Error: The '{key}' environment variable does not exist.")
 
 
-def _is_integer(number) -> bool:
-    try:
-        int(number)
-        return True
-    except ValueError:
-        return False
-
-
 def _log(message: str, is_hint: bool = False, log_type: str = "info") -> None:
     if log_type == "info":
         if is_hint and _env("SHOW_HINTS", "true") == "true":
@@ -134,13 +126,13 @@ def _verify_config_parse() -> None:
 
     if os.path.exists(path) is False:
         log.info("Cannot find 'config.json'. Creating file...")
-        file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "x")
+        file = open(path, "x")
         file.write(json.dumps(_new_config_json(), indent=4))
         file.close()
         log.info("Created 'config.json'.")
         return
 
-    file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+    file = open(path, "r")
     config = json.loads(file.read())
     file.close()
 
@@ -177,22 +169,25 @@ def _verify_watchlist_parse(watchlist: dict) -> bool:
                           f"the property and restart the server.")
 
 
-def _verify_history_parse(history: dict) -> bool:
-    try:
-        if len(history['history']) == 0:
-            return True
-        else:
-            for entry in history['history']:
-                if 'torrent_title' not in entry \
-                        or 'date_downloaded' not in entry \
-                        or 'nyaa_page' not in entry \
-                        or 'nyaa_hash' not in entry:
-                    raise ConfigError("Parse Error: One or more entries in history.json contains missing or "
-                                      "invalid properties. Revert the changes and restart the server.")
-            return True
-    except Exception as e:
-        raise ConfigError(f"Parse Error: The {str(e)} property is invalid or misspelled in history.json. Change "
-                          f"the property and restart the server.")
+def _verify_history_parse() -> None:
+    path = _env("WATCHER_DIRECTORY", "") + "/history.json"
+
+    if os.path.exists(path) is False:
+        log.info("Cannot find 'history.json'. Creating file...")
+        file = open(path, "x")
+        history = {"history": []}
+        file.write(json.dumps(history, indent=4))
+        file.close()
+        log.info("Created 'history.json'.")
+        return
+
+    file = open(path, "r")
+    history = json.loads(file.read())
+    file.close()
+
+    properties = ['torrent_title', 'date_downloaded', 'nyaa_page', 'nyaa_hash']
+    if not all(all(key in entry for key in properties) for entry in history['history']):
+        raise ConfigError("Parse Error: One or more entries in history.json contains missing or invalid properties. Fix the history properties and restart the watcher.")
 
 
 def _verify_webhooks_parse() -> None:
@@ -200,13 +195,13 @@ def _verify_webhooks_parse() -> None:
 
     if os.path.exists(path) is False:
         log.info("Cannot find 'webhooks.json'. Creating file...")
-        file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "x")
+        file = open(path, "x")
         file.write(json.dumps(_new_webhook_file_json(), indent=4))
         file.close()
         log.info("Created 'webhooks.json'.")
         return
 
-    file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
+    file = open(path, "r")
     webhooks = json.loads(file.read())
     file.close()
 
@@ -322,23 +317,9 @@ class Config:
 
     @staticmethod
     def get_watcher_history() -> dict:
-        try:
-            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/history.json", "r")
-            file.close()
-            log.info("Found history.json.")
-        except Exception as e:
-            log.info("Cannot find history.json.")
-            file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/history.json", "x")
-            history = {"history": []}
-            file.write(json.dumps(history, indent=2))
-            file.close()
-            log.info("Created file.")
-
-        file = open(os.environ.get("WATCHER_DIRECTORY", "") + "/history.json", "r")
+        file = open(_env("WATCHER_DIRECTORY", "") + "/history.json", "r")
         history = json.loads(file.read())
         file.close()
-
-        _verify_history_parse(history)
         return history
 
     @staticmethod
