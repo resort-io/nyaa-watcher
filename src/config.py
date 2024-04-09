@@ -22,6 +22,24 @@ def _env(key: str, default: str = None) -> str:
     raise ConfigError(f"Environment Error: The '{key}' environment variable does not exist.")
 
 
+def _get_version() -> str:
+    file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+    config = json.loads(file.read())
+    file.close()
+
+    version: str = config['version']
+    if version:
+        return version
+
+    file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
+    webhooks = json.loads(file.read())
+    file.close()
+
+    if len(webhooks['webhooks']) > 0:
+        return "1.1.1"
+    return "1.0.1"
+
+
 def _new_config_json() -> dict:
     return {
         "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
@@ -276,15 +294,14 @@ class Config:
         _verify_webhooks_parse()
         Logger.debug("Files verified.")
 
-        # TODO: Create function to get version
-        version = self.get_config().get('version') if self.get_config().get('version') else "1.0.1"
-        if version == "1.0.1":
+        self.version = _get_version()
+        if self.version == "1.0.1":
             _migrate_v101_to_v110()
-            version = "1.1.1"  # Skips v1.1.0
-        if version == "1.1.1":
+            self.version = "1.1.1"  # Skips v1.1.0
+        if self.version == "1.1.1":
             _migrate_v111_to_v112()
-            version = "1.1.2"
-        Logger.debug(f"Watcher version: {version}")
+            self.version = "1.1.2"
+        Logger.debug(f"Watcher version: {self.version}")
 
     @staticmethod
     def append_to_history(torrents: dict | list) -> None:
@@ -346,6 +363,10 @@ class Config:
         webhooks = json.loads(file.read())
         file.close()
         return webhooks
+
+    @staticmethod
+    def get_version(self) -> str:
+        return self.version
 
     @staticmethod
     def set_history(history: dict | list) -> None:
