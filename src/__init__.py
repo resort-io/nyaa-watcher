@@ -4,7 +4,6 @@ import logging
 import requests
 import sched
 import time
-
 from dotenv import load_dotenv
 from config import Config
 from watcher import Watcher
@@ -100,10 +99,9 @@ def download_torrent(torrent: dict) -> str:
         response = requests.get(torrent_url)
         # Success
         if response.status_code == 200:
-            # TODO: Test
-            async with open(file_path, "wb") as f:
+            with open(file_path, "wb") as f:
                 f.write(response.content)
-            # time.sleep(0.1)
+            time.sleep(0.1)
             return "success"
         # Failure
         else:
@@ -212,7 +210,7 @@ def main() -> None:
 
         webhook = Webhook(WEBHOOKS)
     except Exception as e:
-        Logger.log(f"{e}\nWatcher exited.", {"exc_info": True, "white_lines": "b"})
+        Logger.log(f"{e}\nWatcher exited.", {"white_lines": "b"})
         exit(-1)
 
     # Testing RSS URL

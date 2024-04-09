@@ -1,5 +1,4 @@
 import os
-import logging
 import json
 from dotenv import load_dotenv
 from logger import Logger
@@ -83,7 +82,7 @@ def _new_webhook_json() -> dict:
 
 
 def _migrate_v101_to_v110() -> None:
-    Logger.log("Migrating files from v1.0.1 to v1.1.0...", {"level": "debug"})
+    Logger.log("Migrating from v1.0.1 to v1.1.0...")
 
     # Adding missing 'webhooks' property to 'watchlist.json'
     file = open(_env("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
@@ -110,11 +109,11 @@ def _migrate_v101_to_v110() -> None:
         file.write(json.dumps(webhooks, indent=4))
         file.close()
 
-    Logger.log("Migrated to v1.1.0.", {"level": "debug"})
+    Logger.log("Migrated to v1.1.0.")
 
 
 def _migrate_v111_to_v112() -> None:
-    Logger.log("Migrating files from v1.1.1 to v1.1.2...", {"level": "debug"})
+    Logger.log("Migrating from v1.1.1 to v1.1.2...")
 
     # Adding 'version' property to 'config.json'
     file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
@@ -127,7 +126,7 @@ def _migrate_v111_to_v112() -> None:
     file.write(json.dumps(config, indent=4))
     file.close()
 
-    Logger.log("Migrated to v1.1.2.", {"level": "debug"})
+    Logger.log("Migrated to v1.1.2.")
 
 
 def _verify_config_parse() -> None:
@@ -145,14 +144,21 @@ def _verify_config_parse() -> None:
     config = json.loads(file.read())
     file.close()
 
-    if ['nyaa_rss', 'watcher_interval_seconds'] not in config:
-        raise ConfigError("Parse Error: 'nyaa_rss' and/or 'watcher_interval_seconds' is missing from config.json. Change the properties and restart the watcher.")
+    if not config['nyaa_rss'] or not config['watcher_interval_seconds']:
+        raise ConfigError("Parse Error: 'nyaa_rss' and/or 'watcher_interval_seconds' is missing from 'config.json'. Change the properties and restart the watcher.")
 
     if config['nyaa_rss'] == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
         raise ConfigError("Parse Error: No Nyaa RSS found. Add a Nyaa RSS URL to 'config.json' and restart the watcher.")
 
-    if int(config['watcher_interval_seconds']) % 1 != 0 or int(config['watcher_interval_seconds']) < 60:
-        raise ConfigError("Parse Error: WATCHER_INTERVAL_SEC must be an integer equal to or greater than 60 seconds.")
+    if not isinstance(config['watcher_interval_seconds'], int) or int(config['watcher_interval_seconds']) % 1 != 0:
+        raise ConfigError("Parse Error: WATCHER_INTERVAL_SEC must be an integer equal to or greater than 60 seconds. Change the property and restart the watcher.")
+
+    if int(config['watcher_interval_seconds']) <= 60:
+        raise ConfigError("Parse Error: WATCHER_INTERVAL_SEC must be equal to or greater than 60 seconds. Change the property and restart the watcher.")
+
+    valid_versions = ["1.0.0", "1.0.1", "1.1.1", "1.1.2"]
+    if config['version'] and config['version'] not in valid_versions:
+        raise ConfigError(f"Parse Error: v{config['version']} is not a valid version. Change the property to '1.1.1' in 'config.json' and restart the watcher to migrate to v1.1.2.")
 
 
 def _verify_watchlist_parse() -> None:
@@ -169,11 +175,11 @@ def _verify_watchlist_parse() -> None:
     watchlist = json.loads(file.read())
     file.close()
 
-    if len(watchlist['watchlist']) == 0:
+    if not watchlist['watchlist'] or len(watchlist['watchlist']) == 0:
         raise ConfigError("Parse Error: watchlist.json contains no entries. Add entries and restart the watcher.")
 
     for entry in watchlist['watchlist']:
-        if ['name', 'tags', 'regex', 'webhooks'] not in entry:
+        if not all(entry['name'] and entry['tags'] and entry['regex'] and entry['webhooks']):
             raise ConfigError("Parse Error: One or more entries in 'watchlist.json' contains missing or invalid properties. Change the properties and restart the watcher.")
 
         if entry['name'] == "" and len(entry['tags']) + len(entry['regex']) == 0 \
@@ -219,44 +225,43 @@ def _verify_webhooks_parse() -> None:
     file.close()
 
     for webhook in webhooks['webhooks']:
-        if _verify_webhook_entry(webhook) is False:
-            raise ConfigError("Parse Error: One or more webhooks in webhooks.json contains missing or invalid properties. Change the properties and restart the watcher.")
-
-        notifications_check = _verify_webhook_notifications(webhook['notifications'], webhook['name'])
-        if notifications_check['result'] is False:
-            raise ConfigError(f"Parse Error: {notifications_check['message']}. Change the properties and restart the watcher.")
+        entry = _verify_webhook_entry(webhook)
+        if entry.get('result') is False:
+            raise ConfigError(f"Parse Error: {entry.get('message')}")
 
         if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
             Logger.log("Watcher Message: Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", {"hint": True})
 
 
-def _verify_webhook_entry(webhook: dict) -> bool:
+def _verify_webhook_entry(webhook: dict) -> dict:
     properties = ['name', 'url', 'notifications']
-    if not all(key in webhook for key in properties):
-        return False
-    return True
+    for key in properties:
+        if key not in webhook:
+            return {
+                "result": False,
+                "message": "One or more webhooks in webhooks.json contains missing or invalid properties. Change the properties and restart the watcher."
+            }
 
+    notify_properties = ['title', 'description', 'show_downloads', 'show_seeders', 'show_leechers', 'show_published', 'show_category', 'show_size']
+    for key in notify_properties:
+        if key not in webhook['notifications']:
+            return {
+                "result": False,
+                "message": f"'{webhook['name']}' webhook contains one or more 'show_' properties that are missing or invalid. Change the webhook properties and restart the watcher"
+            }
 
-def _verify_webhook_notifications(webhook_notifications: dict, webhook_name: str) -> dict:
-    properties = ['title', 'description', 'show_downloads', 'show_seeders', 'show_leechers', 'show_published',
-                  'show_category', 'show_size']
-    if not all(key in webhook_notifications for key in properties):
+    notify_values: list = [value for key, value in webhook['notifications'].items() if isinstance(value, int)]
+    for value in notify_values:
+        if value not in range(0, 7):
+            return {
+                "result": False,
+                "message": f"'{webhook['name']}' webhook contains one or more 'show_' properties out of range (0 to 6). Change the webhook properties and restart the watcher"
+            }
+
+    if len(notify_values) != len(set(notify_values)):
         return {
             "result": False,
-            "message": f"'{webhook_name}' webhook contains one or more 'show_' properties that are missing or invalid. Change the webhook properties and restart the watcher"
-        }
-
-    if not all(value in range(0, 7) for value in webhook_notifications):
-        return {
-            "result": False,
-            "message": f"'{webhook_name}' webhook contains one or more 'show_' properties out of range (0 to 6). Change the webhook properties and restart the watcher"
-        }
-
-    values = [value for value in webhook_notifications if value != 0]
-    if len(values) != len(set(values)):
-        return {
-            "result": False,
-            "message": f"'{webhook_name}' webhook contains one or more duplicate 'show_' properties. Change the webhook properties and restart the watcher"
+            "message": f"'{webhook['name']}' webhook contains one or more duplicate 'show_' properties. Change the webhook properties and restart the watcher"
         }
 
     return {"result": True}
@@ -264,21 +269,22 @@ def _verify_webhook_notifications(webhook_notifications: dict, webhook_name: str
 
 class Config:
     def __init__(self) -> None:
-        Logger.log("Verifying files...", {"level": "debug"})
+        Logger.debug("Verifying files...")
         _verify_config_parse()
         _verify_watchlist_parse()
         _verify_history_parse()
         _verify_webhooks_parse()
-        Logger.log("Files verified.", {"level": "debug"})
+        Logger.debug("Files verified.")
 
-        version = self.get_config()['version'] if 'version' in self.get_config() else "1.0.1"
+        # TODO: Create function to get version
+        version = self.get_config().get('version') if self.get_config().get('version') else "1.0.1"
         if version == "1.0.1":
             _migrate_v101_to_v110()
             version = "1.1.1"  # Skips v1.1.0
         if version == "1.1.1":
             _migrate_v111_to_v112()
             version = "1.1.2"
-        Logger.log(f"Watcher version: {version}", {"level": "debug"})
+        Logger.debug(f"Watcher version: {version}")
 
     @staticmethod
     def append_to_history(torrents: dict | list) -> None:
@@ -340,3 +346,10 @@ class Config:
         webhooks = json.loads(file.read())
         file.close()
         return webhooks
+
+    @staticmethod
+    def set_history(history: dict | list) -> None:
+        file = open(_env("WATCHER_DIRECTORY", "") + "/history.json", "w")
+        file.write(json.dumps(history, indent=4))
+        file.close()
+        Logger.debug("Set 'history.json'.")

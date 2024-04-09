@@ -28,5 +28,8 @@ class Logger:
 
     @staticmethod
     def debug(messages: str | list = "", options: dict = None) -> None:
-        options['level'] = "debug"
+        if options:
+            options['level'] = "debug"
+        else:
+            options = {'level': "debug"}
         Logger.log(messages, options)
