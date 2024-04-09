@@ -2,14 +2,29 @@ import logging
 import discord
 import re
 
-from typing import Any
 
-log = logging.getLogger("webhook")
+log = logging.getLogger("main")
 
 
 class WebhookError(Exception):
     pass
 
+
+def _apply_fields(webhook_json: dict, notification: discord.Embed, torrent: dict) -> discord.Embed:
+    for i in range(1, 7):
+        if webhook_json['notifications']['show_downloads'] == i:
+            notification.add_field(name="Downloads", value=torrent['nyaa_downloads'])
+        elif webhook_json['notifications']['show_seeders'] == i:
+            notification.add_field(name="Seeders", value=torrent['nyaa_seeders'])
+        elif webhook_json['notifications']['show_leechers'] == i:
+            notification.add_field(name="Leechers", value=torrent['nyaa_leechers'])
+        elif webhook_json['notifications']['show_published'] == i:
+            notification.add_field(name="Published", value=re.sub(r":\d\d -0000", "", torrent['published']))
+        elif webhook_json['notifications']['show_category'] == i:
+            notification.add_field(name="Category", value=torrent['nyaa_category'])
+        elif webhook_json['notifications']['show_size'] == i:
+            notification.add_field(name="Size", value=torrent['nyaa_size'])
+    return notification
 
 def _parse_url(url: str) -> list:
     return (
@@ -34,16 +49,14 @@ def _insert_tags(string: str, webhook_name: str, torrent: dict) -> str:
 class Webhook:
 
     def __init__(self, webhooks: dict) -> None:
-        self.webhooks = webhooks
-        # Two lists to maintain index continuity
-        self.webhook_names = list()
-        self.discord_webhooks = list()
+        self.json_webhooks = webhooks
+        self.discord_webhooks = dict()
 
-        if len(self.webhooks['webhooks']) > 0:
+        if len(self.json_webhooks['webhooks']) > 0:
             log.info("Connecting to Discord webhooks...")
 
             connected = 0
-            for webhook in self.webhooks['webhooks']:
+            for webhook in self.json_webhooks['webhooks']:
                 if webhook['name'] == "" or webhook['url'] == "":
                     raise WebhookError("Webhook Error: Webhook entries must have a name and URL.")
 
@@ -52,10 +65,10 @@ class Webhook:
 
                 log.debug(f" - {webhook['name']} ({webhook['url']})")
                 id, token = _parse_url(webhook['url'])
+
                 try:
                     discord_webhook = discord.SyncWebhook.partial(id, token)
-                    self.webhook_names.append(webhook['name'])
-                    self.discord_webhooks.append(discord_webhook)
+                    self.discord_webhooks[webhook['name']] = discord_webhook
                     connected += 1
                 except Exception as e:
                     log.info(f"Webhook Error: Cannot connect to '{webhook['name']}' webhook at {webhook['url']}.")
@@ -64,75 +77,45 @@ class Webhook:
             log.info(f"Connected to 1 Discord webhook.") if connected == 1 \
                 else log.info(f"Connected to {connected} Discord webhooks.")
 
-    def get_webhooks(self) -> dict:
-        return self.webhooks
+    def get_json_webhooks(self) -> dict:
+        return self.json_webhooks
 
-    def get_webhook_by_name(self, name: str) -> bool | Any:
-        for webhook in self.webhooks['webhooks']:
-            if webhook['name'].lower() == name.lower():
+    def get_json_webhook(self, name: str) -> dict | None:
+        for webhook in self.json_webhooks['webhooks']:
+            if webhook['name'] == name:
                 return webhook
-        return False
+        return None
 
-    def get_discord_webhook_by_name(self, name: str) -> bool | Any:
-        try:
-            index = self.webhook_names.index(name)
-            return self.discord_webhooks[index]
-        except Exception as e:
-            return False
+    def get_discord_webhook(self, name: str) -> discord.SyncWebhook | None:
+        return self.discord_webhooks.get(name)
 
     def send_notification(self, webhook_name: str, torrent: dict) -> None:
-        # Finding webhook dict
-        webhook_json = self.get_webhook_by_name(webhook_name)
-        if webhook_json is False:
-            log.info(f"Watchlist Error: Cannot find '{webhook_name}' in webhooks.json.")
+        webhook_json = self.get_json_webhook(webhook_name)
+        discord_webhook = self.get_discord_webhook(webhook_name)
+        if not webhook_json or not discord_webhook:
+            log.info(f"Webhook Error: Cannot find '{webhook_name}' webhook.")
             return
 
         notification = discord.Embed()
 
-        # Title
-        if webhook_json['notifications']['title'] != "":
-            notification.title = _insert_tags(webhook_json['notifications']['title'], webhook_json['name'], torrent)
-        else:
-            notification.title = f"Downloading New Torrent: {torrent['title']}"
+        # Notification Title and Description
+        title = webhook_json['notifications']['title']
+        notification.title = f"Downloading New Torrent: {torrent.get('title')}" if title == "" else _insert_tags(title, webhook_json['name'], torrent)
 
-        # Description
+        # Notification Title and Description
         if webhook_json['notifications']['description'] != "":
             notification.description = _insert_tags(webhook_json['notifications']['description'], webhook_json['name'], torrent)
 
-        # Custom Notification Details
-        for i in range(1, 7):
-            if webhook_json['notifications']['show_custom' + str(i)] != "":
-                notification.add_field(
-                    name=f"Custom{i}",
-                    value=_insert_tags(webhook_json['notifications']['show_custom' + str(i)], webhook_json['name'], torrent)
-                )
+        # Notification 'show_' Details
+        notification = _apply_fields(webhook_json, notification, torrent)
 
-        for i in range(1, 7):
-            if webhook_json['notifications']['show_downloads'] == i:
-                notification.add_field(name="Downloads", value=torrent['nyaa_downloads'])
-            elif webhook_json['notifications']['show_seeders'] == i:
-                notification.add_field(name="Seeders", value=torrent['nyaa_seeders'])
-            elif webhook_json['notifications']['show_leechers'] == i:
-                notification.add_field(name="Leechers", value=torrent['nyaa_leechers'])
-            elif webhook_json['notifications']['show_published'] == i:
-                notification.add_field(name="Published", value=re.sub(r":\d\d -0000", "", torrent['published']))
-            elif webhook_json['notifications']['show_category'] == i:
-                notification.add_field(name="Category", value=torrent['nyaa_category'])
-            elif webhook_json['notifications']['show_size'] == i:
-                notification.add_field(name="Size", value=torrent['nyaa_size'])
-
-        # Nyaa Page URL
+        # Notification Nyaa URL
         notification.url = f"{torrent['id']}"
 
-        # Send notification
-        log.debug(f"Sending Discord notification to webhook: {webhook_name}...")
-        discord_webhook = self.get_discord_webhook_by_name(webhook_name)
-        if discord_webhook is False:
-            log.info(f"Webhook Error: Cannot find '{webhook_name}' in webhooks.json.")
-        else:
-            try:
-                discord_webhook.send(embed=notification)
-                log.debug("Done.")
-            except Exception as e:
-                log.info(f"Webhook Error: Failed to send notification to '{webhook_name}' webhook.")
-                log.debug(e)
+        try:
+            log.debug(f"Sending notification to '{webhook_name}' discord webhook...")
+            discord_webhook.send(embed=notification)
+            log.debug("Notification sent.")
+        except Exception as e:
+            log.info(f"Webhook Error: Failed to send notification to '{webhook_name}' discord webhook.")
+            log.debug(e)

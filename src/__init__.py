@@ -163,10 +163,8 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
                 watcher.add_to_history(torrent)
                 Logger.debug(" - Success.")
 
-                # Sending Discord notification to each webhook in watchlist
-                if len(torrent['webhooks']) > 0:
-                    for webhook_name in torrent['webhooks']:
-                        webhook.send_notification(webhook_name, torrent)
+                for webhook_name in torrent['webhooks']:
+                    webhook.send_notification(webhook_name, torrent)
 
             # Error
             else:
