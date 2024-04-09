@@ -1,9 +1,6 @@
-import logging
 import discord
 import re
-
-
-log = logging.getLogger("main")
+from logger import Logger
 
 
 class WebhookError(Exception):
@@ -53,7 +50,7 @@ class Webhook:
         self.discord_webhooks = dict()
 
         if len(self.json_webhooks['webhooks']) > 0:
-            log.info("Connecting to Discord webhooks...")
+            Logger.log("Connecting to Discord webhooks...")
 
             connected = 0
             for webhook in self.json_webhooks['webhooks']:
@@ -63,7 +60,7 @@ class Webhook:
                 if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
                     continue
 
-                log.debug(f" - {webhook['name']} ({webhook['url']})")
+                Logger.debug(f" - {webhook['name']} ({webhook['url']})")
                 id, token = _parse_url(webhook['url'])
 
                 try:
@@ -71,11 +68,11 @@ class Webhook:
                     self.discord_webhooks[webhook['name']] = discord_webhook
                     connected += 1
                 except Exception as e:
-                    log.info(f"Webhook Error: Cannot connect to '{webhook['name']}' webhook at {webhook['url']}.")
-                    log.debug(e, exc_info=True)
+                    Logger.log(f"Webhook Error: Cannot connect to '{webhook['name']}' webhook at {webhook['url']}.")
+                    Logger.debug(f"{e}", {"exc_info": True})
 
-            log.info(f"Connected to 1 Discord webhook.") if connected == 1 \
-                else log.info(f"Connected to {connected} Discord webhooks.")
+            Logger.log(f"Connected to 1 Discord webhook.") if connected == 1 \
+                else Logger.log(f"Connected to {connected} Discord webhooks.")
 
     def get_json_webhooks(self) -> dict:
         return self.json_webhooks
@@ -93,7 +90,7 @@ class Webhook:
         webhook_json = self.get_json_webhook(webhook_name)
         discord_webhook = self.get_discord_webhook(webhook_name)
         if not webhook_json or not discord_webhook:
-            log.info(f"Webhook Error: Cannot find '{webhook_name}' webhook.")
+            Logger.log(f"Webhook Error: Cannot find '{webhook_name}' webhook.")
             return
 
         notification = discord.Embed()
@@ -113,9 +110,9 @@ class Webhook:
         notification.url = f"{torrent['id']}"
 
         try:
-            log.debug(f"Sending notification to '{webhook_name}' discord webhook...")
+            Logger.debug(f"Sending notification to '{webhook_name}' discord webhook...")
             discord_webhook.send(embed=notification)
-            log.debug("Notification sent.")
+            Logger.debug("Notification sent.")
         except Exception as e:
-            log.info(f"Webhook Error: Failed to send notification to '{webhook_name}' discord webhook.")
-            log.debug(e)
+            Logger.log(f"Webhook Error: Failed to send notification to '{webhook_name}' discord webhook.")
+            Logger.debug(f"{e}", {"exc_info": True})
