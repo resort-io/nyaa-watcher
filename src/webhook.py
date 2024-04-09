@@ -23,6 +23,7 @@ def _apply_fields(webhook_json: dict, notification: discord.Embed, torrent: dict
             notification.add_field(name="Size", value=torrent['nyaa_size'])
     return notification
 
+
 def _parse_url(url: str) -> list:
     return (
         url.replace("https://discord.com/api/webhooks/", "")
@@ -55,7 +56,7 @@ class Webhook:
             connected = 0
             for webhook in self.json_webhooks['webhooks']:
                 if webhook['name'] == "" or webhook['url'] == "":
-                    raise WebhookError("Webhook Error: Webhook entries must have a name and URL.")
+                    raise WebhookError("Webhook entries must have a name and URL.")
 
                 if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
                     continue

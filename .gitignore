@@ -5,3 +5,5 @@ venv/
 watch/
 test.py
 todo.txt
+
+dev.*

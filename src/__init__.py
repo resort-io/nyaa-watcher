@@ -118,49 +118,33 @@ def sort_torrents(torrents: list) -> list:
     return sorted_list
 
 
-def update_history_file(watcher: Watcher) -> None:
-    history = watcher.get_history()
-
-    file_directory = os.environ.get("WATCHER_DIRECTORY", "") + "/history.json"
-    file = open(file_directory, "w")
-    file.write(json.dumps(history, indent=4))
-    file.close()
-
-
-def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -> None:
-    # Schedule next check
-    scheduler.enter(interval, 1, check_rss, (scheduler, watcher, interval, webhook))
-
-    # Reading torrents
+def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook, config: Config) -> None:
+    # Reading RSS feed
     Logger.log("Searching for matching torrents...", {"white_lines": "t"})
     torrents = watcher.fetch_new_torrents()
     torrents = sort_torrents(torrents)
-        
-    interval_string = get_interval_string(interval)
 
     # No new torrents
     if len(torrents) == 0:
+        interval_string = get_interval_string(interval)
         Logger.log(f"No new torrents found.\nSearching for matching torrents in {interval_string}.")
     # New torrents
     else:
-        Logger.log("1 new torrent:") if len(torrents) == 1 \
-            else Logger.log(f"{len(torrents)} new torrents:")
-
-        # Display torrents
+        Logger.log(f"{len(torrents)} new torrent{'' if len(torrents) == 1 else 's'}:")
         for torrent in torrents:
             Logger.log(f" - {torrent['title']}")
+        Logger.log("Downloading...", {"white_lines": "b"})
 
-        # Download torrents
-        Logger.log("Downloading...")
-        Logger.debug()
+        new_history_entries = list()
         errors = 0
         for torrent in torrents:
-            Logger.debug(f" - Downloading: {torrent['title']}")
+            Logger.log(f" - Downloading: {torrent['title']}")
             download_status = download_torrent(torrent)
 
             # Success
             if download_status == "success":
-                watcher.add_to_history(torrent)
+                # watcher.add_to_history(torrent)
+                new_history_entries.append(torrent)
                 Logger.debug(" - Success.")
 
                 for webhook_name in torrent['webhooks']:
@@ -168,14 +152,16 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
 
             # Error
             else:
-                Logger.debug(" - Error downloading file. " + download_status)
+                Logger.log(f" - Error downloading file. f{download_status}")
                 errors += 1
             Logger.debug()
 
-        update_history_file(watcher)
-        Logger.debug("Updated history.json.")
+        Config.append_to_history(new_history_entries)
+        interval_string = get_interval_string(interval)
+        Logger.log(f"Done. Finished with {errors} error{'' if errors == 1 else 's'}.\nSearching for matching torrents in {interval_string}.")
 
-        Logger.log(f"Done. Finished with {errors} errors.\nSearching for matching torrents in {interval_string}.")
+    # Schedule next check
+    scheduler.enter(interval, 1, check_rss, (scheduler, watcher, interval, webhook, config))
 
 
 def main() -> None:
@@ -228,7 +214,7 @@ def main() -> None:
     Logger.log("Success!\nWatcher started.")
     try:
         scheduler = sched.scheduler(time.time, time.sleep)
-        scheduler.enter(1, 1, check_rss, (scheduler, watcher, WATCHER_INTERVAL, webhook))
+        scheduler.enter(1, 1, check_rss, (scheduler, watcher, WATCHER_INTERVAL, webhook, config))
         scheduler.run()
     except KeyboardInterrupt:
         Logger.log("Watcher exited.", {"white_lines": "b"})

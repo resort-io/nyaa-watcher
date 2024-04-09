@@ -28,15 +28,6 @@ class Watcher:
     def get_rss(self) -> str:
         return self.rss
 
-    def add_to_history(self, torrent: dict) -> None:
-        entry = {
-            "torrent_title": torrent['title'],
-            "date_downloaded": str(datetime.now()),
-            "nyaa_page": torrent['id'],
-            "nyaa_hash": torrent['nyaa_infohash']
-        }
-        self.history["history"].append(entry)
-
     def fetch_new_torrents(self) -> list:
         feed = feedparser.parse(self.rss)
 

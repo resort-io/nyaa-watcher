@@ -1,9 +1,13 @@
 import os
 import json
+from datetime import datetime
+
 from dotenv import load_dotenv
 from logger import Logger
+from env import Env
 
 load_dotenv()
+env = Env()
 
 
 class ConfigError(Exception):
@@ -23,15 +27,15 @@ def _env(key: str, default: str = None) -> str:
 
 
 def _get_version() -> str:
-    file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+    file = open(env.path("config"), "r")
     config = json.loads(file.read())
     file.close()
 
-    version: str = config['version']
+    version = config['version']
     if version:
         return version
 
-    file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
+    file = open(env.path("webhooks"), "r")
     webhooks = json.loads(file.read())
     file.close()
 
@@ -103,7 +107,7 @@ def _migrate_v101_to_v110() -> None:
     Logger.log("Migrating from v1.0.1 to v1.1.0...")
 
     # Adding missing 'webhooks' property to 'watchlist.json'
-    file = open(_env("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
+    file = open(env.path("watchlist"), "r")
     watchlist = json.loads(file.read())
     file.close()
 
@@ -112,18 +116,18 @@ def _migrate_v101_to_v110() -> None:
             entry['webhooks'] = []
             Logger.log(f"Added 'webhooks' property to watchlist entry: {entry['name']}.", {"level": "debug"})
 
-    file = open(_env("WATCHER_DIRECTORY", "") + "/watchlist.json", "w")
+    file = open(env.path("watchlist"), "w")
     file.write(json.dumps(watchlist, indent=4))
     file.close()
 
     # Adding sample webhook entry to 'webhooks.json', if empty
-    file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
+    file = open(env.path("webhooks"), "r")
     webhooks = json.loads(file.read())
     file.close()
 
     if len(webhooks['webhooks']) == 0:
         webhooks['webhooks'].append(_new_webhook_entry_sample())
-        file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "w")
+        file = open(env.path("webhooks"), "w")
         file.write(json.dumps(webhooks, indent=4))
         file.close()
 
@@ -134,13 +138,13 @@ def _migrate_v111_to_v112() -> None:
     Logger.log("Migrating from v1.1.1 to v1.1.2...")
 
     # Adding 'version' property to 'config.json'
-    file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+    file = open(env.path("config"), "r")
     config = json.loads(file.read())
     file.close()
 
     config['version'] = "1.1.2"
 
-    file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "w")
+    file = open(env.path("config"), "w")
     file.write(json.dumps(config, indent=4))
     file.close()
 
@@ -148,7 +152,7 @@ def _migrate_v111_to_v112() -> None:
 
 
 def _verify_config_parse() -> None:
-    path = _env("WATCHER_DIRECTORY", "") + "/config.json"
+    path = env.path("config")
 
     if os.path.exists(path) is False:
         Logger.log("Cannot find 'config.json'. Creating file...")
@@ -180,7 +184,7 @@ def _verify_config_parse() -> None:
 
 
 def _verify_watchlist_parse() -> None:
-    path = _env("WATCHER_DIRECTORY", "") + "/watchlist.json"
+    path = env.path("watchlist")
 
     if os.path.exists(path) is False:
         Logger.log("Cannot find 'watchlist.json'. Creating file...")
@@ -207,7 +211,7 @@ def _verify_watchlist_parse() -> None:
 
 
 def _verify_history_parse() -> None:
-    path = _env("WATCHER_DIRECTORY", "") + "/history.json"
+    path = env.path("history")
 
     if os.path.exists(path) is False:
         Logger.log("Cannot find 'history.json'. Creating file...")
@@ -228,7 +232,7 @@ def _verify_history_parse() -> None:
 
 
 def _verify_webhooks_parse() -> None:
-    path = _env("WATCHER_DIRECTORY", "") + "/webhooks.json"
+    path = env.path("webhooks")
 
     if os.path.exists(path) is False:
         Logger.log("Cannot find 'webhooks.json'. Creating file...")
@@ -294,31 +298,37 @@ class Config:
         _verify_webhooks_parse()
         Logger.debug("Files verified.")
 
-        self.version = _get_version()
-        if self.version == "1.0.1":
+        version = _get_version()
+        if version == "1.0.1":
             _migrate_v101_to_v110()
-            self.version = "1.1.1"  # Skips v1.1.0
-        if self.version == "1.1.1":
+            version = "1.1.1"  # Skips v1.1.0
+        if version == "1.1.1":
             _migrate_v111_to_v112()
-            self.version = "1.1.2"
-        Logger.debug(f"Watcher version: {self.version}")
+            version = "1.1.2"
+        Logger.debug(f"Watcher version: {version}")
 
     @staticmethod
-    def append_to_history(torrents: dict | list) -> None:
-        file = open(_env("WATCHER_DIRECTORY", "") + "/history.json", "r")
+    def append_to_history(torrents: list) -> None:
+        file = open(env.path("history"), "r")
         history = json.loads(file.read())
         file.close()
 
-        history['history'].append(torrents)
+        for torrent in torrents:
+            history['history'].append({
+                "torrent_title": torrent['title'],
+                "date_downloaded": str(datetime.now()),
+                "nyaa_page": torrent['id'],
+                "nyaa_hash": torrent['nyaa_infohash']
+            })
 
-        file = open(_env("WATCHER_DIRECTORY", "") + "/history.json", "w")
+        file = open(env.path("history"), "w")
         file.write(json.dumps(history, indent=4))
         file.close()
-        Logger.log(f"Appended '{len(torrents)}' torrents to 'history.json'.", {"level": "debug"})
+        Logger.debug(f"Appended '{len(torrents)}' torrent{'' if len(torrents) == 1 else 's'} to 'history.json'.")
 
     @staticmethod
     def get_config() -> dict:
-        file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+        file = open(env.path("config"), "r")
         config = json.loads(file.read())
         file.close()
         return config
@@ -328,21 +338,21 @@ class Config:
         if os.environ.get("NYAA_RSS"):
             return os.environ.get("NYAA_RSS")
 
-        file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+        file = open(env.path("config"), "r")
         config = json.loads(file.read())
         file.close()
         return config['nyaa_rss']
 
     @staticmethod
     def get_watcher_watchlist() -> dict:
-        file = open(_env("WATCHER_DIRECTORY", "") + "/watchlist.json", "r")
+        file = open(env.path("watchlist"), "r")
         watchlist = json.loads(file.read())
         file.close()
         return watchlist
 
     @staticmethod
     def get_watcher_history() -> dict:
-        file = open(_env("WATCHER_DIRECTORY", "") + "/history.json", "r")
+        file = open(env.path("history"), "r")
         history = json.loads(file.read())
         file.close()
         return history
@@ -352,25 +362,18 @@ class Config:
         if os.environ.get("WATCHER_INTERVAL_SEC"):
             return int(os.environ.get("WATCHER_INTERVAL_SEC"))
 
-        file = open(_env("WATCHER_DIRECTORY", "") + "/config.json", "r")
+        file = open(env.path("config"), "r")
         config = json.loads(file.read())
         file.close()
         return int(config['watcher_interval_seconds'])
 
     @staticmethod
     def get_discord_webhooks() -> dict:
-        file = open(_env("WATCHER_DIRECTORY", "") + "/webhooks.json", "r")
+        file = open(env.path("webhooks"), "r")
         webhooks = json.loads(file.read())
         file.close()
         return webhooks
 
     @staticmethod
-    def get_version(self) -> str:
-        return self.version
-
-    @staticmethod
-    def set_history(history: dict | list) -> None:
-        file = open(_env("WATCHER_DIRECTORY", "") + "/history.json", "w")
-        file.write(json.dumps(history, indent=4))
-        file.close()
-        Logger.debug("Set 'history.json'.")
+    def get_version() -> str:
+        return _get_version()
