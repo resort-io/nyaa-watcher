@@ -2,7 +2,6 @@ import os
 import re
 import logging
 import feedparser
-
 from datetime import datetime
 
 log = logging.getLogger("watcher")
@@ -12,12 +11,29 @@ class WatcherError(Exception):
     pass
 
 
+def _sort_torrents(torrents: list) -> list:
+    torrent_titles = [(torrent['title'], torrent) for torrent in torrents]
+    torrent_titles.sort()
+
+    sorted_list = [pair[1] for pair in torrent_titles]
+    return sorted_list
+
+
 class Watcher:
 
     def __init__(self, rss: str, watchlist: dict, history: dict) -> None:
         self.rss = rss
         self.watchlist = watchlist
         self.history = history
+
+    def append_to_history(self, torrents: list) -> None:
+        for torrent in torrents:
+            self.history['history'].append({
+                "torrent_title": torrent['title'],
+                "date_downloaded": str(datetime.now()),
+                "nyaa_page": torrent['id'],
+                "nyaa_hash": torrent['nyaa_infohash']
+            })
 
     def get_history(self) -> dict:
         return self.history
@@ -28,7 +44,7 @@ class Watcher:
     def get_rss(self) -> str:
         return self.rss
 
-    def fetch_new_torrents(self) -> list:
+    def get_new_torrents(self) -> list:
         feed = feedparser.parse(self.rss)
 
         new_torrents = []
@@ -101,4 +117,4 @@ class Watcher:
                 if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
                     log.debug("")
 
-        return new_torrents
+        return _sort_torrents(new_torrents)

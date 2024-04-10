@@ -1,10 +1,10 @@
 import os
 import json
 from datetime import datetime
-
 from dotenv import load_dotenv
 from logger import Logger
 from env import Env
+from math import floor
 
 load_dotenv()
 env = Env()
@@ -14,16 +14,7 @@ class ConfigError(Exception):
     pass
 
 
-def _env(key: str, default: str = None) -> str:
-    if os.environ.get(key) is not None:
-        return os.environ.get(key)
-    if os.environ.get(key.lower()) is not None:
-        return os.environ.get(key.lower())
-    if os.environ.get(key.upper()) is not None:
-        return os.environ.get(key.upper())
-    if default is not None:
-        return default
-    raise ConfigError(f"Environment Error: The '{key}' environment variable does not exist.")
+
 
 
 def _get_version() -> str:
@@ -290,7 +281,8 @@ def _verify_webhook_entry(webhook: dict) -> dict:
 
 
 class Config:
-    def __init__(self) -> None:
+    @staticmethod
+    def verify_and_migrate() -> None:
         Logger.debug("Verifying files...")
         _verify_config_parse()
         _verify_watchlist_parse()
@@ -332,6 +324,81 @@ class Config:
         config = json.loads(file.read())
         file.close()
         return config
+
+    @staticmethod
+    def get_interval_string(interval: int) -> str:
+        days = floor(interval / 86400)
+        if days > 0:
+            interval -= floor(days * 86400)
+
+        hours = floor(interval / 3600)
+        if hours > 0:
+            interval -= floor(hours * 3600)
+
+        minutes = floor(interval / 60)
+        if minutes > 0:
+            interval -= floor(minutes * 60)
+
+        seconds = interval
+
+        array = [days, hours, minutes, seconds]
+
+        # Find last non-zero index
+        last_index = -1
+        i = 0
+        while i <= 3:
+            if array[i] > 0:
+                last_index = i
+            i += 1
+
+        # Number of units to display
+        units = 0
+        for value in array:
+            if value > 0:
+                units += 1
+
+        # Build string
+        if units == 1:
+            if days > 0:
+                return f"{days} day" if days == 1 else f"{days} days"
+            elif hours > 0:
+                return f"{hours} hour" if hours == 1 else f"{hours} hours"
+            elif minutes > 0:
+                return f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+            else:
+                return f"{seconds} second" if seconds == 1 else f"{seconds} seconds"
+        else:
+            string = ""
+
+            # Days
+            if array[0] > 0:
+                string += f"{days} day" if days == 1 else f"{days} days"
+                if last_index != 0:
+                    string += ", "
+                units -= 1
+            # Hours
+            if array[1] > 0:
+                if last_index == 1 and units == 1:
+                    string += f"and {hours} hour" if hours == 1 else f"and {hours} hours"
+                else:
+                    string += f"{hours} hour" if hours == 1 else f"{hours} hours"
+                    if last_index != 1:
+                        string += ", "
+                    units -= 1
+            # Minutes
+            if array[2] > 0:
+                if last_index == 2 and units == 1:
+                    string += f"and {minutes} minute" if minutes == 1 else f"and {minutes} minutes"
+                else:
+                    string += f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+                    if last_index != 2:
+                        string += ", "
+                    units -= 1
+            # Seconds
+            if array[3] > 0:
+                string += f"and {seconds} second" if seconds == 1 else f"and {seconds} seconds"
+
+            return string
 
     @staticmethod
     def get_nyaa_rss() -> str:

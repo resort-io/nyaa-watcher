@@ -1,93 +1,18 @@
-import json
 import os
 import logging
 import requests
 import sched
 import time
+from env import Env
 from dotenv import load_dotenv
 from config import Config
 from watcher import Watcher
 from webhook import Webhook
-from math import floor
 from logger import Logger
 
 load_dotenv()
+env = Env()
 log = logging.getLogger("main")
-
-
-def get_interval_string(interval: int) -> str:
-    days = floor(interval / 86400)
-    if days > 0:
-        interval -= floor(days * 86400)
-
-    hours = floor(interval / 3600)
-    if hours > 0:
-        interval -= floor(hours * 3600)
-
-    minutes = floor(interval / 60)
-    if minutes > 0:
-        interval -= floor(minutes * 60)
-
-    seconds = interval
-
-    array = [days, hours, minutes, seconds]
-
-    # Find last non-zero index
-    last_index = -1
-    i = 0
-    while i <= 3:
-        if array[i] > 0:
-            last_index = i
-        i += 1
-
-    # Number of units to display
-    units = 0
-    for value in array:
-        if value > 0:
-            units += 1
-
-    # Build string
-    if units == 1:
-        if days > 0:
-            return f"{days} day" if days == 1 else f"{days} days"
-        elif hours > 0:
-            return f"{hours} hour" if hours == 1 else f"{hours} hours"
-        elif minutes > 0:
-            return f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
-        else:
-            return f"{seconds} second" if seconds == 1 else f"{seconds} seconds"
-    else:
-        string = ""
-
-        # Days
-        if array[0] > 0:
-            string += f"{days} day" if days == 1 else f"{days} days"
-            if last_index != 0:
-                string += ", "
-            units -= 1
-        # Hours
-        if array[1] > 0:
-            if last_index == 1 and units == 1:
-                string += f"and {hours} hour" if hours == 1 else f"and {hours} hours"
-            else:
-                string += f"{hours} hour" if hours == 1 else f"{hours} hours"
-                if last_index != 1:
-                    string += ", "
-                units -= 1
-        # Minutes
-        if array[2] > 0:
-            if last_index == 2 and units == 1:
-                string += f"and {minutes} minute" if minutes == 1 else f"and {minutes} minutes"
-            else:
-                string += f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
-                if last_index != 2:
-                    string += ", "
-                units -= 1
-        # Seconds
-        if array[3] > 0:
-            string += f"and {seconds} second" if seconds == 1 else f"and {seconds} seconds"
-
-        return string
 
 
 def download_torrent(torrent: dict) -> str:
@@ -110,23 +35,14 @@ def download_torrent(torrent: dict) -> str:
         return "Download Error: " + str(e)
 
 
-def sort_torrents(torrents: list) -> list:
-    torrent_titles = [(torrent['title'], torrent) for torrent in torrents]
-    torrent_titles.sort()
-
-    sorted_list = [pair[1] for pair in torrent_titles]
-    return sorted_list
-
-
-def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook, config: Config) -> None:
+def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -> None:
     # Reading RSS feed
     Logger.log("Searching for matching torrents...", {"white_lines": "t"})
-    torrents = watcher.fetch_new_torrents()
-    torrents = sort_torrents(torrents)
+    torrents = watcher.get_new_torrents()
 
     # No new torrents
     if len(torrents) == 0:
-        interval_string = get_interval_string(interval)
+        interval_string = Config.get_interval_string(interval)
         Logger.log(f"No new torrents found.\nSearching for matching torrents in {interval_string}.")
     # New torrents
     else:
@@ -138,14 +54,13 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
         new_history_entries = list()
         errors = 0
         for torrent in torrents:
-            Logger.log(f" - Downloading: {torrent['title']}")
+            Logger.debug(f" - Downloading: {torrent['title']}...")
             download_status = download_torrent(torrent)
 
             # Success
             if download_status == "success":
-                # watcher.add_to_history(torrent)
                 new_history_entries.append(torrent)
-                Logger.debug(" - Success.")
+                Logger.debug(f" - Downloaded: {torrent['title']}")
 
                 for webhook_name in torrent['webhooks']:
                     webhook.send_notification(webhook_name, torrent)
@@ -157,11 +72,12 @@ def check_rss(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhoo
             Logger.debug()
 
         Config.append_to_history(new_history_entries)
-        interval_string = get_interval_string(interval)
-        Logger.log(f"Done. Finished with {errors} error{'' if errors == 1 else 's'}.\nSearching for matching torrents in {interval_string}.")
+        watcher.append_to_history(new_history_entries)
+        interval_string = Config.get_interval_string(interval)
+        Logger.log(f"Done. Finished with {errors} error{'' if errors == 1 else 's'}.\nSearching for new torrents in {interval_string}.")
 
     # Schedule next check
-    scheduler.enter(interval, 1, check_rss, (scheduler, watcher, interval, webhook, config))
+    scheduler.enter(interval, 1, fetch, (scheduler, watcher, interval, webhook))
 
 
 def main() -> None:
@@ -173,23 +89,23 @@ def main() -> None:
     Logger.log("~~~ Nyaa Watcher ~~~\nStarting watcher...")
 
     try:
-        config = Config()
+        Config.verify_and_migrate()
 
-        NYAA_RSS = config.get_nyaa_rss()
+        NYAA_RSS = Config.get_nyaa_rss()
         Logger.debug(f"NYAA RSS: {NYAA_RSS}")
 
-        WATCHER_INTERVAL = config.get_watcher_interval()
+        WATCHER_INTERVAL = Config.get_watcher_interval()
         Logger.debug(f"WATCHER INTERVAL: {WATCHER_INTERVAL} seconds.")
 
-        WATCHER_WATCHLIST = config.get_watcher_watchlist()
+        WATCHER_WATCHLIST = Config.get_watcher_watchlist()
         Logger.debug(f"WATCHER WATCHLIST: {len(WATCHER_WATCHLIST['watchlist'])} entries.")
 
-        WATCHER_HISTORY = config.get_watcher_history()
+        WATCHER_HISTORY = Config.get_watcher_history()
         Logger.debug(f"WATCHER HISTORY: {len(WATCHER_HISTORY['history'])} entries.")
 
         watcher = Watcher(NYAA_RSS, WATCHER_WATCHLIST, WATCHER_HISTORY)
 
-        WEBHOOKS = config.get_discord_webhooks()
+        WEBHOOKS = Config.get_discord_webhooks()
         Logger.debug(f"DISCORD WEBHOOKS: {len(WEBHOOKS['webhooks'])} entries.")
 
         webhook = Webhook(WEBHOOKS)
@@ -214,7 +130,7 @@ def main() -> None:
     Logger.log("Success!\nWatcher started.")
     try:
         scheduler = sched.scheduler(time.time, time.sleep)
-        scheduler.enter(1, 1, check_rss, (scheduler, watcher, WATCHER_INTERVAL, webhook, config))
+        scheduler.enter(1, 1, fetch, (scheduler, watcher, WATCHER_INTERVAL, webhook))
         scheduler.run()
     except KeyboardInterrupt:
         Logger.log("Watcher exited.", {"white_lines": "b"})

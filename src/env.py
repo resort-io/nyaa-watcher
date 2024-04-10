@@ -1,8 +1,5 @@
 import os
-from dotenv import load_dotenv
 from logger import Logger
-
-load_dotenv()
 
 
 class Env:
