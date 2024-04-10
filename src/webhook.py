@@ -61,7 +61,7 @@ class Webhook:
                 if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
                     continue
 
-                Logger.debug(f" - {webhook['name']} ({webhook['url']})")
+                Logger.log(f" - Connected to '{webhook['name']}' webhook.")
                 id, token = _parse_url(webhook['url'])
 
                 try:
@@ -69,7 +69,7 @@ class Webhook:
                     self.discord_webhooks[webhook['name']] = discord_webhook
                     connected += 1
                 except Exception as e:
-                    Logger.log(f"Webhook Error: Cannot connect to '{webhook['name']}' webhook at {webhook['url']}.")
+                    Logger.log(f" - Error connecting to '{webhook['name']}' webhook.")
                     Logger.debug(f"{e}", {"exc_info": True})
 
             Logger.log(f"Connected to 1 Discord webhook.") if connected == 1 \

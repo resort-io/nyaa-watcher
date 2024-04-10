@@ -21,6 +21,8 @@ class Logger:
         if messages.__class__ == str:
             messages = messages.split("\n")
         for message in messages:
+            if level_num == logging.DEBUG:
+                message = f"[DEBUG] {message}"
             log.log(level_num, message, exc_info=exc_info)
 
         if options and options.get('white_lines') and options.get('white_lines').__contains__("b"):

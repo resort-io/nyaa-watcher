@@ -91,46 +91,42 @@ def main() -> None:
     try:
         Config.verify_and_migrate()
 
-        NYAA_RSS = Config.get_nyaa_rss()
-        Logger.debug(f"NYAA RSS: {NYAA_RSS}")
+        interval = Config.get_watcher_interval()
 
-        WATCHER_INTERVAL = Config.get_watcher_interval()
-        Logger.debug(f"WATCHER INTERVAL: {WATCHER_INTERVAL} seconds.")
+        rss = Config.get_nyaa_rss()
+        watchlist = Config.get_watcher_watchlist()
+        history = Config.get_watcher_history()
+        watcher = Watcher(rss, watchlist, history)
 
-        WATCHER_WATCHLIST = Config.get_watcher_watchlist()
-        Logger.debug(f"WATCHER WATCHLIST: {len(WATCHER_WATCHLIST['watchlist'])} entries.")
+        discord_webhooks = Config.get_discord_webhooks()
+        webhook = Webhook(discord_webhooks)
 
-        WATCHER_HISTORY = Config.get_watcher_history()
-        Logger.debug(f"WATCHER HISTORY: {len(WATCHER_HISTORY['history'])} entries.")
-
-        watcher = Watcher(NYAA_RSS, WATCHER_WATCHLIST, WATCHER_HISTORY)
-
-        WEBHOOKS = Config.get_discord_webhooks()
-        Logger.debug(f"DISCORD WEBHOOKS: {len(WEBHOOKS['webhooks'])} entries.")
-
-        webhook = Webhook(WEBHOOKS)
+        Logger.debug(f"INTERVAL: {interval} seconds.\n"
+                     f"NYAA RSS: {rss}\n"
+                     f"WATCHLIST: {len(watchlist['watchlist'])} entries.\n"
+                     f"HISTORY: {len(history['history'])} entries.\n"
+                     f"WEBHOOKS: {len(discord_webhooks['webhooks'])} entries.")
     except Exception as e:
         Logger.log(f"{e}\nWatcher exited.", {"white_lines": "b"})
         exit(-1)
 
-    # Testing RSS URL
     Logger.log("Attempting to reach RSS URL...")
     try:
-        response = requests.get(NYAA_RSS)
+        response = requests.get(rss, timeout=60)
+
+        if response.status_code != 200:
+            Logger.log(f"Connection Error: Could not read RSS URL; received HTTPS Status Code: {str(response.status_code)}. "
+                       f"Add a valid Nyaa RSS URL to config.json and restart the server.\nWatcher exited.", {"white_lines": "b"})
+            exit(-1)
     except Exception as e:
         Logger.log("Connection Error: Cannot connect to RSS URL. Your internet provider could be blocking requests to nyaa domains."
                    f"\n{e}\nWatcher exited.", {"exc_info": True, "white_lines": "b"})
         exit(-1)
-
-    if response.status_code != 200:
-        Logger.log(f"Connection Error: Could not read RSS URL; received HTTPS Status Code: {str(response.status_code)}. "
-                   f"Add a valid Nyaa RSS URL to config.json and restart the server.\nWatcher exited.", {"white_lines": "b"})
-        exit(-1)
-
     Logger.log("Success!\nWatcher started.")
+
     try:
         scheduler = sched.scheduler(time.time, time.sleep)
-        scheduler.enter(1, 1, fetch, (scheduler, watcher, WATCHER_INTERVAL, webhook))
+        scheduler.enter(1, 1, fetch, (scheduler, watcher, interval, webhook))
         scheduler.run()
     except KeyboardInterrupt:
         Logger.log("Watcher exited.", {"white_lines": "b"})
