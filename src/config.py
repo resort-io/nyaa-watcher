@@ -15,16 +15,15 @@ def _get_version() -> str:
     config = json.loads(file.read())
     file.close()
 
-    version = config['version']
-    if version:
-        return version
+    if config.get('version'):
+        return config.get('version')
 
     if os.path.exists(_get_json_path("webhooks")):
         file = open(_get_json_path("webhooks"), "r")
         webhooks = json.loads(file.read())
         file.close()
 
-        if webhooks['webhooks'] and len(webhooks['webhooks']) > 0:
+        if webhooks.get('webhooks') and len(webhooks.get('webhooks')) > 0:
             return "1.1.1"
     return "1.0.1"
 
@@ -96,7 +95,7 @@ def _update_v101_to_v110() -> None:
     watchlist = json.loads(file.read())
     file.close()
 
-    for entry in watchlist['watchlist']:
+    for entry in watchlist.get('watchlist'):
         if 'webhooks' not in entry:
             entry['webhooks'] = []
             Logger.log(f"Added 'webhooks' property to watchlist entry: {entry['name']}.", {"level": "debug"})
@@ -110,7 +109,7 @@ def _update_v101_to_v110() -> None:
     webhooks = json.loads(file.read())
     file.close()
 
-    if len(webhooks['webhooks']) == 0:
+    if len(webhooks.get('webhooks')) == 0:
         webhooks['webhooks'].append(_new_webhook_entry_sample())
         file = open(_get_json_path("webhooks"), "w")
         file.write(json.dumps(webhooks, indent=4))
@@ -137,6 +136,7 @@ def _update_v111_to_v112() -> None:
 
 
 def _verify_config_parse() -> None:
+    Logger.debug("Verifying 'config.json'...")
     path = _get_json_path("config")
 
     if os.path.exists(path) is False:
@@ -151,24 +151,25 @@ def _verify_config_parse() -> None:
     config = json.loads(file.read())
     file.close()
 
-    if not config['nyaa_rss'] or not config['watcher_interval_seconds']:
+    if not config.get('nyaa_rss') or not config.get('watcher_interval_seconds'):
         raise Exception("Parse Error: 'nyaa_rss' and/or 'watcher_interval_seconds' is missing from 'config.json'. Change the properties and restart the watcher.")
 
-    if config['nyaa_rss'] == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
+    if config.get('nyaa_rss') == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
         raise Exception("Parse Error: No Nyaa RSS found. Add a Nyaa RSS URL to 'config.json' and restart the watcher.")
 
-    if not isinstance(config['watcher_interval_seconds'], int) or int(config['watcher_interval_seconds']) % 1 != 0:
+    if not isinstance(config.get('watcher_interval_seconds'), int) or int(config.get('watcher_interval_seconds')) % 1 != 0:
         raise Exception("Parse Error: 'watcher_interval_seconds' must be an integer equal to or greater than 60 seconds. Change the property and restart the watcher.")
 
-    if int(config['watcher_interval_seconds']) <= 60:
+    if int(config.get('watcher_interval_seconds')) <= 60:
         raise Exception("Parse Error: 'watcher_interval_seconds' must be equal to or greater than 60 seconds. Change the property and restart the watcher.")
 
     valid_versions = ["1.0.0", "1.0.1", "1.1.1", "1.1.2"]
-    if config['version'] and config['version'] not in valid_versions:
-        raise Exception(f"Parse Error: v{config['version']} is not a valid version. Change the property to '1.1.1' in 'config.json' and restart the watcher to migrate to v1.1.2.")
+    if config.get('version') and config.get('version') not in valid_versions:
+        raise Exception(f"Parse Error: v{config.get('version')} is not a valid version. Change the property to '1.1.1' in 'config.json' and restart the watcher to migrate to v1.1.2.")
 
 
 def _verify_watchlist_parse() -> None:
+    Logger.debug("Verifying 'watchlist.json'...")
     path = _get_json_path("watchlist")
 
     if os.path.exists(path) is False:
@@ -182,20 +183,21 @@ def _verify_watchlist_parse() -> None:
     watchlist = json.loads(file.read())
     file.close()
 
-    if not watchlist['watchlist'] or len(watchlist['watchlist']) == 0:
+    if not watchlist.get('watchlist') or len(watchlist.get('watchlist')) == 0:
         raise Exception("Parse Error: watchlist.json contains no entries. Add entries and restart the watcher.")
 
-    for entry in watchlist['watchlist']:
-        if not all(entry['name'] and entry['tags'] and entry['regex'] and entry['webhooks']):
+    for entry in watchlist.get('watchlist'):
+        if not all(entry.get('name') and entry.get('tags') and entry.get('regex') and entry.get('webhooks')):
             raise Exception("Parse Error: One or more entries in 'watchlist.json' contains missing or invalid properties. Change the properties and restart the watcher.")
 
-        if entry['name'] == "" and len(entry['tags']) + len(entry['regex']) == 0 \
-                or len(entry['tags']) + len(entry['regex']) == 0:
+        if entry.get('name') == "" and len(entry.get('tags')) + len(entry.get('regex')) == 0 \
+                or len(entry.get('tags')) + len(entry.get('regex')) == 0:
             raise Exception("Parse Error: One or more entries in 'watchlist.json' does not have a tag or regex. "
                               "Change the entries to have at least one 'tag' or 'regex' value and restart the watcher.")
 
 
 def _verify_history_parse() -> None:
+    Logger.debug("Verifying 'history.json'...")
     path = _get_json_path("history")
 
     if os.path.exists(path) is False:
@@ -212,11 +214,12 @@ def _verify_history_parse() -> None:
     file.close()
 
     properties = ['torrent_title', 'date_downloaded', 'nyaa_page', 'nyaa_hash']
-    if not all(all(key in entry for key in properties) for entry in history['history']):
+    if not all(all(key in entry for key in properties) for entry in history.get('history')):
         raise Exception("Parse Error: One or more entries in history.json contains missing or invalid properties. Fix the history properties and restart the watcher.")
 
 
 def _verify_webhooks_parse() -> None:
+    Logger.debug("Verifying 'webhooks.json'...")
     path = _get_json_path("webhooks")
 
     if os.path.exists(path) is False:
@@ -231,7 +234,7 @@ def _verify_webhooks_parse() -> None:
     webhooks = json.loads(file.read())
     file.close()
 
-    for webhook in webhooks['webhooks']:
+    for webhook in webhooks.get('webhooks'):
         entry = _verify_webhook_entry(webhook)
         if entry.get('result') is False:
             raise Exception(f"Parse Error: {entry.get('message')}")
@@ -251,24 +254,24 @@ def _verify_webhook_entry(webhook: dict) -> dict:
 
     notify_properties = ['title', 'description', 'show_downloads', 'show_seeders', 'show_leechers', 'show_published', 'show_category', 'show_size']
     for key in notify_properties:
-        if key not in webhook['notifications']:
+        if key not in webhook.get('notifications'):
             return {
                 "result": False,
                 "message": f"'{webhook['name']}' webhook contains one or more 'show_' properties that are missing or invalid. Change the webhook properties and restart the watcher"
             }
 
-    notify_values: list = [value for key, value in webhook['notifications'].items() if isinstance(value, int)]
+    notify_values: list = [value for key, value in webhook.get('notifications').items() if isinstance(value, int)]
     for value in notify_values:
         if value not in range(0, 7):
             return {
                 "result": False,
-                "message": f"'{webhook['name']}' webhook contains one or more 'show_' properties out of range (0 to 6). Change the webhook properties and restart the watcher"
+                "message": f"'{webhook.get('name')}' webhook contains one or more 'show_' properties out of range (0 to 6). Change the webhook properties and restart the watcher"
             }
 
     if len(notify_values) != len(set(notify_values)):
         return {
             "result": False,
-            "message": f"'{webhook['name']}' webhook contains one or more duplicate 'show_' properties. Change the webhook properties and restart the watcher"
+            "message": f"'{webhook.get('name')}' webhook contains one or more duplicate 'show_' properties. Change the webhook properties and restart the watcher"
         }
 
     return {"result": True}
@@ -280,15 +283,15 @@ class Config:
         try:
             Logger.log("Checking for updates...")
             version = _get_version()
+            Logger.debug(f"(Before) Watcher version: {version}")
             if version == "1.0.1":
                 _update_v101_to_v110()
                 version = "1.1.1"  # Skips v1.1.0
             if version == "1.1.1":
                 _update_v111_to_v112()
                 version = "1.1.2"
-            Logger.debug(f"Watcher version: {version}")
+            Logger.debug(f"(After) Watcher version: {version}")
 
-            Logger.debug("Verifying files...")
             _verify_config_parse()
             _verify_watchlist_parse()
             _verify_history_parse()
@@ -304,14 +307,14 @@ class Config:
         file.close()
 
         for success in successes:
-            history['history'].append({
+            history.get('history').append({
                 "torrent_title": success['title'],
                 "date_downloaded": str(datetime.now()),
                 "nyaa_page": success['id'],
                 "nyaa_hash": success['nyaa_infohash']
             })
         for error in errors:
-            history['errors'].append({
+            history.get('errors').append({
                 "torrent_title": error['title'],
                 "date_failed": str(datetime.now()),
                 "nyaa_page": error['id'],

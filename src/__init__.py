@@ -45,18 +45,18 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
 
         for torrent in torrents:
             Logger.debug(f" - Downloading: {torrent['title']}...")
-            download_status = download_torrent(torrent)
+            download = download_torrent(torrent)
 
-            if download_status['status'] == 200:
+            if download['status'] == 200:
                 Logger.log(f" - Downloaded: {torrent['title']}")
                 successes.append(torrent)
 
                 for webhook_name in torrent['watcher_webhooks']:
                     webhook.send_notification(webhook_name, torrent)
             else:
-                Logger.log(f" - Error: {torrent['title']} (HTTP Status Code: {download_status['status']}.")
-                if 'message' in download_status:
-                    Logger.debug(f" - {download_status['message']}")
+                Logger.log(f" - Error: {torrent['title']} (HTTP Status Code: {download['status']}.")
+                if 'message' in download:
+                    Logger.debug(f" - {download['message']}")
                 errors.append(torrent)
             Logger.debug()
 
