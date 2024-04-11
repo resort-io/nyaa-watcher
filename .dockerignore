@@ -1,9 +1,11 @@
 .env
-.git/
-.gitignore
 .idea/
 __pycache__/
 venv/
-watch/
+downloads/
 test.py
-todo.txt
+
+dev.*
+
+.git/
+.gitignore
