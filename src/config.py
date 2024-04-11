@@ -90,8 +90,8 @@ def _new_webhook_json() -> dict:
     }
 
 
-def _migrate_v101_to_v110() -> None:
-    Logger.log("Migrating from v1.0.1 to v1.1.0...")
+def _update_v101_to_v110() -> None:
+    Logger.log("Updating from v1.0.1 to v1.1.0...")
 
     # Adding missing 'webhooks' property to 'watchlist.json'
     file = open(_get_json_path("watchlist"), "r")
@@ -118,11 +118,11 @@ def _migrate_v101_to_v110() -> None:
         file.write(json.dumps(webhooks, indent=4))
         file.close()
 
-    Logger.log("Migrated to v1.1.0.")
+    Logger.log("Updated to v1.1.0.")
 
 
-def _migrate_v111_to_v112() -> None:
-    Logger.log("Migrating from v1.1.1 to v1.1.2...")
+def _update_v111_to_v112() -> None:
+    Logger.log("Updating from v1.1.1 to v1.1.2...")
 
     # Adding 'version' property to 'config.json'
     file = open(_get_json_path("config"), "r")
@@ -135,7 +135,7 @@ def _migrate_v111_to_v112() -> None:
     file.write(json.dumps(config, indent=4))
     file.close()
 
-    Logger.log("Migrated to v1.1.2.")
+    Logger.log("Updated to v1.1.2.")
 
 
 def _verify_config_parse() -> None:
@@ -278,22 +278,23 @@ def _verify_webhook_entry(webhook: dict) -> dict:
 
 class Config:
     @staticmethod
-    def verify_and_migrate() -> None:
+    def update_and_verify() -> None:
+        Logger.debug("Checking version...")
+        version = _get_version()
+        if version == "1.0.1":
+            _update_v101_to_v110()
+            version = "1.1.1"  # Skips v1.1.0
+        if version == "1.1.1":
+            _update_v111_to_v112()
+            version = "1.1.2"
+        Logger.debug(f"Watcher version: {version}")
+
         Logger.debug("Verifying files...")
         _verify_config_parse()
         _verify_watchlist_parse()
         _verify_history_parse()
         _verify_webhooks_parse()
         Logger.debug("Files verified.")
-
-        version = _get_version()
-        if version == "1.0.1":
-            _migrate_v101_to_v110()
-            version = "1.1.1"  # Skips v1.1.0
-        if version == "1.1.1":
-            _migrate_v111_to_v112()
-            version = "1.1.2"
-        Logger.debug(f"Watcher version: {version}")
 
     @staticmethod
     def append_to_history(torrents: list) -> None:

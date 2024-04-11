@@ -87,7 +87,7 @@ def main() -> None:
     Logger.log("~~~ Nyaa Watcher ~~~\nStarting watcher...")
 
     try:
-        Config.verify_and_migrate()
+        Config.update_and_verify()
 
         interval = Config.get_watcher_interval()
 
