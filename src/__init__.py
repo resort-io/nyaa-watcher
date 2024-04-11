@@ -19,7 +19,7 @@ def download_torrent(torrent: dict) -> str:
     torrent_title = torrent['title'] + ".torrent"
     torrent_url = torrent['link']
 
-    file_path = os.path.join(os.environ.get("WATCH_DIRECTORY", "../watch"), torrent_title)
+    file_path = os.environ.get("WATCH_DIRECTORY", "./watch") + "/" + torrent_title
     try:
         response = requests.get(torrent_url)
         # Success
@@ -32,11 +32,10 @@ def download_torrent(torrent: dict) -> str:
         else:
             return f"HTTP Status Code: {str(response.status_code)}."
     except Exception as e:
-        return "Download Error: " + str(e)
+        return str(e)
 
 
 def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -> None:
-    # Reading RSS feed
     Logger.log("Searching for matching torrents...", {"white_lines": "t"})
     torrents = watcher.get_new_torrents()
 
@@ -49,9 +48,9 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
         Logger.log(f"{len(torrents)} new torrent{'' if len(torrents) == 1 else 's'}:")
         for torrent in torrents:
             Logger.log(f" - {torrent['title']}")
-        Logger.log("Downloading...", {"white_lines": "b"})
+        Logger.log("Downloading...")
 
-        new_history_entries = list()
+        successful_downloads = list()
         errors = 0
         for torrent in torrents:
             Logger.debug(f" - Downloading: {torrent['title']}...")
@@ -59,7 +58,7 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
 
             # Success
             if download_status == "success":
-                new_history_entries.append(torrent)
+                successful_downloads.append(torrent)
                 Logger.debug(f" - Downloaded: {torrent['title']}")
 
                 for webhook_name in torrent['webhooks']:
@@ -67,12 +66,12 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
 
             # Error
             else:
-                Logger.log(f" - Error downloading file. f{download_status}")
+                Logger.log(f" - Error downloading file. {download_status}")
                 errors += 1
             Logger.debug()
 
-        Config.append_to_history(new_history_entries)
-        watcher.append_to_history(new_history_entries)
+        watcher.append_to_history(successful_downloads)
+        Config.append_to_history(successful_downloads)
         interval_string = Config.get_interval_string(interval)
         Logger.log(f"Done. Finished with {errors} error{'' if errors == 1 else 's'}.\nSearching for new torrents in {interval_string}.")
 
@@ -129,7 +128,7 @@ def main() -> None:
         scheduler.enter(1, 1, fetch, (scheduler, watcher, interval, webhook))
         scheduler.run()
     except KeyboardInterrupt:
-        Logger.log("Watcher exited.", {"white_lines": "b"})
+        Logger.log("Watcher exited.", {"white_lines": "bt"})
         exit(0)
 
 

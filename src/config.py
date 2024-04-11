@@ -14,9 +14,6 @@ class ConfigError(Exception):
     pass
 
 
-
-
-
 def _get_version() -> str:
     file = open(env.path("config"), "r")
     config = json.loads(file.read())
