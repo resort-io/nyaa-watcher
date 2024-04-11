@@ -3,7 +3,6 @@ import logging
 import requests
 import sched
 import time
-from env import Env
 from dotenv import load_dotenv
 from config import Config
 from watcher import Watcher
