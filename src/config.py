@@ -36,6 +36,13 @@ def _new_config_json() -> dict:
     }
 
 
+def new_history_json() -> dict:
+    return {
+        "history": [],
+        "errors": []
+    }
+
+
 def _new_watchlist_json() -> dict:
     return {
         "watchlist": [
@@ -132,6 +139,18 @@ def _update_v111_to_v112() -> None:
     file.write(json.dumps(config, indent=4))
     file.close()
 
+    # Adding 'errors' property to 'history.json'
+    file = open(_get_json_path("history"), "r")
+    history = json.loads(file.read())
+    file.close()
+
+    if not history.get('errors'):
+        history['errors'] = []
+
+    file = open(_get_json_path("history"), "w")
+    file.write(json.dumps(history, indent=4))
+    file.close()
+
     Logger.log("Updated to v1.1.2.")
 
 
@@ -203,8 +222,7 @@ def _verify_history_parse() -> None:
     if os.path.exists(path) is False:
         Logger.log("Cannot find 'history.json'. Creating file...")
         file = open(path, "x")
-        history = {"history": []}
-        file.write(json.dumps(history, indent=4))
+        file.write(json.dumps(new_history_json(), indent=4))
         file.close()
         Logger.log("Created 'history.json'.")
         return
