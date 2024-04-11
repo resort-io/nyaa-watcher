@@ -7,11 +7,10 @@ from env import Env
 from math import floor
 
 load_dotenv()
-env = Env()
 
 
 def _get_version() -> str:
-    file = open(env.path("config"), "r")
+    file = open(Env.json_path("config"), "r")
     config = json.loads(file.read())
     file.close()
 
@@ -19,7 +18,7 @@ def _get_version() -> str:
     if version:
         return version
 
-    file = open(env.path("webhooks"), "r")
+    file = open(Env.json_path("webhooks"), "r")
     webhooks = json.loads(file.read())
     file.close()
 
@@ -91,7 +90,7 @@ def _migrate_v101_to_v110() -> None:
     Logger.log("Migrating from v1.0.1 to v1.1.0...")
 
     # Adding missing 'webhooks' property to 'watchlist.json'
-    file = open(env.path("watchlist"), "r")
+    file = open(Env.json_path("watchlist"), "r")
     watchlist = json.loads(file.read())
     file.close()
 
@@ -100,18 +99,18 @@ def _migrate_v101_to_v110() -> None:
             entry['webhooks'] = []
             Logger.log(f"Added 'webhooks' property to watchlist entry: {entry['name']}.", {"level": "debug"})
 
-    file = open(env.path("watchlist"), "w")
+    file = open(Env.json_path("watchlist"), "w")
     file.write(json.dumps(watchlist, indent=4))
     file.close()
 
     # Adding sample webhook entry to 'webhooks.json', if empty
-    file = open(env.path("webhooks"), "r")
+    file = open(Env.json_path("webhooks"), "r")
     webhooks = json.loads(file.read())
     file.close()
 
     if len(webhooks['webhooks']) == 0:
         webhooks['webhooks'].append(_new_webhook_entry_sample())
-        file = open(env.path("webhooks"), "w")
+        file = open(Env.json_path("webhooks"), "w")
         file.write(json.dumps(webhooks, indent=4))
         file.close()
 
@@ -122,13 +121,13 @@ def _migrate_v111_to_v112() -> None:
     Logger.log("Migrating from v1.1.1 to v1.1.2...")
 
     # Adding 'version' property to 'config.json'
-    file = open(env.path("config"), "r")
+    file = open(Env.json_path("config"), "r")
     config = json.loads(file.read())
     file.close()
 
     config['version'] = "1.1.2"
 
-    file = open(env.path("config"), "w")
+    file = open(Env.json_path("config"), "w")
     file.write(json.dumps(config, indent=4))
     file.close()
 
@@ -136,7 +135,7 @@ def _migrate_v111_to_v112() -> None:
 
 
 def _verify_config_parse() -> None:
-    path = env.path("config")
+    path = Env.json_path("config")
 
     if os.path.exists(path) is False:
         Logger.log("Cannot find 'config.json'. Creating file...")
@@ -168,7 +167,7 @@ def _verify_config_parse() -> None:
 
 
 def _verify_watchlist_parse() -> None:
-    path = env.path("watchlist")
+    path = Env.json_path("watchlist")
 
     if os.path.exists(path) is False:
         Logger.log("Cannot find 'watchlist.json'. Creating file...")
@@ -195,7 +194,7 @@ def _verify_watchlist_parse() -> None:
 
 
 def _verify_history_parse() -> None:
-    path = env.path("history")
+    path = Env.json_path("history")
 
     if os.path.exists(path) is False:
         Logger.log("Cannot find 'history.json'. Creating file...")
@@ -216,7 +215,7 @@ def _verify_history_parse() -> None:
 
 
 def _verify_webhooks_parse() -> None:
-    path = env.path("webhooks")
+    path = Env.json_path("webhooks")
 
     if os.path.exists(path) is False:
         Logger.log("Cannot find 'webhooks.json'. Creating file...")
@@ -294,7 +293,7 @@ class Config:
 
     @staticmethod
     def append_to_history(torrents: list) -> None:
-        file = open(env.path("history"), "r")
+        file = open(Env.json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
 
@@ -306,14 +305,14 @@ class Config:
                 "nyaa_hash": torrent['nyaa_infohash']
             })
 
-        file = open(env.path("history"), "w")
+        file = open(Env.json_path("history"), "w")
         file.write(json.dumps(history, indent=4))
         file.close()
         Logger.debug(f"Appended {len(torrents)} torrent{'' if len(torrents) == 1 else 's'} to 'history.json'.")
 
     @staticmethod
     def get_config() -> dict:
-        file = open(env.path("config"), "r")
+        file = open(Env.json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
         return config
@@ -398,21 +397,21 @@ class Config:
         if os.environ.get("NYAA_RSS"):
             return os.environ.get("NYAA_RSS")
 
-        file = open(env.path("config"), "r")
+        file = open(Env.json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
         return config['nyaa_rss']
 
     @staticmethod
     def get_watcher_watchlist() -> dict:
-        file = open(env.path("watchlist"), "r")
+        file = open(Env.json_path("watchlist"), "r")
         watchlist = json.loads(file.read())
         file.close()
         return watchlist
 
     @staticmethod
     def get_watcher_history() -> dict:
-        file = open(env.path("history"), "r")
+        file = open(Env.json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
         return history
@@ -422,14 +421,14 @@ class Config:
         if os.environ.get("INTERVAL_SEC"):
             return int(os.environ.get("INTERVAL_SEC"))
 
-        file = open(env.path("config"), "r")
+        file = open(Env.json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
         return int(config['watcher_interval_seconds'])
 
     @staticmethod
     def get_discord_webhooks() -> dict:
-        file = open(env.path("webhooks"), "r")
+        file = open(Env.json_path("webhooks"), "r")
         webhooks = json.loads(file.read())
         file.close()
         return webhooks

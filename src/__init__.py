@@ -11,7 +11,6 @@ from webhook import Webhook
 from logger import Logger
 
 load_dotenv()
-env = Env()
 log = logging.getLogger("main")
 
 
@@ -19,7 +18,7 @@ def download_torrent(torrent: dict) -> str:
     torrent_title = torrent['title'] + ".torrent"
     torrent_url = torrent['link']
 
-    file_path = env.get("DOWNLOADS_DIR", "./downloads") + "/" + torrent_title
+    file_path = os.environ.get("DOWNLOADS_DIR", "./downloads") + "/" + torrent_title
     try:
         response = requests.get(torrent_url)
         # Success
@@ -85,6 +84,7 @@ def main() -> None:
         level=os.environ.get("LOG_LEVEL", "INFO").upper(),
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    Logger.debug(f"Environment: {os.environ.get('ENV').upper()}")
     Logger.log("~~~ Nyaa Watcher ~~~\nStarting watcher...")
 
     try:
