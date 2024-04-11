@@ -128,17 +128,6 @@ def _update_v101_to_v110() -> None:
 def _update_v111_to_v112() -> None:
     Logger.log("Updating from v1.1.1 to v1.1.2...")
 
-    # Adding 'version' property to 'config.json'
-    file = open(_get_json_path("config"), "r")
-    config = json.loads(file.read())
-    file.close()
-
-    config['version'] = "1.1.2"
-
-    file = open(_get_json_path("config"), "w")
-    file.write(json.dumps(config, indent=4))
-    file.close()
-
     # Adding 'errors' property to 'history.json'
     file = open(_get_json_path("history"), "r")
     history = json.loads(file.read())
@@ -149,6 +138,17 @@ def _update_v111_to_v112() -> None:
 
     file = open(_get_json_path("history"), "w")
     file.write(json.dumps(history, indent=4))
+    file.close()
+
+    # Adding 'version' property to 'config.json'
+    file = open(_get_json_path("config"), "r")
+    config = json.loads(file.read())
+    file.close()
+
+    config['version'] = "1.1.2"
+
+    file = open(_get_json_path("config"), "w")
+    file.write(json.dumps(config, indent=4))
     file.close()
 
     Logger.log("Updated to v1.1.2.")
