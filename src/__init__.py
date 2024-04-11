@@ -19,14 +19,14 @@ def download_torrent(torrent: dict) -> str:
     torrent_title = torrent['title'] + ".torrent"
     torrent_url = torrent['link']
 
-    file_path = os.environ.get("WATCH_DIRECTORY", "./watch") + "/" + torrent_title
+    file_path = env.get("DOWNLOADS_DIR", "./downloads") + "/" + torrent_title
     try:
         response = requests.get(torrent_url)
         # Success
         if response.status_code == 200:
             with open(file_path, "wb") as f:
                 f.write(response.content)
-            time.sleep(0.1)
+            time.sleep(0.01)
             return "success"
         # Failure
         else:
@@ -61,7 +61,7 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
                 successful_downloads.append(torrent)
                 Logger.debug(f" - Downloaded: {torrent['title']}")
 
-                for webhook_name in torrent['webhooks']:
+                for webhook_name in torrent['watcher_webhooks']:
                     webhook.send_notification(webhook_name, torrent)
 
             # Error
@@ -82,7 +82,7 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
 def main() -> None:
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
-        level=os.environ.get("LOG_LEVEL", "INFO"),
+        level=os.environ.get("LOG_LEVEL", "INFO").upper(),
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     Logger.log("~~~ Nyaa Watcher ~~~\nStarting watcher...")

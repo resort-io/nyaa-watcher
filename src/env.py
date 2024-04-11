@@ -20,4 +20,4 @@ class Env:
 
     def path(self, path: str) -> str:
         version = f"/dev.{path}.json" if self.env == "development" else f"/{path}.json"
-        return self.get("WATCHER_DIRECTORY", "") + version
+        return self.get("WATCHER_DIR", "") + version

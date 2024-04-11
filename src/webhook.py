@@ -3,10 +3,6 @@ import re
 from logger import Logger
 
 
-class WebhookError(Exception):
-    pass
-
-
 def _apply_fields(webhook_json: dict, notification: discord.Embed, torrent: dict) -> discord.Embed:
     for i in range(1, 7):
         if webhook_json['notifications']['show_downloads'] == i:
@@ -56,7 +52,7 @@ class Webhook:
             connected = 0
             for webhook in self.json_webhooks['webhooks']:
                 if webhook['name'] == "" or webhook['url'] == "":
-                    raise WebhookError("Webhook entries must have a name and URL.")
+                    raise Exception("Webhook entries must have a name and URL.")
 
                 if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
                     continue
@@ -113,7 +109,7 @@ class Webhook:
         try:
             Logger.debug(f"Sending notification to '{webhook_name}' discord webhook...")
             discord_webhook.send(embed=notification)
-            Logger.debug("Notification sent.")
+            Logger.debug(f"Notification sent to '{webhook_name}' webhook.")
         except Exception as e:
             Logger.log(f"Webhook Error: Failed to send notification to '{webhook_name}' discord webhook.")
             Logger.debug(f"{e}", {"exc_info": True})

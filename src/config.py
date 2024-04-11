@@ -10,10 +10,6 @@ load_dotenv()
 env = Env()
 
 
-class ConfigError(Exception):
-    pass
-
-
 def _get_version() -> str:
     file = open(env.path("config"), "r")
     config = json.loads(file.read())
@@ -155,20 +151,20 @@ def _verify_config_parse() -> None:
     file.close()
 
     if not config['nyaa_rss'] or not config['watcher_interval_seconds']:
-        raise ConfigError("Parse Error: 'nyaa_rss' and/or 'watcher_interval_seconds' is missing from 'config.json'. Change the properties and restart the watcher.")
+        raise Exception("Parse Error: 'nyaa_rss' and/or 'watcher_interval_seconds' is missing from 'config.json'. Change the properties and restart the watcher.")
 
     if config['nyaa_rss'] == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
-        raise ConfigError("Parse Error: No Nyaa RSS found. Add a Nyaa RSS URL to 'config.json' and restart the watcher.")
+        raise Exception("Parse Error: No Nyaa RSS found. Add a Nyaa RSS URL to 'config.json' and restart the watcher.")
 
     if not isinstance(config['watcher_interval_seconds'], int) or int(config['watcher_interval_seconds']) % 1 != 0:
-        raise ConfigError("Parse Error: WATCHER_INTERVAL_SEC must be an integer equal to or greater than 60 seconds. Change the property and restart the watcher.")
+        raise Exception("Parse Error: 'watcher_interval_seconds' must be an integer equal to or greater than 60 seconds. Change the property and restart the watcher.")
 
     if int(config['watcher_interval_seconds']) <= 60:
-        raise ConfigError("Parse Error: WATCHER_INTERVAL_SEC must be equal to or greater than 60 seconds. Change the property and restart the watcher.")
+        raise Exception("Parse Error: 'watcher_interval_seconds' must be equal to or greater than 60 seconds. Change the property and restart the watcher.")
 
     valid_versions = ["1.0.0", "1.0.1", "1.1.1", "1.1.2"]
     if config['version'] and config['version'] not in valid_versions:
-        raise ConfigError(f"Parse Error: v{config['version']} is not a valid version. Change the property to '1.1.1' in 'config.json' and restart the watcher to migrate to v1.1.2.")
+        raise Exception(f"Parse Error: v{config['version']} is not a valid version. Change the property to '1.1.1' in 'config.json' and restart the watcher to migrate to v1.1.2.")
 
 
 def _verify_watchlist_parse() -> None:
@@ -186,15 +182,15 @@ def _verify_watchlist_parse() -> None:
     file.close()
 
     if not watchlist['watchlist'] or len(watchlist['watchlist']) == 0:
-        raise ConfigError("Parse Error: watchlist.json contains no entries. Add entries and restart the watcher.")
+        raise Exception("Parse Error: watchlist.json contains no entries. Add entries and restart the watcher.")
 
     for entry in watchlist['watchlist']:
         if not all(entry['name'] and entry['tags'] and entry['regex'] and entry['webhooks']):
-            raise ConfigError("Parse Error: One or more entries in 'watchlist.json' contains missing or invalid properties. Change the properties and restart the watcher.")
+            raise Exception("Parse Error: One or more entries in 'watchlist.json' contains missing or invalid properties. Change the properties and restart the watcher.")
 
         if entry['name'] == "" and len(entry['tags']) + len(entry['regex']) == 0 \
                 or len(entry['tags']) + len(entry['regex']) == 0:
-            raise ConfigError("Parse Error: One or more entries in 'watchlist.json' does not have a tag or regex. "
+            raise Exception("Parse Error: One or more entries in 'watchlist.json' does not have a tag or regex. "
                               "Change the entries to have at least one 'tag' or 'regex' value and restart the watcher.")
 
 
@@ -216,7 +212,7 @@ def _verify_history_parse() -> None:
 
     properties = ['torrent_title', 'date_downloaded', 'nyaa_page', 'nyaa_hash']
     if not all(all(key in entry for key in properties) for entry in history['history']):
-        raise ConfigError("Parse Error: One or more entries in history.json contains missing or invalid properties. Fix the history properties and restart the watcher.")
+        raise Exception("Parse Error: One or more entries in history.json contains missing or invalid properties. Fix the history properties and restart the watcher.")
 
 
 def _verify_webhooks_parse() -> None:
@@ -237,7 +233,7 @@ def _verify_webhooks_parse() -> None:
     for webhook in webhooks['webhooks']:
         entry = _verify_webhook_entry(webhook)
         if entry.get('result') is False:
-            raise ConfigError(f"Parse Error: {entry.get('message')}")
+            raise Exception(f"Parse Error: {entry.get('message')}")
 
         if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
             Logger.log("Watcher Message: Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", {"hint": True})
@@ -313,7 +309,7 @@ class Config:
         file = open(env.path("history"), "w")
         file.write(json.dumps(history, indent=4))
         file.close()
-        Logger.debug(f"Appended '{len(torrents)}' torrent{'' if len(torrents) == 1 else 's'} to 'history.json'.")
+        Logger.debug(f"Appended {len(torrents)} torrent{'' if len(torrents) == 1 else 's'} to 'history.json'.")
 
     @staticmethod
     def get_config() -> dict:
@@ -423,8 +419,8 @@ class Config:
 
     @staticmethod
     def get_watcher_interval() -> int:
-        if os.environ.get("WATCHER_INTERVAL_SEC"):
-            return int(os.environ.get("WATCHER_INTERVAL_SEC"))
+        if os.environ.get("INTERVAL_SEC"):
+            return int(os.environ.get("INTERVAL_SEC"))
 
         file = open(env.path("config"), "r")
         config = json.loads(file.read())

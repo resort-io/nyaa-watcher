@@ -2,7 +2,7 @@
 .idea/
 __pycache__/
 venv/
-watch/
+downloads/
 test.py
 todo.txt
 

@@ -8,10 +8,6 @@ from logger import Logger
 load_dotenv()
 
 
-class WatcherError(Exception):
-    pass
-
-
 def _sort_torrents(torrents: list) -> list:
     torrent_titles = [(torrent['title'], torrent) for torrent in torrents]
     torrent_titles.sort()
@@ -46,6 +42,7 @@ class Watcher:
 
     def get_new_torrents(self) -> list:
         feed = feedparser.parse(self.rss)
+        show_entries = os.environ.get("SHOW_RSS_ENTRIES", "false").lower() == "true"
 
         queue = []
         for torrent in feed.entries:
@@ -54,10 +51,9 @@ class Watcher:
 
             # Check if the next torrents have already been checked in a previous fetch
             if hash == self.previous_hash:
-                self.previous_hash = feed.entries[0]['nyaa_infohash']
                 break
 
-            if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
+            if show_entries:
                 Logger.debug(f"Checking: {title}")
 
             # Check if user is watching this title
@@ -88,7 +84,7 @@ class Watcher:
                     history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("history") if entry['nyaa_hash'] == hash]
                     hash_match = len(history_entry) > 0
 
-                if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
+                if show_entries:
                     Logger.debug(f" - Watchlist: {name}\n"
                                  f" - Tags  (Match={tag_match}): {tags}\n"
                                  f" - RegEx (Match={regex_match}): {regexes}\n"
@@ -98,14 +94,15 @@ class Watcher:
                 if (tag_match is True and regex_match is True
                         or tag_match is None and regex_match is True
                         or tag_match is True and regex_match is None) and not hash_match:
-                    torrent['webhooks'] = [] if len(watchlist_entry["webhooks"]) == 0 else watchlist_entry["webhooks"]
+                    torrent['watcher_webhooks'] = [] if len(watchlist_entry["webhooks"]) == 0 else watchlist_entry["webhooks"]
                     queue.append(torrent)
 
-                    if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
+                    if show_entries:
                         Logger.debug("New torrent. Added to download list.", {"white_lines": "b"})
                     break
 
-                if os.environ.get("LOG_RSS_ENTRIES", "true") == "true":
+                if show_entries:
                     Logger.debug()
 
+        self.previous_hash = feed.entries[0]['nyaa_infohash']
         return _sort_torrents(queue)
