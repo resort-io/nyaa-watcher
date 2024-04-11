@@ -15,17 +15,19 @@ class Logger:
         if options and options.get('hint') is True and show_hints is False:
             return
 
-        if options and options.get('white_lines') and options.get('white_lines').__contains__("t"):
+        if options and options.get('white_lines') and "t" in options.get('white_lines'):
             log.log(level_num, "")
 
         if messages.__class__ == str:
             messages = messages.split("\n")
         for message in messages:
+            if options and options.get('hint') is True:
+                message = f"Tip: {message}"
             if level_num == logging.DEBUG:
                 message = f"[DEBUG] {message}"
             log.log(level_num, message, exc_info=exc_info)
 
-        if options and options.get('white_lines') and options.get('white_lines').__contains__("b"):
+        if options and options.get('white_lines') and "b" in options.get('white_lines'):
             log.log(level_num, "")
 
     @staticmethod

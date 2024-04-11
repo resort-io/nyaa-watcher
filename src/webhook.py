@@ -46,6 +46,9 @@ class Webhook:
         self.json_webhooks = webhooks
         self.discord_webhooks = dict()
 
+        if len(self.json_webhooks['webhooks']) == 1 and self.json_webhooks['webhooks'][0]['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
+            return
+
         if len(self.json_webhooks['webhooks']) > 0:
             Logger.log("Connecting to Discord webhooks...")
 
@@ -72,7 +75,9 @@ class Webhook:
                 else Logger.log(f"Connected to {connected} Discord webhooks.")
 
     def get_json_webhooks(self) -> dict:
-        return self.json_webhooks
+        return {
+            'webhooks': [webhook for webhook in self.json_webhooks['webhooks'] if webhook['url'] != "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING"]
+        }
 
     def get_json_webhook(self, name: str) -> dict | None:
         for webhook in self.json_webhooks['webhooks']:
@@ -81,7 +86,7 @@ class Webhook:
         return None
 
     def get_discord_webhook(self, name: str) -> discord.SyncWebhook | None:
-        return self.discord_webhooks.get(name)
+        return self.discord_webhooks.get(name, None)
 
     def send_notification(self, webhook_name: str, torrent: dict) -> None:
         webhook_json = self.get_json_webhook(webhook_name)

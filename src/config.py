@@ -1,11 +1,8 @@
 import os
 import json
 from datetime import datetime
-from dotenv import load_dotenv
 from logger import Logger
 from math import floor
-
-load_dotenv()
 
 
 def _get_json_path(filename: str) -> str:
@@ -22,12 +19,13 @@ def _get_version() -> str:
     if version:
         return version
 
-    file = open(_get_json_path("webhooks"), "r")
-    webhooks = json.loads(file.read())
-    file.close()
+    if os.path.exists(_get_json_path("webhooks")):
+        file = open(_get_json_path("webhooks"), "r")
+        webhooks = json.loads(file.read())
+        file.close()
 
-    if len(webhooks['webhooks']) > 0:
-        return "1.1.1"
+        if webhooks['webhooks'] and len(webhooks['webhooks']) > 0:
+            return "1.1.1"
     return "1.0.1"
 
 
@@ -239,7 +237,7 @@ def _verify_webhooks_parse() -> None:
             raise Exception(f"Parse Error: {entry.get('message')}")
 
         if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-            Logger.log("Watcher Message: Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", {"hint": True})
+            Logger.log("Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", {"hint": True})
 
 
 def _verify_webhook_entry(webhook: dict) -> dict:
@@ -279,41 +277,51 @@ def _verify_webhook_entry(webhook: dict) -> dict:
 class Config:
     @staticmethod
     def update_and_verify() -> None:
-        Logger.debug("Checking version...")
-        version = _get_version()
-        if version == "1.0.1":
-            _update_v101_to_v110()
-            version = "1.1.1"  # Skips v1.1.0
-        if version == "1.1.1":
-            _update_v111_to_v112()
-            version = "1.1.2"
-        Logger.debug(f"Watcher version: {version}")
+        try:
+            Logger.log("Checking for updates...")
+            version = _get_version()
+            if version == "1.0.1":
+                _update_v101_to_v110()
+                version = "1.1.1"  # Skips v1.1.0
+            if version == "1.1.1":
+                _update_v111_to_v112()
+                version = "1.1.2"
+            Logger.debug(f"Watcher version: {version}")
 
-        Logger.debug("Verifying files...")
-        _verify_config_parse()
-        _verify_watchlist_parse()
-        _verify_history_parse()
-        _verify_webhooks_parse()
-        Logger.debug("Files verified.")
+            Logger.debug("Verifying files...")
+            _verify_config_parse()
+            _verify_watchlist_parse()
+            _verify_history_parse()
+            _verify_webhooks_parse()
+            Logger.debug("Files verified.")
+        except Exception as e:
+            raise ValueError(e)
 
     @staticmethod
-    def append_to_history(torrents: list) -> None:
+    def append_to_history(successes: list, errors: list) -> None:
         file = open(_get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
 
-        for torrent in torrents:
+        for success in successes:
             history['history'].append({
-                "torrent_title": torrent['title'],
+                "torrent_title": success['title'],
                 "date_downloaded": str(datetime.now()),
-                "nyaa_page": torrent['id'],
-                "nyaa_hash": torrent['nyaa_infohash']
+                "nyaa_page": success['id'],
+                "nyaa_hash": success['nyaa_infohash']
+            })
+        for error in errors:
+            history['errors'].append({
+                "torrent_title": error['title'],
+                "date_failed": str(datetime.now()),
+                "nyaa_page": error['id'],
+                "nyaa_hash": error['nyaa_infohash']
             })
 
         file = open(_get_json_path("history"), "w")
         file.write(json.dumps(history, indent=4))
         file.close()
-        Logger.debug(f"Appended {len(torrents)} torrent{'' if len(torrents) == 1 else 's'} to 'history.json'.")
+        Logger.debug(f"Appended {len(successes)} download{'' if len(successes) == 1 else 's'} and {len(errors)} error{'' if len(errors) == 1 else 's'} to 'history.json'.")
 
     @staticmethod
     def get_config() -> dict:

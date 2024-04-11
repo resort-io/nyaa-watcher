@@ -13,24 +13,20 @@ load_dotenv()
 log = logging.getLogger("main")
 
 
-def download_torrent(torrent: dict) -> str:
+def download_torrent(torrent: dict) -> dict:
     torrent_title = torrent['title'] + ".torrent"
     torrent_url = torrent['link']
 
     file_path = os.environ.get("DOWNLOADS_DIR", "./downloads") + "/" + torrent_title
     try:
         response = requests.get(torrent_url)
-        # Success
         if response.status_code == 200:
             with open(file_path, "wb") as f:
                 f.write(response.content)
             time.sleep(0.01)
-            return "success"
-        # Failure
-        else:
-            return f"HTTP Status Code: {str(response.status_code)}."
+        return {"status": response.status_code}
     except Exception as e:
-        return str(e)
+        return {"status": 500, "message": str(e)}
 
 
 def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -> None:
@@ -40,38 +36,34 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
     # No new torrents
     if len(torrents) == 0:
         interval_string = Config.get_interval_string(interval)
-        Logger.log(f"No new torrents found.\nSearching for matching torrents in {interval_string}.")
+        Logger.log(f"Found 0 new torrents.\nSearching for matching torrents in {interval_string}.")
     # New torrents
     else:
-        Logger.log(f"{len(torrents)} new torrent{'' if len(torrents) == 1 else 's'}:")
-        for torrent in torrents:
-            Logger.log(f" - {torrent['title']}")
-        Logger.log("Downloading...")
+        Logger.log(f"Found {len(torrents)} new torrent{'' if len(torrents) == 1 else 's'}. Downloading...")
+        successes = list()
+        errors = list()
 
-        successful_downloads = list()
-        errors = 0
         for torrent in torrents:
             Logger.debug(f" - Downloading: {torrent['title']}...")
             download_status = download_torrent(torrent)
 
-            # Success
-            if download_status == "success":
-                successful_downloads.append(torrent)
-                Logger.debug(f" - Downloaded: {torrent['title']}")
+            if download_status['status'] == 200:
+                Logger.log(f" - Downloaded: {torrent['title']}")
+                successes.append(torrent)
 
                 for webhook_name in torrent['watcher_webhooks']:
                     webhook.send_notification(webhook_name, torrent)
-
-            # Error
             else:
-                Logger.log(f" - Error downloading file. {download_status}")
-                errors += 1
+                Logger.log(f" - Error: {torrent['title']} (HTTP Status Code: {download_status['status']}.")
+                if 'message' in download_status:
+                    Logger.debug(f" - {download_status['message']}")
+                errors.append(torrent)
             Logger.debug()
 
-        watcher.append_to_history(successful_downloads)
-        Config.append_to_history(successful_downloads)
+        watcher.append_to_history(successes)
+        Config.append_to_history(successes, errors)
         interval_string = Config.get_interval_string(interval)
-        Logger.log(f"Done. Finished with {errors} error{'' if errors == 1 else 's'}.\nSearching for new torrents in {interval_string}.")
+        Logger.log(f"Done. Finished with {len(errors)} error{'' if len(errors) == 1 else 's'}.\nSearching for new torrents in {interval_string}.")
 
     # Schedule next check
     scheduler.enter(interval, 1, fetch, (scheduler, watcher, interval, webhook))
@@ -103,7 +95,7 @@ def main() -> None:
                      f"NYAA RSS: {rss}\n"
                      f"WATCHLIST: {len(watchlist['watchlist'])} entries.\n"
                      f"HISTORY: {len(history['history'])} entries.\n"
-                     f"WEBHOOKS: {len(discord_webhooks['webhooks'])} entries.")
+                     f"WEBHOOKS: {len(webhook.get_json_webhooks()['webhooks'])} entries.")
     except Exception as e:
         Logger.log(f"{e}\nWatcher exited.", {"white_lines": "b"})
         exit(-1)

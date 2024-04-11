@@ -1,11 +1,8 @@
 import os
 import re
 import feedparser
-from dotenv import load_dotenv
 from datetime import datetime
 from logger import Logger
-
-load_dotenv()
 
 
 def _sort_torrents(torrents: list) -> list:
