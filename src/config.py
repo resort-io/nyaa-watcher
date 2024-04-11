@@ -134,7 +134,10 @@ def _update_v111_to_v112() -> None:
     file.close()
 
     if not history.get('errors'):
-        history['errors'] = []
+        history = {
+            "errors": [],
+            "history": history.get('history') if history.get('history') else []
+        }
 
     file = open(_get_json_path("history"), "w")
     file.write(json.dumps(history, indent=4))
