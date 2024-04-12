@@ -14,8 +14,8 @@ log = logging.getLogger("main")
 
 
 def download_torrent(torrent: dict) -> dict:
-    torrent_title = torrent['title'] + ".torrent"
-    torrent_url = torrent['link']
+    torrent_title = torrent.get('title') + ".torrent"
+    torrent_url = torrent.get('link')
 
     file_path = os.environ.get("DOWNLOADS_DIR", "./downloads") + "/" + torrent_title
     try:
@@ -44,19 +44,19 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
         errors = list()
 
         for torrent in torrents:
-            Logger.debug(f" - Downloading: {torrent['title']}...")
+            Logger.debug(f" - Downloading: {torrent.get('title')}...")
             download = download_torrent(torrent)
 
-            if download['status'] == 200:
-                Logger.log(f" - Downloaded: {torrent['title']}")
+            if download.get('status') == 200:
+                Logger.log(f" - Downloaded: {torrent.get('title')}")
                 successes.append(torrent)
 
-                for webhook_name in torrent['watcher_webhooks']:
+                for webhook_name in torrent.get('watcher_webhooks'):
                     webhook.send_notification(webhook_name, torrent)
             else:
-                Logger.log(f" - Error: {torrent['title']} (HTTP Status Code: {download['status']}.")
+                Logger.log(f" - Error: {torrent.get('title')} (HTTP Status Code: {download.get('status')}.")
                 if 'message' in download:
-                    Logger.debug(f" - {download['message']}")
+                    Logger.debug(f" - {download.get('message')}")
                 errors.append(torrent)
             Logger.debug()
 
@@ -93,9 +93,9 @@ def main() -> None:
 
         Logger.debug(f"INTERVAL: {interval} seconds.\n"
                      f"NYAA RSS: {rss}\n"
-                     f"WATCHLIST: {len(watchlist['watchlist'])} entries.\n"
-                     f"HISTORY: {len(history['history'])} entries.\n"
-                     f"WEBHOOKS: {len(webhook.get_json_webhooks()['webhooks'])} entries.")
+                     f"WATCHLIST: {len(watchlist.get('watchlist'))} entries.\n"
+                     f"HISTORY: {len(history.get('history'))} entries.\n"
+                     f"WEBHOOKS: {len(webhook.get_json_webhooks().get('webhooks'))} entries.")
     except Exception as e:
         Logger.log(f"{e}\nWatcher exited.", {"white_lines": "b"})
         exit(-1)

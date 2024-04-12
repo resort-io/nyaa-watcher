@@ -21,11 +21,11 @@ class Watcher:
 
     def append_to_history(self, torrents: list) -> None:
         for torrent in torrents:
-            self.history['history'].append({
-                "torrent_title": torrent['title'],
+            self.history.get('history').append({
+                "torrent_title": torrent.get('title'),
                 "date_downloaded": str(datetime.now()),
-                "nyaa_page": torrent['id'],
-                "nyaa_hash": torrent['nyaa_infohash']
+                "nyaa_page": torrent.get('id'),
+                "nyaa_hash": torrent.get('nyaa_infohash')
             })
 
     def get_history(self) -> dict:
@@ -43,8 +43,8 @@ class Watcher:
 
         queue = []
         for torrent in feed.entries:
-            title = torrent['title']
-            hash = torrent['nyaa_infohash']
+            title = torrent.get('title')
+            hash = torrent.get('nyaa_infohash')
 
             # Check if the next torrents have already been checked in a previous fetch
             if hash == self.previous_hash:
@@ -54,10 +54,10 @@ class Watcher:
                 Logger.debug(f"Checking: {title}")
 
             # Check if user is watching this title
-            for watchlist_entry in self.watchlist["watchlist"]:
-                name = watchlist_entry["name"]
-                tags = watchlist_entry["tags"]
-                regexes = watchlist_entry["regex"]
+            for watchlist_entry in self.watchlist.get("watchlist"):
+                name = watchlist_entry.get("name")
+                tags = watchlist_entry.get("tags")
+                regexes = watchlist_entry.get("regex")
 
                 # Tags and RegEx
                 regex_match = tag_match = None
@@ -78,7 +78,7 @@ class Watcher:
                 if tag_match is True and regex_match is True \
                         or tag_match is None and regex_match is True \
                         or tag_match is True and regex_match is None:
-                    history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("history") if entry['nyaa_hash'] == hash]
+                    history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("history") if entry.get('nyaa_hash') == hash]
                     hash_match = len(history_entry) > 0
 
                 if show_entries:
@@ -91,7 +91,7 @@ class Watcher:
                 if (tag_match is True and regex_match is True
                         or tag_match is None and regex_match is True
                         or tag_match is True and regex_match is None) and not hash_match:
-                    torrent['watcher_webhooks'] = [] if len(watchlist_entry["webhooks"]) == 0 else watchlist_entry["webhooks"]
+                    torrent['watcher_webhooks'] = [] if len(watchlist_entry.get("webhooks")) == 0 else watchlist_entry.get("webhooks")
                     queue.append(torrent)
 
                     if show_entries:
@@ -101,5 +101,5 @@ class Watcher:
                 if show_entries:
                     Logger.debug()
 
-        self.previous_hash = feed.entries[0]['nyaa_infohash']
+        self.previous_hash = feed.entries.get(0).get('nyaa_infohash')
         return _sort_torrents(queue)

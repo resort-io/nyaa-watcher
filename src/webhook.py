@@ -80,8 +80,8 @@ class Webhook:
         }
 
     def get_json_webhook(self, name: str) -> dict | None:
-        for webhook in self.json_webhooks['webhooks']:
-            if webhook['name'] == name:
+        for webhook in self.json_webhooks.get('webhooks'):
+            if webhook.get('name') == name:
                 return webhook
         return None
 
@@ -98,18 +98,18 @@ class Webhook:
         notification = discord.Embed()
 
         # Notification Title and Description
-        title = webhook_json['notifications']['title']
-        notification.title = f"Downloading New Torrent: {torrent.get('title')}" if title == "" else _insert_tags(title, webhook_json['name'], torrent)
+        title = webhook_json.get('notifications').get('title')
+        notification.title = f"Downloading New Torrent: {torrent.get('title')}" if title == "" else _insert_tags(title, webhook_json.get('name'), torrent)
 
         # Notification Title and Description
-        if webhook_json['notifications']['description'] != "":
-            notification.description = _insert_tags(webhook_json['notifications']['description'], webhook_json['name'], torrent)
+        if webhook_json.get('notifications').get('description') != "":
+            notification.description = _insert_tags(webhook_json.get('notifications').get('description'), webhook_json.get('name'), torrent)
 
         # Notification 'show_' Details
         notification = _apply_fields(webhook_json, notification, torrent)
 
         # Notification Nyaa URL
-        notification.url = f"{torrent['id']}"
+        notification.url = f"{torrent.get('id')}"
 
         try:
             Logger.debug(f"Sending notification to '{webhook_name}' discord webhook...")

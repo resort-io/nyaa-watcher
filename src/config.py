@@ -105,7 +105,7 @@ def _update_v101_to_v110() -> None:
     for entry in watchlist.get('watchlist'):
         if 'webhooks' not in entry:
             entry['webhooks'] = []
-            Logger.log(f"Added 'webhooks' property to watchlist entry: {entry['name']}.", {"level": "debug"})
+            Logger.log(f"Added 'webhooks' property to watchlist entry: {entry.get('name')}.", {"level": "debug"})
 
     file = open(_get_json_path("watchlist"), "w")
     file.write(json.dumps(watchlist, indent=4))
@@ -117,7 +117,7 @@ def _update_v101_to_v110() -> None:
     file.close()
 
     if len(webhooks.get('webhooks')) == 0:
-        webhooks['webhooks'].append(_new_webhook_entry_sample())
+        webhooks.get('webhooks').append(_new_webhook_entry_sample())
         file = open(_get_json_path("webhooks"), "w")
         file.write(json.dumps(webhooks, indent=4))
         file.close()
@@ -278,7 +278,7 @@ def _verify_webhook_entry(webhook: dict) -> dict:
         if key not in webhook.get('notifications'):
             return {
                 "result": False,
-                "message": f"'{webhook['name']}' webhook contains one or more 'show_' properties that are missing or invalid. Change the webhook properties and restart the watcher"
+                "message": f"'{webhook.get('name')}' webhook contains one or more 'show_' properties that are missing or invalid. Change the webhook properties and restart the watcher"
             }
 
     notify_values: list = [value for key, value in webhook.get('notifications').items() if isinstance(value, int)]
@@ -329,17 +329,17 @@ class Config:
 
         for success in successes:
             history.get('history').append({
-                "torrent_title": success['title'],
+                "torrent_title": success.get('title'),
                 "date_downloaded": str(datetime.now()),
-                "nyaa_page": success['id'],
-                "nyaa_hash": success['nyaa_infohash']
+                "nyaa_page": success.get('id'),
+                "nyaa_hash": success.get('nyaa_infohash')
             })
         for error in errors:
             history.get('errors').append({
-                "torrent_title": error['title'],
+                "torrent_title": error.get('title'),
                 "date_failed": str(datetime.now()),
-                "nyaa_page": error['id'],
-                "nyaa_hash": error['nyaa_infohash']
+                "nyaa_page": error.get('id'),
+                "nyaa_hash": error.get('nyaa_infohash')
             })
 
         file = open(_get_json_path("history"), "w")
@@ -437,7 +437,7 @@ class Config:
         file = open(_get_json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
-        return config['nyaa_rss']
+        return config.get('nyaa_rss')
 
     @staticmethod
     def get_watcher_watchlist() -> dict:
@@ -461,7 +461,7 @@ class Config:
         file = open(_get_json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
-        return int(config['watcher_interval_seconds'])
+        return int(config.get('watcher_interval_seconds'))
 
     @staticmethod
     def get_discord_webhooks() -> dict:
