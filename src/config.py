@@ -2,11 +2,10 @@ import os
 import json
 from datetime import datetime
 from logger import Logger
-from math import floor
 
 
 def _get_json_path(filename: str) -> str:
-    version = f"/dev.{filename}.json" if os.environ.get("ENV", "production").lower() == "development" else f"/{filename}.json"
+    version = f"/{'dev.' if os.environ.get('ENV', 'production').lower() == 'development' else ''}{filename}.json"
     return os.environ.get("WATCHER_DIR", "") + version
 
 
@@ -356,78 +355,21 @@ class Config:
 
     @staticmethod
     def get_interval_string(interval: int) -> str:
-        days = floor(interval / 86400)
-        if days > 0:
-            interval -= floor(days * 86400)
+        days, remainder = divmod(interval, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
 
-        hours = floor(interval / 3600)
-        if hours > 0:
-            interval -= floor(hours * 3600)
+        values = [
+            f"{value} {name}" + ("s" if value > 1 else "")
+            for value, name in [(days, "day"), (hours, "hour"), (minutes, "minute"), (seconds, "second")]
+            if value > 0
+        ]
 
-        minutes = floor(interval / 60)
-        if minutes > 0:
-            interval -= floor(minutes * 60)
-
-        seconds = interval
-
-        array = [days, hours, minutes, seconds]
-
-        # Find last non-zero index
-        last_index = -1
-        i = 0
-        while i <= 3:
-            if array[i] > 0:
-                last_index = i
-            i += 1
-
-        # Number of units to display
-        units = 0
-        for value in array:
-            if value > 0:
-                units += 1
-
-        # Build string
-        if units == 1:
-            if days > 0:
-                return f"{days} day" if days == 1 else f"{days} days"
-            elif hours > 0:
-                return f"{hours} hour" if hours == 1 else f"{hours} hours"
-            elif minutes > 0:
-                return f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
-            else:
-                return f"{seconds} second" if seconds == 1 else f"{seconds} seconds"
+        if len(values) > 1:
+            last = values.pop()
+            return ", ".join(values) + f"{',' if len(values) > 1 else ''} and " + last
         else:
-            string = ""
-
-            # Days
-            if array[0] > 0:
-                string += f"{days} day" if days == 1 else f"{days} days"
-                if last_index != 0:
-                    string += ", "
-                units -= 1
-            # Hours
-            if array[1] > 0:
-                if last_index == 1 and units == 1:
-                    string += f"and {hours} hour" if hours == 1 else f"and {hours} hours"
-                else:
-                    string += f"{hours} hour" if hours == 1 else f"{hours} hours"
-                    if last_index != 1:
-                        string += ", "
-                    units -= 1
-            # Minutes
-            if array[2] > 0:
-                if last_index == 2 and units == 1:
-                    string += f"and {minutes} minute" if minutes == 1 else f"and {minutes} minutes"
-                else:
-                    string += f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
-                    if last_index != 2:
-                        string += ", "
-                    units -= 1
-            # Seconds
-            if array[3] > 0:
-                string += f"and {seconds} second" if seconds == 1 else f"and {seconds} seconds"
-
-            return string
+            return values[0]
 
     @staticmethod
     def get_nyaa_rss() -> str:

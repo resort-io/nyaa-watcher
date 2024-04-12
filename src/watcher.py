@@ -101,5 +101,5 @@ class Watcher:
                 if show_entries:
                     Logger.debug()
 
-        self.previous_hash = feed.entries.get(0).get('nyaa_infohash')
+        self.previous_hash = feed.entries[0]['nyaa_infohash']
         return _sort_torrents(queue)
