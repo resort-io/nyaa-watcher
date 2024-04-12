@@ -261,7 +261,7 @@ def _verify_webhooks_parse() -> None:
             raise Exception(f"Parse Error: {entry.get('message')}")
 
         if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-            Logger.log("Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", {"hint": True})
+            Logger.log("Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", {"tip": True})
 
 
 def _verify_webhook_entry(webhook: dict) -> dict:
