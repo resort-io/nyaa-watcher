@@ -17,7 +17,7 @@ def download_torrent(torrent: dict) -> dict:
     torrent_title = torrent.get('title') + ".torrent"
     torrent_url = torrent.get('link')
 
-    file_path = os.environ.get("DOWNLOADS_DIR", "./downloads") + "/" + torrent_title
+    file_path = os.environ.get("DOWNLOADS_DIR", "/downloads") + "/" + torrent_title
     try:
         response = requests.get(torrent_url)
         if response.status_code == 200:

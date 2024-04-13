@@ -5,7 +5,7 @@ from logger import Logger
 
 
 def _get_json_path(filename: str) -> str:
-    version = f"/{'dev.' if os.environ.get('ENV', 'production').lower() == 'development' else ''}{filename}.json"
+    version = f"{'json/dev.' if os.environ.get('ENV', 'production').lower() == 'development' else '/'}{filename}.json"
     return os.environ.get("WATCHER_DIR", "") + version
 
 
@@ -178,11 +178,11 @@ def _verify_config_parse() -> None:
     if config.get('nyaa_rss') == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
         raise Exception("Parse Error: No Nyaa RSS found. Add a Nyaa RSS URL to 'config.json' and restart the watcher.")
 
-    if not isinstance(config.get('watcher_interval_seconds'), int) or int(config.get('watcher_interval_seconds')) % 1 != 0:
-        raise Exception("Parse Error: 'watcher_interval_seconds' must be an integer equal to or greater than 60 seconds. Change the property and restart the watcher.")
+    if not isinstance(config.get('watcher_interval_seconds'), int):
+        raise Exception("Parse Error: 'watcher_interval_seconds' must be an integer that is at least 60 seconds. Change the property and restart the watcher.")
 
-    if int(config.get('watcher_interval_seconds')) <= 60:
-        raise Exception("Parse Error: 'watcher_interval_seconds' must be equal to or greater than 60 seconds. Change the property and restart the watcher.")
+    if int(config.get('watcher_interval_seconds')) < 60:
+        raise Exception("Parse Error: 'watcher_interval_seconds' must be at least 60 seconds. Change the property and restart the watcher.")
 
     valid_versions = ["1.0.0", "1.0.1", "1.1.1", "1.1.2"]
     if config.get('version') and config.get('version') not in valid_versions:
