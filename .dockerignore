@@ -1,11 +1,43 @@
+### Development ###
+src/downloads/
+__tests__/__init__.py
+dev.*.json
+package.json
+
+### Environment & OS ###
+.DS_Store
 .env
-.idea/
-__pycache__/
+.venv
+env/
 venv/
-downloads/
-test.py
+ENV/
+env.bak/
+venv.bak/
 
-dev.*
+### PyCharm & VSCode ###
+.idea/
+.idea_modules/
+out/
+*.iml
+modules.xml
+.vscode/*
+.history/
+*.vsix
+.history
+.ionide
 
+### Python ###
+__pycache__/
+__pypackages__/
+.Python
+*.log
+MANIFEST
+
+### Docker Ignore Specific ###
 .git/
+.github/
 .gitignore
+CHANGELOG.md
+Dockerfile
+LICENSE
+SETUP.md

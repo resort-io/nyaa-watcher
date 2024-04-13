@@ -1,8 +1,34 @@
-.env
-.idea/
-__pycache__/
-venv/
-downloads/
-test.py
+### Development ###
+src/downloads/
+__tests__/__init__.py
+dev.*.json
+package.json
 
-dev.*
+### Environment & OS ###
+.DS_Store
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+### PyCharm & VSCode ###
+.idea/
+.idea_modules/
+out/
+*.iml
+modules.xml
+.vscode/*
+.history/
+*.vsix
+.history
+.ionide
+
+### Python ###
+__pycache__/
+__pypackages__/
+.Python
+*.log
+MANIFEST
