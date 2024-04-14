@@ -55,23 +55,6 @@ def _new_watchlist_json() -> dict:
     }
 
 
-def _new_webhook_entry_sample() -> dict:
-    return {
-        "name": "Example Webhook Name",
-        "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-        "notifications": {
-            "title": "",
-            "description": "",
-            "show_category": 3,
-            "show_downloads": 4,
-            "show_leechers": 6,
-            "show_published": 1,
-            "show_seeders": 5,
-            "show_size": 2
-        }
-    }
-
-
 def _new_webhook_json() -> dict:
     return {
         "webhooks": [
@@ -116,9 +99,8 @@ def _update_v101_to_v110() -> None:
     file.close()
 
     if len(webhooks.get('webhooks')) == 0:
-        webhooks.get('webhooks').append(_new_webhook_entry_sample())
         file = open(_get_json_path("webhooks"), "w")
-        file.write(json.dumps(webhooks, indent=4))
+        file.write(json.dumps(_new_webhook_json(), indent=4))
         file.close()
 
     Logger.log("Updated to v1.1.0.")
@@ -142,12 +124,16 @@ def _update_v111_to_v112() -> None:
     file.write(json.dumps(history, indent=4))
     file.close()
 
-    # Adding 'version' property to 'config.json'
+    # Change value name and adding 'version' property in 'config.json'
     file = open(_get_json_path("config"), "r")
     config = json.loads(file.read())
     file.close()
 
-    config['version'] = "1.1.2"
+    config = {
+        "nyaa_rss": config.get('nyaa_rss'),
+        "interval_sec": config.get('watcher_interval_seconds'),
+        "version": "1.1.2"
+    }
 
     file = open(_get_json_path("config"), "w")
     file.write(json.dumps(config, indent=4))
@@ -172,17 +158,17 @@ def _verify_config_parse() -> None:
     config = json.loads(file.read())
     file.close()
 
-    if not config.get('nyaa_rss') or not config.get('watcher_interval_seconds'):
-        raise Exception("Parse Error: 'nyaa_rss' and/or 'watcher_interval_seconds' is missing from 'config.json'. Change the properties and restart the watcher.")
+    if not config.get('nyaa_rss') or not config.get('interval_sec') or not config.get('version'):
+        raise Exception("Parse Error: 'nyaa_rss', 'interval_sec', and/or 'version' is missing from 'config.json'. Change the properties and restart the watcher.")
 
     if config.get('nyaa_rss') == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
         raise Exception("Parse Error: No Nyaa RSS found. Add a Nyaa RSS URL to 'config.json' and restart the watcher.")
 
-    if not isinstance(config.get('watcher_interval_seconds'), int):
-        raise Exception("Parse Error: 'watcher_interval_seconds' must be an integer that is at least 60 seconds. Change the property and restart the watcher.")
+    if not isinstance(config.get('interval_sec'), int):
+        raise Exception("Parse Error: 'interval_sec' must be an integer that is at least 60 seconds. Change the property and restart the watcher.")
 
-    if int(config.get('watcher_interval_seconds')) < 60:
-        raise Exception("Parse Error: 'watcher_interval_seconds' must be at least 60 seconds. Change the property and restart the watcher.")
+    if int(config.get('interval_sec')) < 60:
+        raise Exception("Parse Error: 'interval_sec' must be at least 60 seconds. Change the property and restart the watcher.")
 
     valid_versions = ["1.0.0", "1.0.1", "1.1.1", "1.1.2"]
     if config.get('version') and config.get('version') not in valid_versions:
