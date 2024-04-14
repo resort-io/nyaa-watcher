@@ -37,7 +37,7 @@ class Watcher:
     def get_rss(self) -> str:
         return self.rss
 
-    def get_new_torrents(self) -> list:
+    def fetch_new_torrents(self) -> list:
         feed = feedparser.parse(self.rss)
         show_entries = os.environ.get("SHOW_RSS_ENTRIES", "false").lower() == "true"
 

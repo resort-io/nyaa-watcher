@@ -31,7 +31,7 @@ def download_torrent(torrent: dict) -> dict:
 
 def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -> None:
     Logger.log("Searching for matching torrents...", {"white_lines": "t"})
-    torrents = watcher.get_new_torrents()
+    torrents = watcher.fetch_new_torrents()
 
     # No new torrents
     if len(torrents) == 0:
