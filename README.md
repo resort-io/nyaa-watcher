@@ -8,7 +8,7 @@
 ## Features
 
 * Monitors a Nyaa user's RSS feed and downloads torrent files based upon tags and/or regular expressions.
-* Notifies Discord channels via webhooks when each torrent file is downloaded.
+* Notifies Discord channels via webhooks when a torrent file is downloaded.
 
 ## Usage
 
@@ -36,14 +36,14 @@ docker run
 
 ### Parameters
 
-The syntax for the volume parameter is `<host>:<container>`. See the [setup documentation](./SETUP.md) for more information.
+The syntax for the volume parameter is `<host>:<container>`. See the [setup documentation](https://github.com/resort-io/nyaa-watcher/blob/main/SETUP.md) for more information.
 
-| Parameter      | Description                                                                   |
-|----------------|-------------------------------------------------------------------------------|
-| `-v /watch`    | Watch directory for your torrent client.                                      |
-| `-v /watcher`  | Directory for Nyaa Watcher files.                                             |
-| `-e LOG_LEVEL` | Log information level. `INFO` (default) or `DEBUG` (Optional)                 |
-| `-e SHOW_TIPS` | Show tips in the log from the watcher. `true` (default) or `false` (Optional) |
+| Parameter      | Description                                                                    |
+|----------------|--------------------------------------------------------------------------------|
+| `-v /watch`    | Watch directory for your torrent client.                                       |
+| `-v /watcher`  | Directory for Nyaa Watcher files.                                              |
+| `-e LOG_LEVEL` | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
+| `-e SHOW_TIPS` | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
 
 ## Issues
 

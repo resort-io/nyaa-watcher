@@ -1,16 +1,16 @@
-# Nyaa Watcher - Setup
+[![Nyaa Watcher Banner](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/banner.png)](https://github.com/resort-io/nyaa-watcher)
 
-## Table of Contents
+# Setup
 
-   * [Get Started](#get-started)
-   * [Files](#files)
-     * [*config.json*](#configjson)
-     * [*history.json*](#historyjson)
-     * [*watchlist.json*](#watchlistjson)
-     * [*webhooks.json*](#webhooksjson)
-   * [Regular Expressions](#regular-expressions)
-   * [Example Notifications](#example-notifications)
-
+* [Get Started](#get-started)
+* [Docker](#docker)
+* [Files](#files)
+  * [*config.json*](#configjson)
+  * [*history.json*](#historyjson)
+  * [*watchlist.json*](#watchlistjson)
+  * [*webhooks.json*](#webhooksjson)
+* [Regular Expressions](#regular-expressions)
+* [Example Notifications](#example-notifications)
 
 ## Get Started
 
@@ -19,20 +19,51 @@ The watcher will generate JSON files on initial startup or if they are missing f
 **To begin watching** follow these steps:
 
 * Add an entry to `watchlist.json` with a `name` value and at least one `tag` and/or `regex` value.
-
 * Add a Nyaa RSS URL to `config.json` within the `nyaa_rss` property.
-
-* (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the name within one or more `watchlist.json` entries.
-
+* (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the `name` within one or more `watchlist.json` entries.
 * Restart the watcher.
 
-#### Triggering Download 
+### Triggering Download 
 
-The watcher will download a torrent file when **one of three scenarios** are true:
+The watcher will download a torrent file when **one of three conditions** are true:
 
 1. When **one or more** `tag` value matches a string sequence and there are **no** `regex` patterns presents.
 2. When **one or more** `regex` patterns matches a string sequence and there are **no** `tag` values present.
 3. When both **one or more** `tag` value and **one or more** `regex` pattern matches a string sequence.
+
+## Docker
+
+```docker
+docker run
+  --name=nyaa-watcher
+  -v /path/to/torrent-client/watch:/downloads
+  -v /path/to/appdata/nyaa-watcher:/watcher
+  --restart unless-stopped
+  resortdocker/nyaa-watcher:latest
+```
+
+```docker
+docker run
+  --name=nyaa-watcher
+  -e LOG_LEVEL=DEBUG
+  -e SHOW_TIPS=false
+  -v /path/to/torrent-client/watch:/downloads
+  -v /path/to/appdata/nyaa-watcher:/watcher
+  --restart unless-stopped
+  resortdocker/nyaa-watcher:latest
+```
+
+### Parameters
+
+The syntax for the volume parameter is `<host>:<container>`.
+
+| Parameter      | Description                                                                    |
+|----------------|--------------------------------------------------------------------------------|
+| `-v /watch`    | Watch directory for your torrent client.                                       |
+| `-v /watcher`  | Directory for Nyaa Watcher files.                                              |
+| `-e LOG_LEVEL` | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
+| `-e SHOW_TIPS` | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
+
 
 ## Files
 
@@ -116,7 +147,7 @@ See [Regular Expressions](#regular-expressions) below for more information.
     {
       "name": "Nyaa Username - One Piece",
       "tags": [],
-      "regex": ["One Piece - ([1-9][0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9][0-9]|[2-9][0-9][0-9][0-9])"],
+      "regex": ["One Piece - (1[0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9]{2}|[2-9][0-9]{3})"],
       "webhooks": ["Notification Server"]
     }
   ]
@@ -132,29 +163,14 @@ Contains the information for the Discord webhooks and notification customization
 * `notifications [dict]` - Customization for the notification.
   * `title [str]` - Custom title of the Discord notification. **Leave blank for default message**.
   * `description [str]` - Custom description of the Discord notification. **Leave blank for no message**.
-  * `show_category [int]` - (0 to 6) Nyaa category for the torrent. (E.g., *Anime - English-translated*)
+  * `show_category [int]` - (0 to 6) Nyaa category for the torrent.
   * `show_downloads [int]` - (0 to 6) Number of downloads for the torrent.
   * `show_leechers [int]` - (0 to 6) Number of leechers for the torrent.
-  * `show_published [int]` - (0 to 6) Date and time the torrent was published. (E.g., *Fri, 20 Apr 2023 20:47*)
+  * `show_published [int]` - (0 to 6) Date and time the torrent was published. 
   * `show_seeders [int]` - (0 to 6) Number of seeders for the torrent.
-  * `show_size [int]` - (0 to 6) Size of the torrent. (E.g., *178.2 MiB*, *32.1 GiB*)
-
-Use one or more placeholders in the `title` and `description` to insert data into the notification:
-
-`$webhook_name`, `$title`, `$downloads`, `$seeders`, `$leechers`, `$size`, `$published`, and `$category`.
+  * `show_size [int]` - (0 to 6) Size of the torrent. 
 
 **Note**: A single webhook URL can be used for multiple webhooks.
-
-The **`show_` properties** represent the placement of each of the property Discord notification message.
-The properties range from `0` to `6` and are placed in a within the **3x2** grid that displays the information from **top left to bottom right**:
-
-* `0` - **Disabled**
-* `1` - **Top Left**
-* `2` - **Top Middle**
-* `3` - **Top Right**
-* `4` - **Bottom Left**
-* `5` - **Bottom Middle**
-* `6` - **Bottom Right**
 
 ```json
 {
@@ -177,12 +193,37 @@ The properties range from `0` to `6` and are placed in a within the **3x2** grid
 }
 ```
 
-See the [Example Notifications](#example-notifications) for images of the notifications.
+#### Torrent Info Tokens
+
+Insert torrent information into the `title` and `description` values in the notification:
+
+* `$webhook_name` - Name of the webhook.
+* `$title` - Title of the torrent.
+* `$downloads` - Number of downloads for the torrent.
+* `$seeders` - Number of seeders for the torrent.
+* `$leechers` - Number of leechers for the torrent.
+* `$size` - Size of the torrent (e.g., *178.2 MiB*).
+* `$published` - Date and time the torrent was published (e.g., *Fri, 20 Apr 2023 20:47*).
+* `$category` - Nyaa category for the torrent (e.g., *Anime - English-translated*).
+
+#### Torrent Info Placement
+
+The **`show_` properties** represent where torrent information will be placed within the notification on a **3x2** grid, ranging from `0` to `6`:
+
+* `0` - **Disabled**
+* `1` - **Top Left**
+* `2` - **Top Middle**
+* `3` - **Top Right**
+* `4` - **Bottom Left**
+* `5` - **Bottom Middle**
+* `6` - **Bottom Right**
+
+See the [Example Notifications](#example-notifications) section for images of notifications.
 
 #### Example `webhooks.json`
 
-* `Friends Server` - Sends a notification with a **custom title and description**, along with the **size** and **published date** properties.
-* `Notifications Server` - Sends a notification with the **default title**, along with **all six** properties in a custom order.
+* `Friends Server` - Sends a notification with a **custom title** and ** custom description**, plus the **size** and **published date** properties.
+* `Notifications Server` - Sends a notification with the **default title** and **all six** properties in a custom order.
 
 ```json
 {
@@ -224,9 +265,9 @@ See the [Example Notifications](#example-notifications) for images of the notifi
 Below are examples of regular expressions that can be modified for your needs.
 
 Titles with the `00` format may the words ***720p*** or ***1080p*** within them which will interfere with the matching,
-so you may want to use `regex` values to with title and episode numbers in the same pattern.
+so you may want to use a `regex` value with both the title and episode number pattern.
 
-Visit [Regex101](https://regex101.com/) for more information on creating and testing regular expressions.
+Visit [Regex101](https://regex101.com/) for more information on creating and testing patterns.
 
 ### Regular Expression Examples
 
@@ -253,10 +294,10 @@ Visit [Regex101](https://regex101.com/) for more information on creating and tes
 
 ### Example Notifications
 
-#### `Friends Server`
+`Friends Server`
 
 ![Nyaa Watcher Webhook Notification Example #1](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/notification-example-1.png)
 
-#### `Notifications Server`
+`Notifications Server`
 
 ![Nyaa Watcher Webhook Notification Example #2](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/notification-example-2.png)
