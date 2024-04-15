@@ -18,18 +18,18 @@ The watcher will generate JSON files on initial startup or if they are missing f
 
 **To begin watching** follow these steps:
 
-* Add an entry to `watchlist.json` with a `name` value and at least one `tag` and/or `regex` value.
-* Add a Nyaa RSS URL to `config.json` within the `nyaa_rss` property.
-* (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the `name` within one or more `watchlist.json` entries.
-* Restart the watcher.
+1. Add an entry to `watchlist.json` with a `name` value and at least one `tag` and/or `regex` value.
+2. Add a Nyaa RSS URL to `config.json` within the `nyaa_rss` property.
+3. (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the `name` within one or more `watchlist.json` entries.
+4. Restart the watcher.
 
 ### Triggering Download 
 
 The watcher will download a torrent file when **one of three conditions** are true:
 
-1. When **one or more** `tag` value matches a string sequence and there are **no** `regex` patterns presents.
-2. When **one or more** `regex` patterns matches a string sequence and there are **no** `tag` values present.
-3. When both **one or more** `tag` value and **one or more** `regex` pattern matches a string sequence.
+* When **one or more** `tag` value matches a string sequence and there are **no** `regex` patterns presents.
+* When **one or more** `regex` patterns matches a string sequence and there are **no** `tag` values present.
+* When both **one or more** `tag` value and **one or more** `regex` pattern matches a string sequence.
 
 ## Docker
 

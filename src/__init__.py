@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import logging
 import requests
@@ -46,6 +47,7 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
         for torrent in torrents:
             Logger.debug(f" - Downloading: {torrent.get('title')}...")
             download = download_torrent(torrent)
+            torrent['download_datetime'] = str(datetime.now())
 
             if download.get('status') == 200:
                 Logger.log(f" - Downloaded: {torrent.get('title')}")

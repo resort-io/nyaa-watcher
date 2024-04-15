@@ -23,17 +23,6 @@ docker run
   resortdocker/nyaa-watcher:latest
 ```
 
-```docker
-docker run
-  --name=nyaa-watcher
-  -e LOG_LEVEL=DEBUG
-  -e SHOW_TIPS=false
-  -v /path/to/torrent-client/watch:/downloads
-  -v /path/to/appdata/nyaa-watcher:/watcher
-  --restart unless-stopped
-  resortdocker/nyaa-watcher:latest
-```
-
 ### Parameters
 
 The syntax for the volume parameter is `<host>:<container>`. See the [setup documentation](https://github.com/resort-io/nyaa-watcher/blob/main/SETUP.md) for more information.

@@ -6,7 +6,7 @@ from logger import Logger
 
 def _get_json_path(filename: str) -> str:
     version = f"{'json/dev.' if os.environ.get('ENV', 'production').lower() == 'development' else '/'}{filename}.json"
-    return os.environ.get("WATCHER_DIR", "") + version
+    return os.environ.get("WATCHER_DIR", "/watcher") + version
 
 
 def _get_version() -> str:
@@ -315,14 +315,15 @@ class Config:
         for success in successes:
             history.get('history').append({
                 "torrent_title": success.get('title'),
-                "date_downloaded": str(datetime.now()),
+                "date_downloaded": success.get('download_datetime'),
                 "nyaa_page": success.get('id'),
                 "nyaa_hash": success.get('nyaa_infohash')
             })
+
         for error in errors:
             history.get('errors').append({
                 "torrent_title": error.get('title'),
-                "date_failed": str(datetime.now()),
+                "date_failed": error.get('download_datetime'),
                 "nyaa_page": error.get('id'),
                 "nyaa_hash": error.get('nyaa_infohash')
             })

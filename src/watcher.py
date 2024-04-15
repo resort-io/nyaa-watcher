@@ -23,7 +23,7 @@ class Watcher:
         for torrent in torrents:
             self.history.get('history').append({
                 "torrent_title": torrent.get('title'),
-                "date_downloaded": str(datetime.now()),
+                "date_downloaded": torrent.get('download_datetime'),
                 "nyaa_page": torrent.get('id'),
                 "nyaa_hash": torrent.get('nyaa_infohash')
             })
