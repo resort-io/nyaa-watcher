@@ -3,6 +3,7 @@ src/downloads/
 __tests__/__init__.py
 dev.*.json
 package.json
+CONTRIBUTING.md
 
 ### Environment & OS ###
 .DS_Store
@@ -33,7 +34,7 @@ __pypackages__/
 *.log
 MANIFEST
 
-### Docker Ignore Specific ###
+### .dockerignore Specific ###
 .git/
 .github/
 .gitignore
