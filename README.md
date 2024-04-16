@@ -25,7 +25,7 @@ docker run
 
 ### Parameters
 
-The syntax for the volume parameter is `<host>:<container>`. See the [setup documentation](https://github.com/resort-io/nyaa-watcher/blob/main/SETUP.md) for more information.
+The syntax for the volume parameter is `<host>:<container>`. See the [setup documentation](./SETUP.md) for more information.
 
 | Parameter       | Description                                                                    |
 |-----------------|--------------------------------------------------------------------------------|

@@ -1,3 +1,5 @@
+[![Nyaa Watcher Banner](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/banner.png)](https://github.com/resort-io/nyaa-watcher)
+
 # Changelog
 
 ## [1.1.2](https://github.com/resort-io/nyaa-watcher/releases/tag/v1.1.2) *(04/16/2024)*
@@ -7,10 +9,10 @@
 * Renamed `history` property to `downloads` in *watchlist.json* .
 * Renamed `watcher_interval_seconds` to `interval_sec` in *config.json*.
 * Renamed `/watch` container directory to `/downloads`.
-* Updated `downloaded_date` results for *history.json* to be more accurate.
+* Updated `downloaded_date` result to be more accurate for *history.json*.
+* Updated JSON file verification and changed it to only execute at startup (instead of executing before every write).
 * Updated RSS fetch function to only read the latest entries since the previous fetch.
 * Updated logging to show successful and failed downloads.
-* Removed JSON file verifications from every write (Files now are only verified at startup).
 
 ## [1.1.1](https://github.com/resort-io/nyaa-watcher/releases/tag/v1.1.1) *(07/17/2023)*
 
