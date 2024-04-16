@@ -9,16 +9,22 @@ def _get_json_path(filename: str) -> str:
 
 
 def _get_version() -> str:
-    file = open(_get_json_path("config"), "r")
-    config = json.loads(file.read())
-    file.close()
+    try:
+        file = open(_get_json_path("config"), "r")
+        config = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
 
     if config.get('version'):
         return config.get('version')
 
-    file = open(_get_json_path("watchlist"), "r")
-    watchlist = json.loads(file.read())
-    file.close()
+    try:
+        file = open(_get_json_path("watchlist"), "r")
+        watchlist = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
 
     if not watchlist.get('watchlist')[0].get('webhooks') or not os.path.exists(_get_json_path("webhooks")):
         return "1.0.1"
@@ -107,9 +113,12 @@ def _update_v101_to_v110() -> None:
     Logger.log("Updating from v1.0.1 to v1.1.0...")
 
     # Adding missing 'webhooks' property to 'watchlist.json'
-    file = open(_get_json_path("watchlist"), "r")
-    watchlist = json.loads(file.read())
-    file.close()
+    try:
+        file = open(_get_json_path("watchlist"), "r")
+        watchlist = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
 
     for entry in watchlist.get('watchlist'):
         if 'webhooks' not in entry:
@@ -121,9 +130,12 @@ def _update_v101_to_v110() -> None:
     file.close()
 
     # Adding sample webhook entry to 'webhooks.json', if empty
-    file = open(_get_json_path("webhooks"), "r")
-    webhooks = json.loads(file.read())
-    file.close()
+    try:
+        file = open(_get_json_path("webhooks"), "r")
+        webhooks = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("webhooks.json", e.doc, e.pos)
 
     if len(webhooks.get('webhooks')) == 0:
         file = open(_get_json_path("webhooks"), "w")
@@ -137,9 +149,12 @@ def _update_v111_to_v112() -> None:
     Logger.log("Updating from v1.1.1 to v1.1.2...")
 
     # Adding 'errors' property and changing 'history' to 'downloads' in 'history.json'
-    file = open(_get_json_path("history"), "r")
-    history = json.loads(file.read())
-    file.close()
+    try:
+        file = open(_get_json_path("history"), "r")
+        history = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
 
     history = {
         "downloads": history.get('history', []),
@@ -151,9 +166,12 @@ def _update_v111_to_v112() -> None:
     file.close()
 
     # Change value name and adding 'version' property in 'config.json'
-    file = open(_get_json_path("config"), "r")
-    config = json.loads(file.read())
-    file.close()
+    try:
+        file = open(_get_json_path("config"), "r")
+        config = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
 
     config = {
         "nyaa_rss": config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=NYAA_USERNAME"),
@@ -179,10 +197,12 @@ def _verify_config_parse() -> None:
         file.close()
         Logger.log("Created 'config.json'.")
         return
-
-    file = open(path, "r")
-    config = json.loads(file.read())
-    file.close()
+    try:
+        file = open(path, "r")
+        config = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
 
     if not config.get('nyaa_rss') or not config.get('interval_sec') or not config.get('version'):
         raise Exception("Parse Error: 'nyaa_rss', 'interval_sec', and/or 'version' is missing from 'config.json'. Change the properties and restart the watcher.")
@@ -212,9 +232,12 @@ def _verify_watchlist_parse() -> None:
         file.close()
         Logger.log("Created 'watchlist.json'.")
 
-    file = open(path, "r")
-    watchlist = json.loads(file.read())
-    file.close()
+    try:
+        file = open(path, "r")
+        watchlist = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
 
     if not watchlist.get('watchlist') or len(watchlist.get('watchlist')) == 0:
         raise Exception("Parse Error: watchlist.json contains no entries. Add entries and restart the watcher.")
@@ -241,9 +264,12 @@ def _verify_history_parse() -> None:
         Logger.log("Created 'history.json'.")
         return
 
-    file = open(path, "r")
-    history = json.loads(file.read())
-    file.close()
+    try:
+        file = open(path, "r")
+        history = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
 
     # Downloads
     if history.get('downloads'):
@@ -270,9 +296,12 @@ def _verify_webhooks_parse() -> None:
         Logger.log("Created 'webhooks.json'.")
         return
 
-    file = open(path, "r")
-    webhooks = json.loads(file.read())
-    file.close()
+    try:
+        file = open(path, "r")
+        webhooks = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("webhooks.json", e.doc, e.pos)
 
     for webhook in webhooks.get('webhooks'):
         entry = _verify_webhook_entry(webhook)
@@ -338,8 +367,6 @@ class Config:
 
         except json.decoder.JSONDecodeError as e:
             raise json.decoder.JSONDecodeError(e.msg, e.doc, e.pos)
-        except Exception as e:
-            raise ValueError(e)
 
     @staticmethod
     def append_to_history(successes: list, errors: list) -> None:

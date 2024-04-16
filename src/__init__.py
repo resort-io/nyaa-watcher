@@ -101,7 +101,8 @@ def main() -> None:
                      f"WEBHOOKS: {len(webhook.get_json_webhooks().get('webhooks'))} entr{'y' if len(webhook.get_json_webhooks().get('webhooks')) == 1 else 'ies'}.")
     except json.decoder.JSONDecodeError as e:
         line = e.doc.split("\n")[e.lineno - 1].replace("  ", "")
-        Logger.log(f"Parse Error: JSON syntax error found on line {e.lineno} at column {e.pos}.\n"
+        message = "'" + e.msg + "'" if '.json' in e.msg else 'JSON'
+        Logger.log(f"Parse Error: {message} syntax error found on line {e.lineno} at column {e.pos}.\n"
                    f"    {line}\nWatcher exited.", {"white_lines": "b"})
         Logger.debug(f"{e}", {"exc_info": True})
         exit(-1)
@@ -131,6 +132,10 @@ def main() -> None:
     except KeyboardInterrupt:
         Logger.log("Watcher exited.", {"white_lines": "bt"})
         exit(0)
+    except Exception as e:
+        Logger.log(f"{e}\nWatcher exited.", {"white_lines": "bt"})
+        Logger.debug(f"{e}", {"exc_info": True})
+        exit(-1)
 
 
 if __name__ == "__main__":
