@@ -99,8 +99,8 @@ Each entry contains the following properties:
 
 ```json
 {
-  "errors": [],
-  "history": []
+    "downloads": [],
+    "errors": []
 }
 ```
 
@@ -117,14 +117,14 @@ Each watchlist entry must have `name` value and **at least one `tag` or `regex`*
 
 ```json
 {
-  "watchlist": [
-    {
-      "name": "",
-      "tags": [],
-      "regex": [],
-      "webhooks": []
-    }
-  ]
+    "watchlist": [
+        {
+            "name": "",
+            "tags": [],
+            "regex": [],
+            "webhooks": []
+        }
+    ]
 }
 ```
 
@@ -137,20 +137,20 @@ See [Regular Expressions](#regular-expressions) below for more information.
 
 ```json
 {
-  "watchlist": [
-    {
-      "name": "Nyaa Username - Demon Slayer",
-      "tags": ["Demon Slayer", "Kimetsu no Yaiba"],
-      "regex": ["S0[0-9]E[0-9][0-9]"],
-      "webhooks": ["Friends Server"]
-    },
-    {
-      "name": "Nyaa Username - One Piece",
-      "tags": [],
-      "regex": ["One Piece - (1[0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9]{2}|[2-9][0-9]{3})"],
-      "webhooks": ["Notification Server"]
-    }
-  ]
+    "watchlist": [
+        {
+            "name": "Nyaa Username - Demon Slayer",
+            "tags": ["Demon Slayer", "Kimetsu no Yaiba"],
+            "regex": ["S0[0-9]E[0-9][0-9]"],
+            "webhooks": ["Friends Server"]
+        },
+        {
+            "name": "Nyaa Username - One Piece",
+            "tags": [],
+            "regex": ["One Piece - (1[0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9]{2}|[2-9][0-9]{3})"],
+            "webhooks": ["Notification Server"]
+        }
+    ]
 }
 ```
 
@@ -174,28 +174,28 @@ Contains the information for the Discord webhooks and notification customization
 
 ```json
 {
-  "webhooks": [
-    {
-      "name": "",
-      "url": "",
-      "notifications": {
-        "title": "",
-        "description": "",
-        "show_category": 0,
-        "show_downloads": 0,
-        "show_leechers": 0,
-        "show_published": 0,
-        "show_seeders": 0,
-        "show_size": 0
-      }
-    }
-  ]
+    "webhooks": [
+        {
+            "name": "",
+            "url": "",
+            "notifications": {
+                "title": "",
+                "description": "",
+                "show_category": 0,
+                "show_downloads": 0,
+                "show_leechers": 0,
+                "show_published": 0,
+                "show_seeders": 0,
+                "show_size": 0
+            }
+        }
+    ]
 }
 ```
 
 #### Torrent Info Tokens
 
-Insert torrent information into the `title` and `description` values in the notification:
+Use tokens to insert torrent information into the `title` and `description` values:
 
 * `$webhook_name` - Name of the webhook.
 * `$title` - Title of the torrent.
@@ -227,36 +227,36 @@ See the [Example Notifications](#example-notifications) section for images of no
 
 ```json
 {
-  "webhooks": [
-    {
-      "name": "Friends Server",
-      "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-      "notifications": {
-        "title": "Nyaa User uploaded a new torrent!",
-        "description": "Starting download for $title.",
-        "show_category": 0,
-        "show_downloads": 0,
-        "show_leechers": 0,
-        "show_published": 2,
-        "show_seeders": 0,
-        "show_size": 1
-      }
-    },
-    {
-      "name": "Notifications Server",
-      "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-      "notifications": {
-        "title": "",
-        "description": "",
-        "show_category": 3,
-        "show_downloads": 4,
-        "show_leechers": 6,
-        "show_published": 1,
-        "show_seeders": 5,
-        "show_size": 2
-      }
-    }
-  ]
+    "webhooks": [
+        {
+            "name": "Friends Server",
+            "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+            "notifications": {
+                "title": "Nyaa User uploaded a new torrent!",
+                "description": "Starting download for $title.",
+                "show_category": 0,
+                "show_downloads": 0,
+                "show_leechers": 0,
+                "show_published": 2,
+                "show_seeders": 0,
+                "show_size": 1
+            }
+        },
+        {
+            "name": "Notifications Server",
+            "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+            "notifications": {
+                "title": "",
+                "description": "",
+                "show_category": 3,
+                "show_downloads": 4,
+                "show_leechers": 6,
+                "show_published": 1,
+                "show_seeders": 5,
+                "show_size": 2
+            }
+        }
+    ]
 }
 ```
 

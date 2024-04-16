@@ -21,7 +21,7 @@ class Watcher:
 
     def append_to_history(self, torrents: list) -> None:
         for torrent in torrents:
-            self.history.get('history').append({
+            self.history.get('downloads').append({
                 "torrent_title": torrent.get('title'),
                 "date_downloaded": torrent.get('download_datetime'),
                 "nyaa_page": torrent.get('id'),
@@ -78,7 +78,7 @@ class Watcher:
                 if tag_match is True and regex_match is True \
                         or tag_match is None and regex_match is True \
                         or tag_match is True and regex_match is None:
-                    history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("history") if entry.get('nyaa_hash') == hash]
+                    history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == hash]
                     hash_match = len(history_entry) > 0
 
                 if show_entries:

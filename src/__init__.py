@@ -95,11 +95,12 @@ def main() -> None:
 
         Logger.debug(f"INTERVAL: {interval} seconds.\n"
                      f"NYAA RSS: {rss}\n"
-                     f"WATCHLIST: {len(watchlist.get('watchlist'))} entries.\n"
-                     f"HISTORY: {len(history.get('history'))} entries.\n"
-                     f"WEBHOOKS: {len(webhook.get_json_webhooks().get('webhooks'))} entries.")
+                     f"WATCHLIST: {len(watchlist.get('watchlist'))} entr{'y' if len(watchlist.get('watchlist')) == 1 else 'ies'}.\n"
+                     f"HISTORY: {len(history.get('downloads'))} download(s) and {len(history.get('errors'))} error(s).\n"
+                     f"WEBHOOKS: {len(webhook.get_json_webhooks().get('webhooks'))} entr{'y' if len(webhook.get_json_webhooks().get('webhooks')) == 1 else 'ies'}.")
     except Exception as e:
         Logger.log(f"{e}\nWatcher exited.", {"white_lines": "b"})
+        Logger.debug(f"{e}", {"exc_info": True})
         exit(-1)
 
     Logger.log("Attempting to reach RSS URL...")

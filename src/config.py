@@ -1,6 +1,5 @@
 import os
 import json
-from datetime import datetime
 from logger import Logger
 
 
@@ -37,8 +36,8 @@ def _new_config_json() -> dict:
 
 def new_history_json() -> dict:
     return {
-        "history": [],
-        "errors": []
+        "errors": [],
+        "downloads": []
     }
 
 
@@ -109,16 +108,15 @@ def _update_v101_to_v110() -> None:
 def _update_v111_to_v112() -> None:
     Logger.log("Updating from v1.1.1 to v1.1.2...")
 
-    # Adding 'errors' property to 'history.json'
+    # Adding 'errors' property and changing 'history' to 'downloads' in 'history.json'
     file = open(_get_json_path("history"), "r")
     history = json.loads(file.read())
     file.close()
 
-    if not history.get('errors'):
-        history = {
-            "errors": [],
-            "history": history.get('history') if history.get('history') else []
-        }
+    history = {
+        "downloads": history.get('history', []),
+        "errors": history.get('errors', [])
+    }
 
     file = open(_get_json_path("history"), "w")
     file.write(json.dumps(history, indent=4))
@@ -130,8 +128,8 @@ def _update_v111_to_v112() -> None:
     file.close()
 
     config = {
-        "nyaa_rss": config.get('nyaa_rss'),
-        "interval_sec": config.get('watcher_interval_seconds'),
+        "nyaa_rss": config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=NYAA_USERNAME"),
+        "interval_sec": config.get('watcher_interval_seconds', 600),
         "version": "1.1.2"
     }
 
@@ -219,9 +217,17 @@ def _verify_history_parse() -> None:
     history = json.loads(file.read())
     file.close()
 
-    properties = ['torrent_title', 'date_downloaded', 'nyaa_page', 'nyaa_hash']
-    if not all(all(key in entry for key in properties) for entry in history.get('history')):
-        raise Exception("Parse Error: One or more entries in history.json contains missing or invalid properties. Fix the history properties and restart the watcher.")
+    # Downloads
+    if history.get('downloads'):
+        properties = ['torrent_title', 'date_downloaded', 'nyaa_page', 'nyaa_hash']
+        if not all(all(key in entry for key in properties) for entry in history.get('downloads')):
+            raise Exception("Parse Error: One or more 'download' entries in 'history.json' contains missing or invalid properties. Fix the history properties and restart the watcher.")
+
+    # Errors
+    if history.get('errors'):
+        properties = ['torrent_title', 'date_failed', 'nyaa_page', 'nyaa_hash']
+        if not all(all(key in entry for key in properties) for entry in history.get('errors')):
+            raise Exception("Parse Error: One or more 'errors' entries in 'history.json' contains missing or invalid properties. Fix the history properties and restart the watcher.")
 
 
 def _verify_webhooks_parse() -> None:
@@ -313,7 +319,7 @@ class Config:
         file.close()
 
         for success in successes:
-            history.get('history').append({
+            history.get('downloads').append({
                 "torrent_title": success.get('title'),
                 "date_downloaded": success.get('download_datetime'),
                 "nyaa_page": success.get('id'),
@@ -355,8 +361,7 @@ class Config:
         if len(values) > 1:
             last = values.pop()
             return ", ".join(values) + f"{',' if len(values) > 1 else ''} and " + last
-        else:
-            return values[0]
+        return values[0]
 
     @staticmethod
     def get_nyaa_rss() -> str:
