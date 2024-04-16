@@ -19,14 +19,7 @@ def _get_version() -> str:
     if config.get('version'):
         return config.get('version')
 
-    try:
-        file = open(_get_json_path("watchlist"), "r")
-        watchlist = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
-
-    if not watchlist.get('watchlist')[0].get('webhooks') or not os.path.exists(_get_json_path("webhooks")):
+    if not os.path.exists(_get_json_path("webhooks")):
         return "1.0.1"
     return "1.1.0"
 
@@ -110,7 +103,7 @@ def _new_webhook_json() -> dict:
 
 
 def _update_v101_to_v110() -> None:
-    Logger.log("Updating from v1.0.1 to v1.1.0...")
+    Logger.debug("Updating from v1.0.1 to v1.1.0...")
 
     # Adding missing 'webhooks' property to 'watchlist.json'
     try:
@@ -146,7 +139,7 @@ def _update_v101_to_v110() -> None:
 
 
 def _update_v111_to_v112() -> None:
-    Logger.log("Updating from v1.1.1 to v1.1.2...")
+    Logger.debug("Updating from v1.1.1 to v1.1.2...")
 
     # Adding 'errors' property and changing 'history' to 'downloads' in 'history.json'
     try:
@@ -309,7 +302,7 @@ def _verify_webhooks_parse() -> None:
             raise Exception(f"Webhook Parse Error: {entry.get('message')}")
 
         if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-            Logger.log("Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", {"tip": True})
+            Logger.log("Enter a Discord webhook URL in 'webhooks.json' to be notified when new torrents are downloaded.", {"tip": True})
 
 
 def _verify_webhook_entry(webhook: dict) -> dict:
@@ -329,7 +322,7 @@ def _verify_webhook_entry(webhook: dict) -> dict:
                 "message": f"'{webhook.get('name')}' webhook contains one or more 'show_' properties that are missing or invalid. Change the webhook properties and restart the watcher"
             }
 
-    notify_values: list = [value for key, value in webhook.get('notifications').items() if isinstance(value, int)]
+    notify_values: list = [value for key, value in webhook.get('notifications').items() if isinstance(value, int) and value > 0]
     for value in notify_values:
         if value not in range(0, 7):
             return {
@@ -459,7 +452,3 @@ class Config:
         webhooks = json.loads(file.read())
         file.close()
         return webhooks
-
-    @staticmethod
-    def get_version() -> str:
-        return _get_version()

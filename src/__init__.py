@@ -81,6 +81,9 @@ def main() -> None:
     Logger.debug(f"Environment: {os.environ.get('ENV', 'PRODUCTION').upper()}")
     Logger.log("~~~ Nyaa Watcher ~~~")
 
+    if not os.path.exists(os.environ.get("DOWNLOADS_DIR", "/downloads")):
+        Logger.log("Map the '/downloads' directory to access downloaded files.", {"tip": True})
+
     try:
         Config.update_and_verify()
 
