@@ -10,6 +10,12 @@
 * Monitors a Nyaa user's RSS feed and downloads torrent files based upon substrings and/or regular expressions.
 * Notifies Discord channels via webhooks when a torrent file is downloaded.
 
+### Roadmap
+
+* Add support for multiple RSS feeds.
+* Add full support for all Nyaa domains.
+* Open repository for contributions.
+
 ## Usage
 
 ### [docker cli](https://docs.docker.com/engine/reference/commandline/cli/)
@@ -30,7 +36,7 @@ The syntax for the volume parameter is `<host>:<container>`. See the [setup docu
 | Parameter       | Description                                                                    |
 |-----------------|--------------------------------------------------------------------------------|
 | `-v /downloads` | Directory for downloaded torrent files.                                        |
-| `-v /watcher`   | Directory for Nyaa Watcher JSON files.                                         |
+| `-v /watcher`   | Directory for watcher JSON files.                                              |
 | `-e LOG_LEVEL`  | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
 | `-e SHOW_TIPS`  | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
 

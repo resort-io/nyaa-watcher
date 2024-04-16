@@ -302,7 +302,7 @@ def _verify_webhooks_parse() -> None:
             raise Exception(f"Webhook Parse Error: {entry.get('message')}")
 
         if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-            Logger.log("Enter a Discord webhook URL in 'webhooks.json' to be notified when new torrents are downloaded.", {"tip": True})
+            Logger.log("Create an entry in 'webhooks.json' and enter the name into one or more 'watchlist.json' entries to be notified when new files are downloaded.", {"tip": True})
 
 
 def _verify_webhook_entry(webhook: dict) -> dict:
@@ -349,14 +349,14 @@ class Config:
             if _get_version() != "1.1.2":
                 _update_v101_to_v110()
                 _update_v111_to_v112()
-            Logger.log("Done!")
+            Logger.debug("Done checking.")
 
             Logger.log("Verifying files...")
             _verify_config_parse()
             _verify_watchlist_parse()
             _verify_history_parse()
             _verify_webhooks_parse()
-            Logger.log("Done!")
+            Logger.debug("Done verifying")
 
         except json.decoder.JSONDecodeError as e:
             raise json.decoder.JSONDecodeError(e.msg, e.doc, e.pos)

@@ -18,20 +18,23 @@ The watcher will generate JSON files on initial startup or if they are missing f
 
 **To begin watching** follow these steps:
 
-1. Add an entry to `watchlist.json` with a `name` value and at least one `tag` and/or `regex` value.
-2. Add a Nyaa RSS URL to `config.json` within the `nyaa_rss` property.
-3. (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the `name` within one or more `watchlist.json` entries.
-4. Restart the watcher.
+1. Start the watcher to generate the JSON files.
+2. Add an entry to `watchlist.json` with a `name` value and at least one `tag` and/or `regex` value.
+3. Add a Nyaa RSS URL to `config.json` within the `nyaa_rss` property.
+4. (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the `name` to one or more `watchlist.json` entries in the `webhooks` property.
+5. Restart the watcher.
 
 ### Triggering Download 
 
-The watcher will download a torrent file when **one of three conditions** are true:
+The watcher will download a torrent file when one of the following conditions are met with the title of the torrent:
 
-* When **one or more** `tag` value matches a string sequence and there are **no** `regex` patterns presents.
-* When **one or more** `regex` patterns matches a string sequence and there are **no** `tag` values present.
-* When both **one or more** `tag` value and **one or more** `regex` pattern matches a string sequence.
+* **One or more** `tag` values matches a string sequence and there are **no** `regex` patterns presents.
+* **One or more** `regex` patterns matches a string sequence and there are **no** `tag` values present.
+* Both **one or more** `tag` values and **one or more** `regex` patterns matches a string sequence.
 
 ## Docker
+
+All image versions can be found on [Docker Hub](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags).
 
 ```docker
 docker run
@@ -60,7 +63,7 @@ The syntax for the volume parameter is `<host>:<container>`.
 | Parameter       | Description                                                                    |
 |-----------------|--------------------------------------------------------------------------------|
 | `-v /downloads` | Directory for downloaded torrent files.                                        |
-| `-v /watcher`   | Directory for Nyaa Watcher JSON files.                                         |
+| `-v /watcher`   | Directory for watcher JSON files.                                              |
 | `-e LOG_LEVEL`  | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
 | `-e SHOW_TIPS`  | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
 
@@ -87,14 +90,14 @@ Contains the configuration information for the watcher.
 
 Contains lists of information for each successful and failed torrent downloads. Used to prevent duplicate downloads.
 
+* `downloads [list]` - List of successful downloads.
 * `errors [list]` - List of failed downloads.
-* `history [list]` - List of successful downloads.
 
 Each entry contains the following properties:
 
 * `torrent_title [str]` - Title of the torrent.
 * `date_downloaded | date_failed [datetime]` - Date and time when the torrent file downloaded/failed.
-* `nyaa_page [str]` - Nyaa page URL for the torrent.
+* `nyaa_page [str]` - Nyaa page URL of the torrent.
 * `nyaa_hash [str]` - Unique identifier of the torrent.
 
 ```json
@@ -132,23 +135,34 @@ See [Regular Expressions](#regular-expressions) below for more information.
 
 #### Example `watchlist.json`
 
-* `Demon Slayer` - Watcher downloads a torrent file when the title contains "***Demon Slayer***" or "***Kimetsu no Yaiba***" **and** is numbered **using the `S00E00` format**.
-* `One Piece` - Watcher downloads a torrent file when the title contains "***One Piece - XXXX***" with an **episode number greater than *1063***.
+* `Nyaa Username - Demon Slayer` - Watcher downloads a torrent file when the title contains "***Demon Slayer***" or "***Kimetsu no Yaiba***" **and** is numbered **using the `S00E00` format**.
+* `Nyaa Username - One Piece` - Watcher downloads a torrent file when the title contains "***One Piece - XXXX***" with an **episode number greater than *1063***.
 
 ```json
 {
     "watchlist": [
         {
             "name": "Nyaa Username - Demon Slayer",
-            "tags": ["Demon Slayer", "Kimetsu no Yaiba"],
-            "regex": ["S[0-9]{2}E[0-9]{2}"],
-            "webhooks": ["Friends Server"]
+            "tags": [
+              "Demon Slayer",
+              "Kimetsu no Yaiba"
+            ],
+            "regex": [
+              "S[0-9]{2}E[0-9]{2}"
+            ],
+            "webhooks": [
+              "Friends Server"
+            ]
         },
         {
             "name": "Nyaa Username - One Piece",
             "tags": [],
-            "regex": ["One Piece - (1[0-9][6-9][3-9]|[1-9][0-9][7-9][0-9]|[1-9][1-9][0-9]{2}|[2-9][0-9]{3})"],
-            "webhooks": ["Notification Server"]
+            "regex": [
+              "One Piece - (1[0-9][6-9][3-9]|1[0-9][7-9][0-9]|1[1-9][0-9]{2}|[2-9][0-9]{3})"
+            ],
+            "webhooks": [
+              "Notification Server"
+            ]
         }
     ]
 }

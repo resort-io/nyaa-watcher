@@ -32,7 +32,7 @@ def download_torrent(torrent: dict) -> dict:
 
 
 def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -> None:
-    Logger.log("Searching for matching torrents...", {"white_lines": "t"})
+    Logger.log("Searching for new torrents...", {"white_lines": "t"})
     torrents = watcher.fetch_new_torrents()
 
     # No new torrents
@@ -66,7 +66,8 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook) -
         watcher.append_to_history(successes)
         Config.append_to_history(successes, errors)
         interval_string = Config.get_interval_string(interval)
-        Logger.log(f"Done. Finished with {len(errors)} error{'' if len(errors) == 1 else 's'}.\nSearching for new torrents in {interval_string}.")
+        error_string = f" Finished with {len(errors)} error{'' if len(errors) == 1 else 's'}." if len(errors) > 0 else ""
+        Logger.log(f"Done!{error_string if len(errors) > 0 else ''}\nSearching for new torrents in {interval_string}.")
 
     # Schedule next check
     scheduler.enter(interval, 1, fetch, (scheduler, watcher, interval, webhook))
@@ -114,7 +115,7 @@ def main() -> None:
         Logger.debug(f"{e}", {"exc_info": True})
         exit(-1)
 
-    Logger.log("Attempting to reach RSS URL...")
+    Logger.log("Connecting to RSS...")
     try:
         response = requests.get(rss, timeout=60)
 
@@ -126,8 +127,9 @@ def main() -> None:
         Logger.log("Connection Error: Cannot connect to RSS URL. Your internet provider could be blocking requests to nyaa domains."
                    f"\n{e}\nWatcher exited.", {"exc_info": True, "white_lines": "b"})
         exit(-1)
-    Logger.log("Success!\nWatcher started.")
+    Logger.debug(f"Connection successful. HTTPS Status Code: {str(response.status_code)}.")
 
+    Logger.log("Done! Watcher started.")
     try:
         scheduler = sched.scheduler(time.time, time.sleep)
         scheduler.enter(1, 1, fetch, (scheduler, watcher, interval, webhook))

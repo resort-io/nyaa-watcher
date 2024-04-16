@@ -61,18 +61,16 @@ class Webhook:
                     continue
 
                 Logger.log(f" - Connected to '{webhook['name']}' webhook.")
-                id, token = _parse_url(webhook['url'])
+                webhook_id, token = _parse_url(webhook['url'])
 
                 try:
-                    discord_webhook = discord.SyncWebhook.partial(id, token)
+                    discord_webhook = discord.SyncWebhook.partial(webhook_id, token)
                     self.discord_webhooks[webhook['name']] = discord_webhook
                     connected += 1
                 except Exception as e:
                     Logger.log(f" - Error connecting to '{webhook['name']}' webhook.")
                     Logger.debug(f"{e}", {"exc_info": True})
-
-            Logger.log(f"Connected to 1 Discord webhook.") if connected == 1 \
-                else Logger.log(f"Connected to {connected} Discord webhooks.")
+            Logger.debug(f"Connected to {connected} Discord webhook{'' if connected == 1 else 's'}.")
 
     def get_json_webhooks(self) -> dict:
         return {
