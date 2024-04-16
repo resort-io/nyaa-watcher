@@ -1,6 +1,6 @@
 [![Nyaa Watcher Banner](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/banner.png)](https://github.com/resort-io/nyaa-watcher)
 
-[![Nyaa Watcher GitHub Repository](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=github&message=nyaa-watcher&logo=github)](https://github.com/resort-io/nyaa-watcher "GitHub Page")
+[![Nyaa Watcher GitHub Repository](https://img.shields.io/static/v1.svg?color=0085ff&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=github&message=nyaa-watcher&logo=github)](https://github.com/resort-io/nyaa-watcher "GitHub Repository")
 [![Latest GitHub Release](https://img.shields.io/github/v/release/resort-io/nyaa-watcher?color=0085ff&logo=github&style=for-the-badge)](https://github.com/resort-io/nyaa-watcher/releases "Latest GitHub release")
 [![Latest Docker Image Tags](https://img.shields.io/docker/v/resortdocker/nyaa-watcher?color=0085ff&logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags "Latest Docker Image")
 ![Docker Image Pulls](https://img.shields.io/docker/pulls/resortdocker/nyaa-watcher?color=0085ff&label=pulls&logo=docker&logoColor=white&style=for-the-badge "Docker Image Pulls")
@@ -27,12 +27,16 @@ docker run
 
 The syntax for the volume parameter is `<host>:<container>`. See the [setup documentation](https://github.com/resort-io/nyaa-watcher/blob/main/SETUP.md) for more information.
 
-| Parameter      | Description                                                                    |
-|----------------|--------------------------------------------------------------------------------|
-| `-v /watch`    | Watch directory for your torrent client.                                       |
-| `-v /watcher`  | Directory for Nyaa Watcher files.                                              |
-| `-e LOG_LEVEL` | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
-| `-e SHOW_TIPS` | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
+| Parameter       | Description                                                                    |
+|-----------------|--------------------------------------------------------------------------------|
+| `-v /downloads` | Directory for downloaded torrent files.                                        |
+| `-v /watcher`   | Directory for Nyaa Watcher JSON files.                                         |
+| `-e LOG_LEVEL`  | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
+| `-e SHOW_TIPS`  | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
+
+## Changelog
+
+Changes for each release are listed in the [changelog](./CHANGELOG.md) file.
 
 ## Issues
 

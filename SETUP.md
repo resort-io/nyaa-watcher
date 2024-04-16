@@ -57,12 +57,12 @@ docker run
 
 The syntax for the volume parameter is `<host>:<container>`.
 
-| Parameter      | Description                                                                    |
-|----------------|--------------------------------------------------------------------------------|
-| `-v /watch`    | Watch directory for your torrent client.                                       |
-| `-v /watcher`  | Directory for Nyaa Watcher files.                                              |
-| `-e LOG_LEVEL` | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
-| `-e SHOW_TIPS` | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
+| Parameter       | Description                                                                    |
+|-----------------|--------------------------------------------------------------------------------|
+| `-v /downloads` | Directory for downloaded torrent files.                                        |
+| `-v /watcher`   | Directory for Nyaa Watcher JSON files.                                         |
+| `-e LOG_LEVEL`  | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
+| `-e SHOW_TIPS`  | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
 
 
 ## Files
@@ -141,7 +141,7 @@ See [Regular Expressions](#regular-expressions) below for more information.
         {
             "name": "Nyaa Username - Demon Slayer",
             "tags": ["Demon Slayer", "Kimetsu no Yaiba"],
-            "regex": ["S0[0-9]E[0-9][0-9]"],
+            "regex": ["S[0-9]{2}E[0-9]{2}"],
             "webhooks": ["Friends Server"]
         },
         {
