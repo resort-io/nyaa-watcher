@@ -4,7 +4,7 @@ from logger import Logger
 
 
 def _get_json_path(filename: str) -> str:
-    version = f"{'json/dev.' if os.environ.get('ENV', 'production').lower() == 'development' else '/'}{filename}.json"
+    version = f"{'json/dev.' if os.environ.get('ENV', 'PRODUCTION').lower() == 'development' else '/'}{filename}.json"
     return os.environ.get("WATCHER_DIR", "/watcher") + version
 
 
@@ -16,20 +16,45 @@ def _get_version() -> str:
     if config.get('version'):
         return config.get('version')
 
-    if os.path.exists(_get_json_path("webhooks")):
-        file = open(_get_json_path("webhooks"), "r")
-        webhooks = json.loads(file.read())
-        file.close()
+    file = open(_get_json_path("watchlist"), "r")
+    watchlist = json.loads(file.read())
+    file.close()
 
-        if webhooks.get('webhooks') and len(webhooks.get('webhooks')) > 0:
-            return "1.1.1"
-    return "1.0.1"
+    if not watchlist.get('watchlist')[0].get('webhooks') or not os.path.exists(_get_json_path("webhooks")):
+        return "1.0.1"
+    return "1.1.0"
+
+
+def _generate_files() -> None:
+    if os.path.exists(_get_json_path("config")) is False:
+        file = open(_get_json_path("config"), "x")
+        file.write(json.dumps(_new_config_json(), indent=4))
+        file.close()
+        Logger.debug("Generated 'config.json'.")
+
+    if os.path.exists(_get_json_path("watchlist")) is False:
+        file = open(_get_json_path("watchlist"), "x")
+        file.write(json.dumps(_new_watchlist_json(), indent=4))
+        file.close()
+        Logger.debug("Generated 'watchlist.json'.")
+
+    if os.path.exists(_get_json_path("history")) is False:
+        file = open(_get_json_path("history"), "x")
+        file.write(json.dumps(new_history_json(), indent=4))
+        file.close()
+        Logger.debug("Generated 'history.json'.")
+
+    if os.path.exists(_get_json_path("webhooks")) is False:
+        file = open(_get_json_path("webhooks"), "x")
+        file.write(json.dumps(_new_webhook_json(), indent=4))
+        file.close()
+        Logger.debug("Generated 'webhooks.json'.")
 
 
 def _new_config_json() -> dict:
     return {
         "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
-        "watcher_interval_seconds": 600,
+        "interval_sec": 600,
         "version": "1.1.2"
     }
 
@@ -162,7 +187,7 @@ def _verify_config_parse() -> None:
     if config.get('nyaa_rss') == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
         raise Exception("Parse Error: No Nyaa RSS found. Add a Nyaa RSS URL to 'config.json' and restart the watcher.")
 
-    if not isinstance(config.get('interval_sec'), int):
+    if not isinstance(int(config.get('interval_sec')), int):
         raise Exception("Parse Error: 'interval_sec' must be an integer that is at least 60 seconds. Change the property and restart the watcher.")
 
     if int(config.get('interval_sec')) < 60:
@@ -249,7 +274,7 @@ def _verify_webhooks_parse() -> None:
     for webhook in webhooks.get('webhooks'):
         entry = _verify_webhook_entry(webhook)
         if entry.get('result') is False:
-            raise Exception(f"Parse Error: {entry.get('message')}")
+            raise Exception(f"Webhook Parse Error: {entry.get('message')}")
 
         if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
             Logger.log("Enter a Discord webhook URL in webhooks.json to be notified when new torrents are downloaded.", {"tip": True})
@@ -292,23 +317,20 @@ def _verify_webhook_entry(webhook: dict) -> dict:
 class Config:
     @staticmethod
     def update_and_verify() -> None:
+        _generate_files()
         try:
             Logger.log("Checking for updates...")
-            version = _get_version()
-            Logger.debug(f"(Before) Watcher version: {version}")
-            if version == "1.0.1":
+            if _get_version() != "1.1.2":
                 _update_v101_to_v110()
-                version = "1.1.1"  # Skips v1.1.0
-            if version == "1.1.1":
                 _update_v111_to_v112()
-                version = "1.1.2"
-            Logger.debug(f"(After) Watcher version: {version}")
+            Logger.log("Done!")
 
+            Logger.log("Verifying files...")
             _verify_config_parse()
             _verify_watchlist_parse()
             _verify_history_parse()
             _verify_webhooks_parse()
-            Logger.debug("Files verified.")
+            Logger.log("Done!")
         except Exception as e:
             raise ValueError(e)
 
@@ -395,7 +417,7 @@ class Config:
         file = open(_get_json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
-        return int(config.get('watcher_interval_seconds'))
+        return int(config.get('interval_sec'))
 
     @staticmethod
     def get_discord_webhooks() -> dict:

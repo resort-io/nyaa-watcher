@@ -77,8 +77,8 @@ def main() -> None:
         level=os.environ.get("LOG_LEVEL", "INFO").upper(),
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    Logger.debug(f"Environment: {os.environ.get('ENV').upper()}")
-    Logger.log("~~~ Nyaa Watcher ~~~\nStarting watcher...")
+    Logger.debug(f"Environment: {os.environ.get('ENV', 'PRODUCTION').upper()}")
+    Logger.log("~~~ Nyaa Watcher ~~~")
 
     try:
         Config.update_and_verify()
