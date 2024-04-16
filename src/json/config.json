@@ -1,0 +1,5 @@
+{
+    "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
+    "interval_sec": 600,
+    "version": "1.1.2"
+}

@@ -2,10 +2,10 @@ FROM python:alpine
 
 WORKDIR /nyaa-watcher
 
-COPY main.py config.py watcher.py webhook.py requirements.txt ./
+COPY requirements.txt src/__init__.py src/config.py src/logger.py src/watcher.py src/webhook.py ./
 
-COPY config.json history.json watchlist.json webhooks.json /watcher/
+COPY src/json/config.json src/json/history.json src/json/watchlist.json src/json/webhooks.json /watcher/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD [ "python", "./main.py" ]
+CMD [ "python", "./__init__.py" ]
