@@ -44,10 +44,10 @@ class Watcher:
         queue = []
         for torrent in feed.entries:
             title = torrent.get('title')
-            hash = torrent.get('nyaa_infohash')
+            torrent_hash = torrent.get('nyaa_infohash')
 
             # Check if the next torrents have already been checked in a previous fetch
-            if hash == self.previous_hash:
+            if torrent_hash == self.previous_hash:
                 break
 
             if show_entries:
@@ -59,7 +59,7 @@ class Watcher:
                 tags = watchlist_entry.get("tags")
                 regexes = watchlist_entry.get("regex")
 
-                # Tags and RegEx
+                # Searching for Tags and RegEx
                 regex_match = tag_match = None
                 for tag in tags:
                     tag_match = False
@@ -69,7 +69,7 @@ class Watcher:
                 for regex_pattern in regexes:
                     regex_match = False
                     pattern = re.compile(regex_pattern)
-                    if re.search(pattern, title) is not None:
+                    if re.search(pattern, title):
                         regex_match = True
                         break
 
@@ -78,14 +78,14 @@ class Watcher:
                 if tag_match is True and regex_match is True \
                         or tag_match is None and regex_match is True \
                         or tag_match is True and regex_match is None:
-                    history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == hash]
+                    history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == torrent_hash]
                     hash_match = len(history_entry) > 0
 
                 if show_entries:
                     Logger.debug(f" - Watchlist: {name}\n"
                                  f" - Tags  (Match={tag_match}): {tags}\n"
                                  f" - RegEx (Match={regex_match}): {regexes}\n"
-                                 f" - Hash  (Match={hash_match}): {hash}")
+                                 f" - Hash  (Match={hash_match}): {torrent_hash}")
 
                 # Add to queue
                 if (tag_match is True and regex_match is True
@@ -101,5 +101,5 @@ class Watcher:
                 if show_entries:
                     Logger.debug()
 
-        self.previous_hash = feed.entries[0]['nyaa_infohash']
+        self.previous_hash = feed.entries[0].get('nyaa_infohash')
         return _sort_torrents(queue)

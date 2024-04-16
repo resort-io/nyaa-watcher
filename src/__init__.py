@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 import os
 import logging
@@ -98,6 +99,12 @@ def main() -> None:
                      f"WATCHLIST: {len(watchlist.get('watchlist'))} entr{'y' if len(watchlist.get('watchlist')) == 1 else 'ies'}.\n"
                      f"HISTORY: {len(history.get('downloads'))} download(s) and {len(history.get('errors'))} error(s).\n"
                      f"WEBHOOKS: {len(webhook.get_json_webhooks().get('webhooks'))} entr{'y' if len(webhook.get_json_webhooks().get('webhooks')) == 1 else 'ies'}.")
+    except json.decoder.JSONDecodeError as e:
+        line = e.doc.split("\n")[e.lineno - 1].replace("  ", "")
+        Logger.log(f"Parse Error: JSON syntax error found on line {e.lineno} at column {e.pos}.\n"
+                   f"    {line}\nWatcher exited.", {"white_lines": "b"})
+        Logger.debug(f"{e}", {"exc_info": True})
+        exit(-1)
     except Exception as e:
         Logger.log(f"{e}\nWatcher exited.", {"white_lines": "b"})
         Logger.debug(f"{e}", {"exc_info": True})

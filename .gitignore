@@ -1,6 +1,6 @@
 ### Development ###
 src/downloads/
-__tests__/__init__.py
+__tests__/
 dev.*.json
 package.json
 CONTRIBUTING.md

@@ -26,29 +26,32 @@ def _get_version() -> str:
 
 
 def _generate_files() -> None:
-    if os.path.exists(_get_json_path("config")) is False:
-        file = open(_get_json_path("config"), "x")
-        file.write(json.dumps(_new_config_json(), indent=4))
-        file.close()
-        Logger.debug("Generated 'config.json'.")
+    try:
+        if os.path.exists(_get_json_path("config")) is False:
+            file = open(_get_json_path("config"), "x")
+            file.write(json.dumps(_new_config_json(), indent=4))
+            file.close()
+            Logger.debug("Generated 'config.json'.")
 
-    if os.path.exists(_get_json_path("watchlist")) is False:
-        file = open(_get_json_path("watchlist"), "x")
-        file.write(json.dumps(_new_watchlist_json(), indent=4))
-        file.close()
-        Logger.debug("Generated 'watchlist.json'.")
+        if os.path.exists(_get_json_path("watchlist")) is False:
+            file = open(_get_json_path("watchlist"), "x")
+            file.write(json.dumps(_new_watchlist_json(), indent=4))
+            file.close()
+            Logger.debug("Generated 'watchlist.json'.")
 
-    if os.path.exists(_get_json_path("history")) is False:
-        file = open(_get_json_path("history"), "x")
-        file.write(json.dumps(new_history_json(), indent=4))
-        file.close()
-        Logger.debug("Generated 'history.json'.")
+        if os.path.exists(_get_json_path("history")) is False:
+            file = open(_get_json_path("history"), "x")
+            file.write(json.dumps(new_history_json(), indent=4))
+            file.close()
+            Logger.debug("Generated 'history.json'.")
 
-    if os.path.exists(_get_json_path("webhooks")) is False:
-        file = open(_get_json_path("webhooks"), "x")
-        file.write(json.dumps(_new_webhook_json(), indent=4))
-        file.close()
-        Logger.debug("Generated 'webhooks.json'.")
+        if os.path.exists(_get_json_path("webhooks")) is False:
+            file = open(_get_json_path("webhooks"), "x")
+            file.write(json.dumps(_new_webhook_json(), indent=4))
+            file.close()
+            Logger.debug("Generated 'webhooks.json'.")
+    except Exception as e:
+        raise ValueError(f"Error generating files: {e}")
 
 
 def _new_config_json() -> dict:
@@ -318,6 +321,7 @@ class Config:
     @staticmethod
     def update_and_verify() -> None:
         _generate_files()
+
         try:
             Logger.log("Checking for updates...")
             if _get_version() != "1.1.2":
@@ -331,6 +335,9 @@ class Config:
             _verify_history_parse()
             _verify_webhooks_parse()
             Logger.log("Done!")
+
+        except json.decoder.JSONDecodeError as e:
+            raise json.decoder.JSONDecodeError(e.msg, e.doc, e.pos)
         except Exception as e:
             raise ValueError(e)
 
