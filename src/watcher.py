@@ -1,7 +1,6 @@
+import feedparser
 import os
 import re
-import feedparser
-from datetime import datetime
 from logger import Logger
 
 
