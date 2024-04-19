@@ -337,26 +337,26 @@ def _verify_webhook_entry(webhook: dict) -> dict:
 
 
 class Config:
+
+    version = "1.1.2"
+
     @staticmethod
     def update_and_verify() -> None:
-        _generate_files()
+        _generate_files()  # Generate missing files
 
-        try:
-            Logger.log("Checking for updates...")
-            if _get_version() != "1.1.2":
-                _update_v101_to_v110()
-                _update_v111_to_v112()
-            Logger.debug("Done checking.")
+        Logger.log("Checking for updates...")
+        if _get_version() != Config.version:
+            _update_v101_to_v110()
+            _update_v111_to_v112()
+        Logger.debug("Done checking.")
 
-            Logger.log("Verifying files...")
-            _verify_config_parse()
-            _verify_watchlist_parse()
-            _verify_history_parse()
-            _verify_webhooks_parse()
-            Logger.debug("Done verifying")
+        Logger.log("Verifying files...")
+        _verify_config_parse()
+        _verify_watchlist_parse()
+        _verify_history_parse()
+        _verify_webhooks_parse()
+        Logger.debug("Done verifying")
 
-        except json.decoder.JSONDecodeError as e:
-            raise json.decoder.JSONDecodeError(e.msg, e.doc, e.pos)
 
     @staticmethod
     def append_to_history(successes: list, errors: list) -> None:
