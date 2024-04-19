@@ -10,9 +10,9 @@ class Logger:
     def log(messages: str | list = "", options: dict = None) -> None:
         level_num: int = logging.DEBUG if options and options.get('level') == "debug" else logging.INFO
         exc_info: bool = options.get('exc_info') if options and options.get('exc_info') else False
-        show_tips = os.environ.get('SHOW_TIPS', "true").lower() == "true"
+        log_tips = os.environ.get('LOG_TIPS', "true").lower() == "true"
 
-        if options and options.get('tip') is True and show_tips is False:
+        if options and options.get('tip') is True and log_tips is False:
             return
 
         if options and options.get('white_lines') and "t" in options.get('white_lines'):
@@ -23,7 +23,7 @@ class Logger:
         for message in messages:
             if options and options.get('tip') is True:
                 message = f"[Tip] {message}"
-            if level_num == logging.DEBUG:
+            elif level_num == logging.DEBUG and message != "":
                 message = f"[DEBUG] {message}"
             log.log(level_num, message, exc_info=exc_info)
 

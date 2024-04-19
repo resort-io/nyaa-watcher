@@ -12,11 +12,11 @@ def _sort_torrents(torrents: list) -> list:
 
 class Watcher:
 
-    def __init__(self, rss: str, watchlist: dict, history: dict) -> None:
+    def __init__(self, rss: str, watchlist_json: dict, history_json: dict, previous_hash: str = None) -> None:
         self.rss = rss
-        self.watchlist = watchlist
-        self.history = history
-        self.previous_hash = None
+        self.watchlist = watchlist_json
+        self.history = history_json
+        self.previous_hash = previous_hash
 
     def append_to_history(self, torrents: list) -> None:
         for torrent in torrents:
@@ -36,35 +36,36 @@ class Watcher:
     def get_rss(self) -> str:
         return self.rss
 
-    def fetch_new_torrents(self) -> list:
-        feed = feedparser.parse(self.rss)
-        show_entries = os.environ.get("SHOW_RSS_ENTRIES", "false").lower() == "true"
+    def fetch_new_torrents(self, rss: str = None) -> list:
+        log_entries = os.environ.get("LOG_RSS_ENTRIES", "false").lower() == "true"
 
+        if rss is None:
+            rss = self.rss
+
+        feed = feedparser.parse(rss)
         queue = []
         for torrent in feed.entries:
             title = torrent.get('title')
             torrent_hash = torrent.get('nyaa_infohash')
 
-            # Check if the next torrents have already been checked in a previous fetch
+            # Check if the following torrents have already been fetched
             if torrent_hash == self.previous_hash:
                 break
 
-            if show_entries:
-                Logger.debug(f"Checking: {title}")
-
-            # Check if user is watching this title
             for watchlist_entry in self.watchlist.get("watchlist"):
-                name = watchlist_entry.get("name")
+                # Checking Tags
                 tags = watchlist_entry.get("tags")
-                regexes = watchlist_entry.get("regex")
-
-                # Searching for Tags and RegEx
-                regex_match = tag_match = None
+                tag_match = None
                 for tag in tags:
                     tag_match = False
                     if tag.lower() in title.lower():
                         tag_match = True
                         break
+
+                # Checking RegEx
+                regexes = watchlist_entry.get("regex")
+
+                regex_match = None
                 for regex_pattern in regexes:
                     regex_match = False
                     pattern = re.compile(regex_pattern)
@@ -80,8 +81,9 @@ class Watcher:
                     history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == torrent_hash]
                     hash_match = len(history_entry) > 0
 
-                if show_entries:
-                    Logger.debug(f" - Watchlist: {name}\n"
+                if log_entries:
+                    Logger.debug(f"RSS Entry: {title}\n"
+                                 f" - Watchlist: {watchlist_entry.get('name')}\n"
                                  f" - Tags  (Match={tag_match}): {tags}\n"
                                  f" - RegEx (Match={regex_match}): {regexes}\n"
                                  f" - Hash  (Match={hash_match}): {torrent_hash}")
@@ -90,14 +92,14 @@ class Watcher:
                 if (tag_match is True and regex_match is True
                         or tag_match is None and regex_match is True
                         or tag_match is True and regex_match is None) and not hash_match:
-                    torrent['watcher_webhooks'] = watchlist_entry.get("webhooks", [])
+                    torrent['watcher_webhooks'] = watchlist_entry.get("webhooks", [])  # Attach webhook(s) to torrent
                     queue.append(torrent)
 
-                    if show_entries:
+                    if log_entries:
                         Logger.debug("New torrent. Added to download list.", {"white_lines": "b"})
                     break
 
-                if show_entries:
+                if log_entries:
                     Logger.debug()
 
         self.previous_hash = feed.entries[0].get('nyaa_infohash')

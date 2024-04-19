@@ -301,9 +301,6 @@ def _verify_webhooks_parse() -> None:
         if entry.get('result') is False:
             raise Exception(f"Webhook Parse Error: {entry.get('message')}")
 
-        if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-            Logger.log("Create an entry in 'webhooks.json' and enter the name into one or more 'watchlist.json' entries to be notified when new files are downloaded.", {"tip": True})
-
 
 def _verify_webhook_entry(webhook: dict) -> dict:
     properties = ['name', 'url', 'notifications']
