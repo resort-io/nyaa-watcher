@@ -20,24 +20,6 @@ def _apply_fields(webhook_json: dict, notification: discord.Embed, torrent: dict
     return notification
 
 
-def _create_webhook(url: str) -> discord.SyncWebhook:
-    discord_webhook = None
-    try:
-        (webhook_id, token) = _parse_url(url)
-        discord_webhook = discord.SyncWebhook.partial(webhook_id, token)
-    except Exception as e:
-        Logger.debug(f"{e}", {"exc_info": True})
-    return discord_webhook
-
-
-def _parse_url(url: str) -> list:
-    return (
-        url.replace("https://discord.com/api/webhooks/", "")
-        .replace("https://discordapp.com/api/webhooks/", "")
-        .split("/")
-    )
-
-
 def _insert_tags(string: str, webhook_name: str, torrent: dict) -> str:
     string = string.replace("$webhook_name", webhook_name) \
         .replace("$title", torrent.get('title')) \
@@ -48,6 +30,24 @@ def _insert_tags(string: str, webhook_name: str, torrent: dict) -> str:
         .replace("$published", re.sub(r":\d\d -0000", "", torrent.get('published'))) \
         .replace("$category", torrent.get('nyaa_downloads'))
     return string
+
+
+def _parse_url(url: str) -> list:
+    return (
+        url.replace("https://discord.com/api/webhooks/", "")
+        .replace("https://discordapp.com/api/webhooks/", "")
+        .split("/")
+    )
+
+
+def create_webhook(url: str) -> discord.SyncWebhook:
+    discord_webhook = None
+    try:
+        (webhook_id, token) = _parse_url(url)
+        discord_webhook = discord.SyncWebhook.partial(webhook_id, token)
+    except Exception as e:
+        Logger.debug(f"{e}", {"exc_info": True})
+    return discord_webhook
 
 
 class Webhook:
@@ -99,7 +99,7 @@ class Webhook:
             discord_webhook = self.get_discord_webhook(webhook_name)
         else:
             webhook_json = webhook
-            discord_webhook = _create_webhook(url)
+            discord_webhook = create_webhook(url)
 
         if not webhook_json or not discord_webhook:
             Logger.log(f"Webhook Error: Cannot find '{webhook_name}' webhook.")

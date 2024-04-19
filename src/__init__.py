@@ -58,14 +58,13 @@ def main() -> None:
         Logger.log(f"Parse Error: {message} syntax error found on line {e.lineno} at column {e.pos}.\n"
                    f"    {line}\nWatcher exited.", {"white_lines": "b"})
         Logger.debug(f"{e}", {"exc_info": True})
-        exit(1)
     except KeyboardInterrupt:
         Logger.log("Watcher exited.", {"white_lines": "bt"})
         exit(0)
     except Exception as e:
         Logger.log(f"{e}\nWatcher exited.", {"white_lines": "b"})
         Logger.debug(f"{e}", {"exc_info": True})
-        exit(1)
+    exit(1)
 
 
 if __name__ == "__main__":
