@@ -43,10 +43,18 @@ class Watcher:
             rss = self.rss
 
         feed = feedparser.parse(rss)
+
+        if len(feed.entries) == 0:
+            Logger.log(f"Cannot retrieve entries from {rss}.")
+            return []
+
         queue = []
         for torrent in feed.entries:
             title = torrent.get('title')
             torrent_hash = torrent.get('nyaa_infohash')
+
+            if log_entries:
+                Logger.debug(f"Torrent: {title}")
 
             # Check if the following torrents have already been fetched
             if torrent_hash == self.previous_hash:
@@ -64,7 +72,6 @@ class Watcher:
 
                 # Checking RegEx
                 regexes = watchlist_entry.get("regex")
-
                 regex_match = None
                 for regex_pattern in regexes:
                     regex_match = False
@@ -73,34 +80,30 @@ class Watcher:
                         regex_match = True
                         break
 
-                # Checking if torrent already downloaded
+                # Checking Hash
                 hash_match = False
-                if tag_match is True and regex_match is True \
-                        or tag_match is None and regex_match is True \
-                        or tag_match is True and regex_match is None:
+                if tag_match or regex_match:
                     history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == torrent_hash]
                     hash_match = len(history_entry) > 0
 
                 if log_entries:
-                    Logger.debug(f"RSS Entry: {title}\n"
-                                 f" - Watchlist: {watchlist_entry.get('name')}\n"
-                                 f" - Tags  (Match={tag_match}): {tags}\n"
-                                 f" - RegEx (Match={regex_match}): {regexes}\n"
-                                 f" - Hash  (Match={hash_match}): {torrent_hash}")
+                    Logger.debug(
+                        f"Watchlist: {watchlist_entry.get('name')}\n"
+                        f" - Tags  (Match={tag_match}): {tags}\n"
+                        f" - RegEx (Match={regex_match}): {regexes}\n"
+                        f" - Hash  (Match={hash_match}): {torrent_hash}"
+                    )
+                    if watchlist_entry == self.watchlist.get("watchlist")[-1]:
+                        Logger.debug()
 
-                # Add to queue
-                if (tag_match is True and regex_match is True
-                        or tag_match is None and regex_match is True
-                        or tag_match is True and regex_match is None) and not hash_match:
+                # Add to queue if not already downloaded
+                if (tag_match and regex_match or not tag_match and regex_match or tag_match and not regex_match) and not hash_match:
                     torrent['watcher_webhooks'] = watchlist_entry.get("webhooks", [])  # Attach webhook(s) to torrent
                     queue.append(torrent)
 
                     if log_entries:
-                        Logger.debug("New torrent. Added to download list.", {"white_lines": "b"})
+                        Logger.debug("Torrent added to download list.")
                     break
 
-                if log_entries:
-                    Logger.debug()
-
-        self.previous_hash = feed.entries[0].get('nyaa_infohash')
+        self.previous_hash = feed.entries[0].get('nyaa_infohash', None)
         return _sort_torrents(queue)
