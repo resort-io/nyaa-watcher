@@ -8,7 +8,7 @@ def _get_json_path(filename: str) -> str:
     return os.environ.get("WATCHER_DIR", "/watcher") + version
 
 
-def _get_version() -> str:
+def _get_file_version() -> str:
     try:
         file = open(_get_json_path("config"), "r")
         config = json.loads(file.read())
@@ -53,6 +53,7 @@ def _generate_files() -> None:
         raise ValueError(f"Error generating files: {e}")
 
 
+# TODO
 def _new_config_json() -> dict:
     return {
         "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
@@ -68,6 +69,7 @@ def new_history_json() -> dict:
     }
 
 
+# TODO
 def _new_watchlist_json() -> dict:
     return {
         "watchlist": [
@@ -102,8 +104,11 @@ def _new_webhook_json() -> dict:
     }
 
 
-def _update_v101_to_v110() -> None:
-    Logger.debug("Updating from v1.0.1 to v1.1.0...")
+def _update_v101_to_v111(version: str = "1.0.1") -> str:
+    if version != "1.0.0" or version != "1.0.1":
+        return version
+
+    Logger.debug("Updating to v1.1.1...")
 
     # Adding missing 'webhooks' property to 'watchlist.json'
     try:
@@ -135,11 +140,15 @@ def _update_v101_to_v110() -> None:
         file.write(json.dumps(_new_webhook_json(), indent=4))
         file.close()
 
-    Logger.log("Updated to v1.1.0.")
+    Logger.log("Updated to v1.1.1.")
+    return "1.1.1"
 
 
-def _update_v111_to_v112() -> None:
-    Logger.debug("Updating from v1.1.1 to v1.1.2...")
+def _update_v111_to_v112(version: str = "1.1.1") -> str:
+    if version != "1.1.0" or version != "1.1.1":
+        return version
+
+    Logger.debug("Updating to v1.1.2...")
 
     # Adding 'errors' property and changing 'history' to 'downloads' in 'history.json'
     try:
@@ -177,8 +186,20 @@ def _update_v111_to_v112() -> None:
     file.close()
 
     Logger.log("Updated to v1.1.2.")
+    return "1.1.2"
 
 
+def _update_v112_to_v120(version: str = "1.1.2") -> str:
+    if version != "1.1.2":
+        return version
+
+    Logger.debug("Updating to v1.1.2...")
+
+    Logger.log("Updated to v1.1.2.")
+    return "1.2.0"
+
+
+# TODO
 def _verify_config_parse() -> None:
     Logger.debug("Verifying 'config.json'...")
     path = _get_json_path("config")
@@ -214,6 +235,7 @@ def _verify_config_parse() -> None:
         raise Exception(f"Parse Error: v{config.get('version')} is not a valid version. Change the property to '1.1.1' in 'config.json' and restart the watcher to migrate to v1.1.2.")
 
 
+# TODO
 def _verify_watchlist_parse() -> None:
     Logger.debug("Verifying 'watchlist.json'...")
     path = _get_json_path("watchlist")
@@ -345,9 +367,8 @@ class Config:
         _generate_files()  # Generate missing files
 
         Logger.log("Checking for updates...")
-        if _get_version() != Config.version:
-            _update_v101_to_v110()
-            _update_v111_to_v112()
+        version = _get_file_version()
+        _update_v112_to_v120(_update_v111_to_v112(_update_v101_to_v111(version)))
         Logger.debug("Done checking.")
 
         Logger.log("Verifying files...")
@@ -355,8 +376,7 @@ class Config:
         _verify_watchlist_parse()
         _verify_history_parse()
         _verify_webhooks_parse()
-        Logger.debug("Done verifying")
-
+        Logger.debug("Done verifying.")
 
     @staticmethod
     def append_to_history(successes: list, errors: list) -> None:
@@ -441,7 +461,7 @@ class Config:
         file = open(_get_json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
-        return int(config.get('interval_sec'))
+        return int(config.get('interval_sec', 600))
 
     @staticmethod
     def get_discord_webhooks() -> dict:
