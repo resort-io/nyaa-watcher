@@ -1,0 +1,17 @@
+{
+    "interval_sec": 600,
+    "subscriptions": [
+        {
+            "username": "Username",
+            "rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
+            "watchlist": [
+                {
+                    "name": "",
+                    "tags": [],
+                    "regex": [],
+                    "webhooks": []
+                }
+            ]
+        }
+    ]
+}
