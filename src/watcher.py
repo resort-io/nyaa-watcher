@@ -12,9 +12,8 @@ def _sort_torrents(torrents: list) -> list:
 
 class Watcher:
 
-    def __init__(self, rss: str, watchlist_json: dict, history_json: dict, previous_hash: str = None) -> None:
-        self.rss = rss
-        self.watchlist = watchlist_json
+    def __init__(self, subscriptions_json: dict, history_json: dict, previous_hash: str = None) -> None:
+        self.subscriptions = subscriptions_json
         self.history = history_json
         self.previous_hash = previous_hash
 
@@ -27,23 +26,10 @@ class Watcher:
                 "nyaa_hash": torrent.get('nyaa_infohash')
             })
 
-    def get_history(self) -> dict:
-        return self.history
-
-    def get_watchlist(self) -> dict:
-        return self.watchlist
-
-    def get_rss(self) -> str:
-        return self.rss
-
-    def fetch_new_torrents(self, rss: str = None) -> list:
+    def fetch_feed(self, rss: str, watchlist: dict) -> list:
         log_entries = os.environ.get("LOG_RSS_ENTRIES", "false").lower() == "true"
 
-        if rss is None:
-            rss = self.rss
-
         feed = feedparser.parse(rss)
-
         if len(feed.entries) == 0:
             Logger.log(f"Cannot retrieve entries from {rss}.")
             return []
@@ -60,7 +46,7 @@ class Watcher:
             if torrent_hash == self.previous_hash:
                 break
 
-            for watchlist_entry in self.watchlist.get("watchlist"):
+            for watchlist_entry in watchlist:
                 # Checking Tags
                 tags = watchlist_entry.get("tags")
                 tag_match = None
@@ -84,6 +70,7 @@ class Watcher:
                 hash_match = False
                 if tag_match or regex_match:
                     history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == torrent_hash]
+                    history_entry = history_entry if len(history_entry) > 0 else [(entry['nyaa_hash'], entry) for entry in self.history.get("errors") if entry.get('nyaa_hash') == torrent_hash]
                     hash_match = len(history_entry) > 0
 
                 if log_entries:
@@ -93,7 +80,7 @@ class Watcher:
                         f" - RegEx (Match={regex_match}): {regexes}\n"
                         f" - Hash  (Match={hash_match}): {torrent_hash}"
                     )
-                    if watchlist_entry == self.watchlist.get("watchlist")[-1]:
+                    if watchlist_entry == watchlist[-1]:
                         Logger.debug()
 
                 # Add to queue if not already downloaded
@@ -107,3 +94,11 @@ class Watcher:
 
         self.previous_hash = feed.entries[0].get('nyaa_infohash', None)
         return _sort_torrents(queue)
+
+    def fetch_all_feeds(self) -> list:
+        queue = []
+        Logger.log()
+        for sub in self.subscriptions.get("subscriptions"):
+            Logger.log(f"Searching for new uploads from '{sub.get('username')}'...")
+            queue += self.fetch_feed(sub.get('rss'), sub.get('watchlist'))
+        return queue

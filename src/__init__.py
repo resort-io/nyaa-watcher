@@ -29,19 +29,17 @@ def main() -> None:
     try:
         Config.update_and_verify()
 
-        interval = Config.get_watcher_interval()
-        rss = Config.get_nyaa_rss()
-        watchlist = Config.get_watcher_watchlist()
-        history = Config.get_watcher_history()
-        webhooks = Config.get_discord_webhooks()
+        interval = Config.get_interval()
+        subscriptions = Config.get_subscriptions()
+        history = Config.get_history()
+        webhooks = Config.get_webhooks()
 
-        watcher = Watcher(rss, watchlist, history)
+        watcher = Watcher(subscriptions, history)
         webhook = Webhook(webhooks)
 
         Logger.debug(
             f"INTERVAL: {interval} seconds.\n"
-            f"NYAA RSS: {rss}\n"
-            f"WATCHLIST: {len(watchlist.get('watchlist'))} entr{'y' if len(watchlist.get('watchlist')) == 1 else 'ies'}.\n"
+            f"WATCHLIST: {len(subscriptions.get('subscriptions'))} entr{'y' if len(subscriptions.get('subscriptions')) == 1 else 'ies'}.\n"
             f"HISTORY: {len(history.get('downloads'))} download(s) and {len(history.get('errors'))} error(s).\n"
             f"WEBHOOKS: {len(webhook.get_json_webhooks().get('webhooks'))} entr{'y' if len(webhook.get_json_webhooks().get('webhooks')) == 1 else 'ies'}."
         )
