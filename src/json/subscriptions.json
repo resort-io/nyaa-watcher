@@ -9,7 +9,8 @@
                     "name": "",
                     "tags": [],
                     "regex": [],
-                    "webhooks": []
+                    "webhooks": [],
+                    "previous_hash": ""
                 }
             ]
         }

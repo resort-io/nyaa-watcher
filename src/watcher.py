@@ -2,6 +2,7 @@ import feedparser
 import os
 import re
 from logger import Logger
+from config import Config
 
 
 def _sort_torrents(torrents: list) -> list:
@@ -12,10 +13,9 @@ def _sort_torrents(torrents: list) -> list:
 
 class Watcher:
 
-    def __init__(self, subscriptions_json: dict, history_json: dict, previous_hash: str = None) -> None:
+    def __init__(self, subscriptions_json: dict, history_json: dict) -> None:
         self.subscriptions = subscriptions_json
         self.history = history_json
-        self.previous_hash = previous_hash
 
     def append_to_history(self, torrents: list) -> None:
         for torrent in torrents:
@@ -26,7 +26,7 @@ class Watcher:
                 "nyaa_hash": torrent.get('nyaa_infohash')
             })
 
-    def fetch_feed(self, rss: str, watchlist: dict) -> list:
+    def fetch_feed(self, rss: str, watchlist: dict, sub_name: str = None, prev_hash: str = None) -> list:
         log_entries = os.environ.get("LOG_RSS_ENTRIES", "false").lower() == "true"
 
         feed = feedparser.parse(rss)
@@ -43,7 +43,7 @@ class Watcher:
                 Logger.debug(f"Torrent: {title}")
 
             # Check if the following torrents have already been fetched
-            if torrent_hash == self.previous_hash:
+            if torrent_hash == prev_hash:
                 break
 
             for watchlist_entry in watchlist:
@@ -92,7 +92,8 @@ class Watcher:
                         Logger.debug("Torrent added to download list.")
                     break
 
-        self.previous_hash = feed.entries[0].get('nyaa_infohash', None)
+        if sub_name:
+            Config.set_previous_hash(sub_name, feed.entries[0].get('nyaa_infohash', ""))
         return _sort_torrents(queue)
 
     def fetch_all_feeds(self) -> list:
@@ -100,5 +101,5 @@ class Watcher:
         Logger.log()
         for sub in self.subscriptions.get("subscriptions"):
             Logger.log(f"Searching for new uploads from '{sub.get('username')}'...")
-            queue += self.fetch_feed(sub.get('rss'), sub.get('watchlist'))
+            queue += self.fetch_feed(sub.get('rss'), sub.get('watchlist'), sub.get('username'), sub.get('previous_hash'))
         return queue
