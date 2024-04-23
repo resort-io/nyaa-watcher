@@ -88,6 +88,7 @@ class Watcher:
                 if (tag_match and regex_match or tag_match is None and regex_match or tag_match and regex_match is None) and not hash_match:
                     torrent['watcher_webhooks'] = watchlist_entry.get("webhooks", [])  # Attach webhook(s) to torrent
                     torrent['uploader'] = sub_name
+                    torrent['watchlist'] = watchlist_entry.get('name')
                     queue.append(torrent)
 
                     if log_entries:
