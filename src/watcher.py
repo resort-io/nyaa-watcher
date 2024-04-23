@@ -50,42 +50,54 @@ class Watcher:
             for watchlist_entry in watchlist:
                 # Checking Tags
                 tags = watchlist_entry.get("tags", [])
-                tag_match = None
+                tag_match = False
                 for tag in tags:
-                    tag_match = False
                     if tag.lower() in title.lower():
                         tag_match = True
                         break
 
                 # Checking RegEx
                 regexes = watchlist_entry.get("regex", [])
-                regex_match = None
+                regex_match = False
                 for regex_pattern in regexes:
-                    regex_match = False
                     pattern = re.compile(regex_pattern)
                     if re.search(pattern, title):
                         regex_match = True
                         break
 
+                # Checking Excluded Regex
+                ex_regexes = watchlist_entry.get("excluded_regex", [])
+                ex_regex_match = False
+                for regex_pattern in regexes:
+                    pattern = re.compile(regex_pattern)
+                    if re.search(pattern, title):
+                        ex_regex_match = True
+                        break
+
+                match = tag_match and regex_match or len(tags) == 0 and regex_match or tag_match and len(regexes) == 0
+
                 # Checking Hash
                 hash_match = False
-                if tag_match and regex_match or tag_match is None and regex_match or tag_match and regex_match is None:
-                    history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == torrent_hash]
-                    history_entry = history_entry if len(history_entry) > 0 else [(entry['nyaa_hash'], entry) for entry in self.history.get("errors") if entry.get('nyaa_hash') == torrent_hash]
+                if match:
+                    history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == torrent_hash]  # Successful downloads
+                    history_entry = history_entry if len(history_entry) > 0 else [(entry['nyaa_hash'], entry) for entry in self.history.get("errors") if entry.get('nyaa_hash') == torrent_hash]  # Failed downloads
                     hash_match = len(history_entry) > 0
+
+                match = match and not hash_match and not ex_regex_match
 
                 if log_entries:
                     Logger.debug(
                         f"Watchlist: {watchlist_entry.get('name')}\n"
-                        f" - Tags  (Match={tag_match}): {tags}\n"
-                        f" - RegEx (Match={regex_match}): {regexes}\n"
-                        f" - Hash  (Match={hash_match}): {torrent_hash}"
+                        f" - Tags     (Match={tag_match}): {tags}\n"
+                        f" - RegEx    (Match={regex_match}): {regexes}\n"
+                        f" - Ex.RegEx (Match={ex_regex_match}): {ex_regexes}\n"
+                        f" - Hash     (Match={hash_match}): {torrent_hash}"
                     )
                     if watchlist_entry == watchlist[-1]:
                         Logger.debug()
 
                 # Add to queue if not already downloaded
-                if (tag_match and regex_match or tag_match is None and regex_match or tag_match and regex_match is None) and not hash_match:
+                if match:
                     torrent['watcher_webhooks'] = watchlist_entry.get("webhooks", [])  # Attach webhook(s) to torrent
                     torrent['uploader'] = sub_name
                     torrent['watchlist'] = watchlist_entry.get('name')

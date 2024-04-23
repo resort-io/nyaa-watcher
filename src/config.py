@@ -79,6 +79,7 @@ def _new_subscriptions_json() -> dict:
                         "name": "",
                         "tags": [],
                         "regex": [],
+                        "exclude_regex": [],
                         "webhooks": []
                     }
                 ],
@@ -220,13 +221,24 @@ def _update_v112_to_v120() -> None:
         raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
 
     username = re.search(r"u=[^&]*", rss).group().replace(r"u=", "")
+
+    new_watchlist = []
+    for entry in watchlist.get('watchlist'):
+        new_watchlist.append({
+            "name": entry.get('name'),
+            "tags": entry.get('tags', []),
+            "regex": entry.get('regex', []),
+            "exclude_regex": entry.get('exclude_regex', []),
+            "webhooks": entry.get('webhooks', [])
+        })
+
     subscriptions = {
         "interval_sec": interval,
         "subscriptions": [
             {
                 "username": username,
                 "rss": rss,
-                "watchlist": watchlist.get('watchlist', []),
+                "watchlist": new_watchlist,
                 "previous_hash": ""
             }
         ]
@@ -347,7 +359,7 @@ def _verify_subscriptions_entry(sub: dict) -> dict:
         }
 
     for watchlist in sub.get('watchlist'):
-        if not all(watchlist.get('name') and watchlist.get('tags') and watchlist.get('regex') and watchlist.get('webhooks')):
+        if not all(watchlist.get('name') and watchlist.get('tags') and watchlist.get('regex') and watchlist.get('exclude_regex') and watchlist.get('webhooks')):
             return {
                 "result": False,
                 "message": "one or more 'watchlist' entries that contains missing or invalid properties"
