@@ -211,14 +211,6 @@ def _update_v112_to_v120() -> None:
     interval = config.get('watcher_interval_seconds', 600)
     rss = config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=USERNAME")
 
-    config = {
-        "version": "1.2.0"
-    }
-
-    file = open(_get_json_path("config"), "w")
-    file.write(json.dumps(config, indent=4))
-    file.close()
-
     # Update 'watchlist.json' and switch to 'subscriptions.json'
     try:
         file = open(_get_json_path("watchlist"), "r")
@@ -227,11 +219,12 @@ def _update_v112_to_v120() -> None:
     except json.decoder.JSONDecodeError as e:
         raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
 
+    username = re.search(r"u=[^&]*", rss).group().replace(r"u=", "")
     subscriptions = {
         "interval_sec": interval,
         "subscriptions": [
             {
-                "username": re.search(r"u=[^&]*", rss).group().replace(r"u=", ""),
+                "username": username,
                 "rss": rss,
                 "watchlist": watchlist.get('watchlist', []),
                 "previous_hash": ""
@@ -241,6 +234,37 @@ def _update_v112_to_v120() -> None:
 
     file = open(_get_json_path("subscriptions"), "w")
     file.write(json.dumps(subscriptions, indent=4))
+    file.close()
+
+    # Adding 'uploader' property to 'history.json'
+    try:
+        file = open(_get_json_path("history"), "r")
+        history = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
+
+    new_history = []
+    for entry in history.get('downloads'):
+        new_history.append({
+            "uploader": entry.get('uploader', username),
+            "torrent_title": entry.get('torrent_title'),
+            "date_downloaded": entry.get('date_downloaded'),
+            "nyaa_page": entry.get('nyaa_page'),
+            "nyaa_hash": entry.get('nyaa_hash')
+        })
+
+    file = open(_get_json_path("history"), "w")
+    file.write(json.dumps(new_history, indent=4))
+    file.close()
+
+    # Update 'version' value in 'config.json'
+    config = {
+        "version": "1.2.0"
+    }
+
+    file = open(_get_json_path("config"), "w")
+    file.write(json.dumps(config, indent=4))
     file.close()
 
     Logger.log("Updated to v1.2.0.")
@@ -465,6 +489,7 @@ class Config:
 
         for success in successes:
             history.get('downloads').append({
+                "uploader": success.get('uploader'),
                 "torrent_title": success.get('title'),
                 "date_downloaded": success.get('download_datetime'),
                 "nyaa_page": success.get('id'),
@@ -473,6 +498,7 @@ class Config:
 
         for error in errors:
             history.get('errors').append({
+                "uploader": error.get('uploader'),
                 "torrent_title": error.get('title'),
                 "date_failed": error.get('download_datetime'),
                 "nyaa_page": error.get('id'),
@@ -533,18 +559,16 @@ class Config:
         return webhooks
 
     @staticmethod
-    def set_previous_hash(sub_name: str, hash_value: str) -> bool:
+    def set_previous_hash(sub_name: str, hash_value: str) -> None:
         file = open(_get_json_path("subscriptions"), "r")
         subscriptions = json.loads(file.read())
         file.close()
 
-        is_set = False
         for sub in subscriptions.get('subscriptions'):
             if sub.get('username') == sub_name:
                 sub['previous_hash'] = hash_value
-                is_set = True
+                break
 
         file = open(_get_json_path("subscriptions"), "w")
         file.write(json.dumps(subscriptions, indent=4))
         file.close()
-        return is_set

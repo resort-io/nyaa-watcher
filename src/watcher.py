@@ -20,6 +20,7 @@ class Watcher:
     def append_to_history(self, torrents: list) -> None:
         for torrent in torrents:
             self.history.get('downloads').append({
+                "uploader": torrent.get('uploader'),
                 "torrent_title": torrent.get('title'),
                 "date_downloaded": torrent.get('download_datetime'),
                 "nyaa_page": torrent.get('id'),
@@ -48,7 +49,7 @@ class Watcher:
 
             for watchlist_entry in watchlist:
                 # Checking Tags
-                tags = watchlist_entry.get("tags")
+                tags = watchlist_entry.get("tags", [])
                 tag_match = None
                 for tag in tags:
                     tag_match = False
@@ -57,7 +58,7 @@ class Watcher:
                         break
 
                 # Checking RegEx
-                regexes = watchlist_entry.get("regex")
+                regexes = watchlist_entry.get("regex", [])
                 regex_match = None
                 for regex_pattern in regexes:
                     regex_match = False
@@ -68,7 +69,7 @@ class Watcher:
 
                 # Checking Hash
                 hash_match = False
-                if tag_match or regex_match:
+                if tag_match and regex_match or tag_match is None and regex_match or tag_match and regex_match is None:
                     history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == torrent_hash]
                     history_entry = history_entry if len(history_entry) > 0 else [(entry['nyaa_hash'], entry) for entry in self.history.get("errors") if entry.get('nyaa_hash') == torrent_hash]
                     hash_match = len(history_entry) > 0
@@ -84,8 +85,9 @@ class Watcher:
                         Logger.debug()
 
                 # Add to queue if not already downloaded
-                if (tag_match and regex_match or not tag_match and regex_match or tag_match and not regex_match) and not hash_match:
+                if (tag_match and regex_match or tag_match is None and regex_match or tag_match and regex_match is None) and not hash_match:
                     torrent['watcher_webhooks'] = watchlist_entry.get("webhooks", [])  # Attach webhook(s) to torrent
+                    torrent['uploader'] = sub_name
                     queue.append(torrent)
 
                     if log_entries:
