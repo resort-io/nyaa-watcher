@@ -1,5 +1,6 @@
-import os
 import json
+import os
+import re
 from logger import Logger
 
 
@@ -8,7 +9,7 @@ def _get_json_path(filename: str) -> str:
     return os.environ.get("WATCHER_DIR", "/watcher") + version
 
 
-def _get_version() -> str:
+def _get_file_version() -> str:
     try:
         file = open(_get_json_path("config"), "r")
         config = json.loads(file.read())
@@ -26,25 +27,25 @@ def _get_version() -> str:
 
 def _generate_files() -> None:
     try:
-        if os.path.exists(_get_json_path("config")) is False:
+        if not os.path.exists(_get_json_path("config")):
             file = open(_get_json_path("config"), "x")
             file.write(json.dumps(_new_config_json(), indent=4))
             file.close()
             Logger.debug("Generated 'config.json'.")
 
-        if os.path.exists(_get_json_path("watchlist")) is False:
-            file = open(_get_json_path("watchlist"), "x")
-            file.write(json.dumps(_new_watchlist_json(), indent=4))
-            file.close()
-            Logger.debug("Generated 'watchlist.json'.")
-
-        if os.path.exists(_get_json_path("history")) is False:
+        if not os.path.exists(_get_json_path("history")):
             file = open(_get_json_path("history"), "x")
             file.write(json.dumps(new_history_json(), indent=4))
             file.close()
             Logger.debug("Generated 'history.json'.")
 
-        if os.path.exists(_get_json_path("webhooks")) is False:
+        if not os.path.exists(_get_json_path("subscriptions")):
+            file = open(_get_json_path("subscriptions"), "x")
+            file.write(json.dumps(_new_subscriptions_json(), indent=4))
+            file.close()
+            Logger.debug("Generated 'subscriptions.json'.")
+
+        if not os.path.exists(_get_json_path("webhooks")):
             file = open(_get_json_path("webhooks"), "x")
             file.write(json.dumps(_new_webhook_json(), indent=4))
             file.close()
@@ -55,9 +56,7 @@ def _generate_files() -> None:
 
 def _new_config_json() -> dict:
     return {
-        "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
-        "interval_sec": 600,
-        "version": "1.1.2"
+        "version": "1.2.0"
     }
 
 
@@ -68,14 +67,23 @@ def new_history_json() -> dict:
     }
 
 
-def _new_watchlist_json() -> dict:
+def _new_subscriptions_json() -> dict:
     return {
-        "watchlist": [
+        "interval_sec": 600,
+        "subscriptions": [
             {
-                "name": "",
-                "tags": [],
-                "regex": [],
-                "webhooks": []
+                "username": "Username",
+                "rss": "https://nyaa.si/?page=rss&u=USERNAME",
+                "watchlist": [
+                    {
+                        "name": "",
+                        "tags": [],
+                        "regex": [],
+                        "exclude_regex": [],
+                        "webhooks": []
+                    }
+                ],
+                "previous_hash": ""
             }
         ]
     }
@@ -102,8 +110,11 @@ def _new_webhook_json() -> dict:
     }
 
 
-def _update_v101_to_v110() -> None:
-    Logger.debug("Updating from v1.0.1 to v1.1.0...")
+def _update_v101_to_v111() -> None:
+    if Config.version != "1.0.0" or Config.version != "1.0.1":
+        return
+
+    Logger.debug("Updating to v1.1.1...")
 
     # Adding missing 'webhooks' property to 'watchlist.json'
     try:
@@ -135,11 +146,15 @@ def _update_v101_to_v110() -> None:
         file.write(json.dumps(_new_webhook_json(), indent=4))
         file.close()
 
-    Logger.log("Updated to v1.1.0.")
+    Logger.log("Updated to v1.1.1.")
+    Config.version = "1.1.1"
 
 
 def _update_v111_to_v112() -> None:
-    Logger.debug("Updating from v1.1.1 to v1.1.2...")
+    if Config.version != "1.1.0" or Config.version != "1.1.1":
+        return
+
+    Logger.debug("Updating to v1.1.2...")
 
     # Adding 'errors' property and changing 'history' to 'downloads' in 'history.json'
     try:
@@ -177,13 +192,102 @@ def _update_v111_to_v112() -> None:
     file.close()
 
     Logger.log("Updated to v1.1.2.")
+    Config.version = "1.1.2"
+
+
+def _update_v112_to_v120() -> None:
+    if Config.version != "1.1.2":
+        return
+
+    Logger.debug("Updating to v1.2.0...")
+
+    # Get values and update the 'version' value in 'config.json'
+    try:
+        file = open(_get_json_path("config"), "r")
+        config = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
+
+    interval = config.get('watcher_interval_seconds', 600)
+    rss = config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=USERNAME")
+
+    # Update 'watchlist.json' and switch to 'subscriptions.json'
+    try:
+        file = open(_get_json_path("watchlist"), "r")
+        watchlist = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
+
+    username = re.search(r"u=[^&]*", rss).group().replace(r"u=", "")
+
+    new_watchlist = []
+    for entry in watchlist.get('watchlist'):
+        new_watchlist.append({
+            "name": entry.get('name'),
+            "tags": entry.get('tags', []),
+            "regex": entry.get('regex', []),
+            "exclude_regex": entry.get('exclude_regex', []),
+            "webhooks": entry.get('webhooks', [])
+        })
+
+    subscriptions = {
+        "interval_sec": interval,
+        "subscriptions": [
+            {
+                "username": username,
+                "rss": rss,
+                "watchlist": new_watchlist,
+                "previous_hash": ""
+            }
+        ]
+    }
+
+    file = open(_get_json_path("subscriptions"), "w")
+    file.write(json.dumps(subscriptions, indent=4))
+    file.close()
+
+    # Adding 'uploader' property to 'history.json'
+    try:
+        file = open(_get_json_path("history"), "r")
+        history = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
+
+    new_history = []
+    for entry in history.get('downloads'):
+        new_history.append({
+            "uploader": entry.get('uploader', username),
+            "torrent_title": entry.get('torrent_title'),
+            "date_downloaded": entry.get('date_downloaded'),
+            "nyaa_page": entry.get('nyaa_page'),
+            "nyaa_hash": entry.get('nyaa_hash')
+        })
+
+    file = open(_get_json_path("history"), "w")
+    file.write(json.dumps(new_history, indent=4))
+    file.close()
+
+    # Update 'version' value in 'config.json'
+    config = {
+        "version": "1.2.0"
+    }
+
+    file = open(_get_json_path("config"), "w")
+    file.write(json.dumps(config, indent=4))
+    file.close()
+
+    Logger.log("Updated to v1.2.0.")
+    Config.version = "1.2.0"
 
 
 def _verify_config_parse() -> None:
     Logger.debug("Verifying 'config.json'...")
     path = _get_json_path("config")
 
-    if os.path.exists(path) is False:
+    if not os.path.exists(path):
         Logger.log("Cannot find 'config.json'. Creating file...")
         file = open(path, "x")
         file.write(json.dumps(_new_config_json(), indent=4))
@@ -197,59 +301,90 @@ def _verify_config_parse() -> None:
     except json.decoder.JSONDecodeError as e:
         raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
 
-    if not config.get('nyaa_rss') or not config.get('interval_sec') or not config.get('version'):
-        raise Exception("Parse Error: 'nyaa_rss', 'interval_sec', and/or 'version' is missing from 'config.json'. Change the properties and restart the watcher.")
+    if not config.get('version'):
+        raise Exception("Parse Error: 'version' is missing from 'config.json'. Add the properties and restart the watcher.")
 
-    if config.get('nyaa_rss') == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
-        raise Exception("Parse Error: No Nyaa RSS found. Add a Nyaa RSS URL to 'config.json' and restart the watcher.")
-
-    if not isinstance(int(config.get('interval_sec')), int):
-        raise Exception("Parse Error: 'interval_sec' must be an integer that is at least 60 seconds. Change the property and restart the watcher.")
-
-    if int(config.get('interval_sec')) < 60:
-        raise Exception("Parse Error: 'interval_sec' must be at least 60 seconds. Change the property and restart the watcher.")
-
-    valid_versions = ["1.0.0", "1.0.1", "1.1.1", "1.1.2"]
+    valid_versions = ["1.0.0", "1.0.1", "1.1.1", "1.1.2", "1.2.0"]
     if config.get('version') and config.get('version') not in valid_versions:
-        raise Exception(f"Parse Error: v{config.get('version')} is not a valid version. Change the property to '1.1.1' in 'config.json' and restart the watcher to migrate to v1.1.2.")
+        raise Exception(f"Parse Error: Version '{config.get('version')}' is not a valid version. Change the property to '1.0.0' in 'config.json' and restart the watcher to migrate to v1.2.0.")
 
 
-def _verify_watchlist_parse() -> None:
-    Logger.debug("Verifying 'watchlist.json'...")
-    path = _get_json_path("watchlist")
+def _verify_subscriptions_parse() -> None:
+    Logger.debug("Verifying 'subscriptions.json'...")
+    path = _get_json_path("subscriptions")
 
-    if os.path.exists(path) is False:
-        Logger.log("Cannot find 'watchlist.json'. Creating file...")
+    if not os.path.exists(path):
+        Logger.log("Cannot find 'subscriptions.json'. Creating file...")
         file = open(path, "x")
-        file.write(json.dumps(_new_watchlist_json(), indent=4))
+        file.write(json.dumps(_new_subscriptions_json(), indent=4))
         file.close()
-        Logger.log("Created 'watchlist.json'.")
+        Logger.log("Created 'subscriptions.json'.")
 
     try:
         file = open(path, "r")
-        watchlist = json.loads(file.read())
+        subscriptions = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
+        raise json.decoder.JSONDecodeError("subscriptions.json", e.doc, e.pos)
 
-    if not watchlist.get('watchlist') or len(watchlist.get('watchlist')) == 0:
-        raise Exception("Parse Error: watchlist.json contains no entries. Add entries and restart the watcher.")
+    if not subscriptions.get('subscriptions') or len(subscriptions.get('subscriptions')) == 0:
+        raise Exception("Parse Error: 'subscriptions.json' contains no entries. Add entries and restart the watcher.")
 
-    for entry in watchlist.get('watchlist'):
-        if not all(entry.get('name') and entry.get('tags') and entry.get('regex') and entry.get('webhooks')):
-            raise Exception("Parse Error: One or more entries in 'watchlist.json' contains missing or invalid properties. Change the properties and restart the watcher.")
+    if not isinstance(int(subscriptions.get('interval_sec')), int) or int(subscriptions.get('interval_sec')) < 60:
+        raise Exception("Parse Error: The 'interval_sec' property is missing or invalid in 'subscriptions.json'. Add the property and restart the watcher.")
 
-        if entry.get('name') == "" and len(entry.get('tags')) + len(entry.get('regex')) == 0 \
-                or len(entry.get('tags')) + len(entry.get('regex')) == 0:
-            raise Exception("Parse Error: One or more entries in 'watchlist.json' does not have a tag or regex. "
-                              "Change the entries to have at least one 'tag' or 'regex' value and restart the watcher.")
+    for sub in subscriptions.get('subscriptions'):
+        result = _verify_subscriptions_entry(sub)
+        if not result.get('result'):
+            raise Exception(f"Subscriptions Parse Error: The '{sub.get('username', 'Unknown User')}' subscription has {result.get('message')}. Change the properties in 'subscriptions.json' and restart the watcher.")
+
+
+def _verify_subscriptions_entry(sub: dict) -> dict:
+    if not sub.get('username') or not sub.get('rss') or not sub.get('watchlist') or sub.get('previous_hash') is None:
+        return {
+            "result": False,
+            "message": "one or more entries that contains missing or invalid 'username', 'rss, 'watchlist', and/or and/or 'previous_hash' properties"
+        }
+
+    if sub.get('username') == "USERNAME":
+        return {
+            "result": False,
+            "message": "one or more entries that contains the default 'username' value"
+        }
+
+    if sub.get('rss') == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
+        return {
+            "result": False,
+            "message": "one or more entries that contains the default 'rss' value"
+        }
+
+    for watchlist in sub.get('watchlist'):
+        if not all(watchlist.get('name') and watchlist.get('tags') and watchlist.get('regex') and watchlist.get('exclude_regex') and watchlist.get('webhooks')):
+            return {
+                "result": False,
+                "message": "one or more 'watchlist' entries that contains missing or invalid properties"
+            }
+
+        if watchlist.get('name') == "":
+            return {
+                "result": False,
+                "message": "one or more 'watchlist' entries that contains no 'name' value"
+            }
+
+        if len(watchlist.get('tags')) + len(watchlist.get('regex')) == 0:
+            return {
+                "result": False,
+                "message": "one or more 'watchlist' entries that contains no 'tags' or 'regex' values."
+            }
+
+    return {"result": True}
 
 
 def _verify_history_parse() -> None:
     Logger.debug("Verifying 'history.json'...")
     path = _get_json_path("history")
 
-    if os.path.exists(path) is False:
+    if not os.path.exists(path):
         Logger.log("Cannot find 'history.json'. Creating file...")
         file = open(path, "x")
         file.write(json.dumps(new_history_json(), indent=4))
@@ -281,7 +416,7 @@ def _verify_webhooks_parse() -> None:
     Logger.debug("Verifying 'webhooks.json'...")
     path = _get_json_path("webhooks")
 
-    if os.path.exists(path) is False:
+    if not os.path.exists(path):
         Logger.log("Cannot find 'webhooks.json'. Creating file...")
         file = open(path, "x")
         file.write(json.dumps(_new_webhook_json(), indent=4))
@@ -297,12 +432,9 @@ def _verify_webhooks_parse() -> None:
         raise json.decoder.JSONDecodeError("webhooks.json", e.doc, e.pos)
 
     for webhook in webhooks.get('webhooks'):
-        entry = _verify_webhook_entry(webhook)
-        if entry.get('result') is False:
-            raise Exception(f"Webhook Parse Error: {entry.get('message')}")
-
-        if webhook['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-            Logger.log("Create an entry in 'webhooks.json' and enter the name into one or more 'watchlist.json' entries to be notified when new files are downloaded.", {"tip": True})
+        result = _verify_webhook_entry(webhook)
+        if not result.get('result'):
+            raise Exception(f"Webhook Parse Error: {result.get('message')}")
 
 
 def _verify_webhook_entry(webhook: dict) -> dict:
@@ -340,26 +472,26 @@ def _verify_webhook_entry(webhook: dict) -> dict:
 
 
 class Config:
+
+    version: str = "0.0.0"
+
     @staticmethod
     def update_and_verify() -> None:
-        _generate_files()
+        _generate_files()  # Generate missing files
 
-        try:
-            Logger.log("Checking for updates...")
-            if _get_version() != "1.1.2":
-                _update_v101_to_v110()
-                _update_v111_to_v112()
-            Logger.debug("Done checking.")
+        Logger.log("Checking for updates...")
+        Config.version = _get_file_version()
+        _update_v101_to_v111()
+        _update_v111_to_v112()
+        _update_v112_to_v120()
+        Logger.debug("Done checking.")
 
-            Logger.log("Verifying files...")
-            _verify_config_parse()
-            _verify_watchlist_parse()
-            _verify_history_parse()
-            _verify_webhooks_parse()
-            Logger.debug("Done verifying")
-
-        except json.decoder.JSONDecodeError as e:
-            raise json.decoder.JSONDecodeError(e.msg, e.doc, e.pos)
+        Logger.log("Verifying files...")
+        _verify_config_parse()
+        _verify_subscriptions_parse()
+        _verify_history_parse()
+        _verify_webhooks_parse()
+        Logger.debug("Done verifying.")
 
     @staticmethod
     def append_to_history(successes: list, errors: list) -> None:
@@ -369,6 +501,7 @@ class Config:
 
         for success in successes:
             history.get('downloads').append({
+                "uploader": success.get('uploader'),
                 "torrent_title": success.get('title'),
                 "date_downloaded": success.get('download_datetime'),
                 "nyaa_page": success.get('id'),
@@ -377,6 +510,7 @@ class Config:
 
         for error in errors:
             history.get('errors').append({
+                "uploader": error.get('uploader'),
                 "torrent_title": error.get('title'),
                 "date_failed": error.get('download_datetime'),
                 "nyaa_page": error.get('id'),
@@ -387,13 +521,6 @@ class Config:
         file.write(json.dumps(history, indent=4))
         file.close()
         Logger.debug(f"Appended {len(successes)} download{'' if len(successes) == 1 else 's'} and {len(errors)} error{'' if len(errors) == 1 else 's'} to 'history.json'.")
-
-    @staticmethod
-    def get_config() -> dict:
-        file = open(_get_json_path("config"), "r")
-        config = json.loads(file.read())
-        file.close()
-        return config
 
     @staticmethod
     def get_interval_string(interval: int) -> str:
@@ -413,42 +540,47 @@ class Config:
         return values[0]
 
     @staticmethod
-    def get_nyaa_rss() -> str:
-        if os.environ.get("NYAA_RSS"):
-            return os.environ.get("NYAA_RSS")
-
-        file = open(_get_json_path("config"), "r")
-        config = json.loads(file.read())
+    def get_subscriptions() -> dict:
+        file = open(_get_json_path("subscriptions"), "r")
+        subscriptions = json.loads(file.read())
         file.close()
-        return config.get('nyaa_rss')
+        return subscriptions
 
     @staticmethod
-    def get_watcher_watchlist() -> dict:
-        file = open(_get_json_path("watchlist"), "r")
-        watchlist = json.loads(file.read())
-        file.close()
-        return watchlist
-
-    @staticmethod
-    def get_watcher_history() -> dict:
+    def get_history() -> dict:
         file = open(_get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
         return history
 
     @staticmethod
-    def get_watcher_interval() -> int:
+    def get_interval() -> int:
         if os.environ.get("INTERVAL_SEC"):
             return int(os.environ.get("INTERVAL_SEC"))
 
-        file = open(_get_json_path("config"), "r")
+        file = open(_get_json_path("subscriptions"), "r")
         config = json.loads(file.read())
         file.close()
-        return int(config.get('interval_sec'))
+        return int(config.get('interval_sec', 600))
 
     @staticmethod
-    def get_discord_webhooks() -> dict:
+    def get_webhooks() -> dict:
         file = open(_get_json_path("webhooks"), "r")
         webhooks = json.loads(file.read())
         file.close()
         return webhooks
+
+    @staticmethod
+    def set_previous_hash(sub_name: str, hash_value: str) -> None:
+        file = open(_get_json_path("subscriptions"), "r")
+        subscriptions = json.loads(file.read())
+        file.close()
+
+        for sub in subscriptions.get('subscriptions'):
+            if sub.get('username') == sub_name:
+                sub['previous_hash'] = hash_value
+                break
+
+        file = open(_get_json_path("subscriptions"), "w")
+        file.write(json.dumps(subscriptions, indent=4))
+        file.close()
