@@ -28,11 +28,11 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook, r
     # No new torrents
     if len(new_torrents) == 0:
         interval_string = Config.get_interval_string(interval)
-        Logger.log(f"Found 0 new torrents.\nSearching for new torrents in {interval_string}.")
+        Logger.log(f"Found 0 new uploads.\nSearching for new uploads in {interval_string}.")
 
     # New torrents
     else:
-        Logger.log(f"Found {len(new_torrents)} new torrent{'' if len(new_torrents) == 1 else 's'}. Downloading...")
+        Logger.log(f"Found {len(new_torrents)} new upload{'' if len(new_torrents) == 1 else 's'}. Downloading...")
 
         successes = list()
         errors = list()
@@ -60,7 +60,7 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook, r
 
         interval_string = Config.get_interval_string(interval)
         error_string = f" Finished with {len(errors)} error{'' if len(errors) == 1 else 's'}." if len(errors) > 0 else ""
-        Logger.log(f"Done!{error_string if len(errors) > 0 else ''}\nSearching for new torrents in {interval_string}.")
+        Logger.log(f"Done!{error_string if len(errors) > 0 else ''}\nSearching for new uploads in {interval_string}.")
 
     # Schedule next check
     if reschedule:
