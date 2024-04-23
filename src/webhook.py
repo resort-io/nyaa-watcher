@@ -28,7 +28,9 @@ def _insert_tags(string: str, webhook_name: str, torrent: dict) -> str:
         .replace("$leechers", torrent.get('nyaa_leechers')) \
         .replace("$size", torrent.get('nyaa_size')) \
         .replace("$published", re.sub(r":\d\d -0000", "", torrent.get('published'))) \
-        .replace("$category", torrent.get('nyaa_downloads'))
+        .replace("$category", torrent.get('nyaa_downloads')) \
+        .replace("$uploader", torrent.get('uploader')) \
+        .replace("$watchlist", torrent.get('watchlist'))
     return string
 
 
