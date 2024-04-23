@@ -81,7 +81,8 @@ def _new_subscriptions_json() -> dict:
                         "regex": [],
                         "webhooks": []
                     }
-                ]
+                ],
+                "previous_hash": ""
             }
         ]
     }
@@ -232,7 +233,8 @@ def _update_v112_to_v120() -> None:
             {
                 "username": re.search(r"u=[^&]*", rss).group().replace(r"u=", ""),
                 "rss": rss,
-                "watchlist": watchlist.get('watchlist', [])
+                "watchlist": watchlist.get('watchlist', []),
+                "previous_hash": ""
             }
         ]
     }
@@ -302,10 +304,10 @@ def _verify_subscriptions_parse() -> None:
 
 
 def _verify_subscriptions_entry(sub: dict) -> dict:
-    if not sub.get('username') or not sub.get('rss') or not sub.get('watchlist'):
+    if not sub.get('username') or not sub.get('rss') or not sub.get('watchlist') or sub.get('previous_hash') is None:
         return {
             "result": False,
-            "message": "one or more entries that contains missing or invalid 'username', 'rss, and/or 'watchlist' properties"
+            "message": "one or more entries that contains missing or invalid 'username', 'rss, 'watchlist', and/or and/or 'previous_hash' properties"
         }
 
     if sub.get('username') == "USERNAME":
@@ -529,3 +531,20 @@ class Config:
         webhooks = json.loads(file.read())
         file.close()
         return webhooks
+
+    @staticmethod
+    def set_previous_hash(sub_name: str, hash_value: str) -> bool:
+        file = open(_get_json_path("subscriptions"), "r")
+        subscriptions = json.loads(file.read())
+        file.close()
+
+        is_set = False
+        for sub in subscriptions.get('subscriptions'):
+            if sub.get('username') == sub_name:
+                sub['previous_hash'] = hash_value
+                is_set = True
+
+        file = open(_get_json_path("subscriptions"), "w")
+        file.write(json.dumps(subscriptions, indent=4))
+        file.close()
+        return is_set

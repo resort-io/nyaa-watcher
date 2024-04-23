@@ -58,7 +58,7 @@ class Webhook:
 
         if len(self.json_webhooks['webhooks']) == 1 \
                 and self.json_webhooks['webhooks'][0]['url'] == "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING":
-            Logger.log("Create an entry in 'webhooks.json' and enter the name into one or more 'watchlist.json' entries to be notified when new files are downloaded.",{"tip": True})
+            Logger.log("Create an entry in 'webhooks.json' and enter the name into one or more 'subscriptions.json' entries to be notified when new files are downloaded.", {"tip": True})
             return
 
         if len(self.json_webhooks['webhooks']) > 0:
