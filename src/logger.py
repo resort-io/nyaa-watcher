@@ -8,6 +8,21 @@ class Logger:
 
     @staticmethod
     def log(messages: str | list = "", options: dict = None) -> None:
+        """
+        Logs messages with the specified options.
+
+        Args:
+            messages (Union[str, list], optional): The messages to be logged. Can be a string or a list of strings. Defaults to "".
+            options (Optional[dict], optional): A dictionary containing options for logging.
+                The `level` key can be used to specify the logging level ("debug" or "info").
+                The `exc_info` key can be used to determine whether exception information should be logged.
+                The `tip` key can be used to specify whether the message is a tip.
+                The `white_lines` key can be used to specify whether white lines should be logged before and/or after the message.
+                Defaults to None.
+
+        Returns:
+            None
+        """
         level_num: int = logging.DEBUG if options and options.get('level') == "debug" else logging.INFO
         exc_info: bool = options.get('exc_info') if options and options.get('exc_info') else False
         log_tips = os.environ.get('LOG_TIPS', "true").lower() == "true"
@@ -32,6 +47,21 @@ class Logger:
 
     @staticmethod
     def debug(messages: str | list = "", options: dict = None) -> None:
+        """
+        Logs debug messages with the specified options.
+
+        Args:
+            messages (Union[str, list], optional): The messages to be logged. Can be a string or a list of strings. Defaults to "".
+            options (Optional[dict], optional): A dictionary containing options for logging.
+                The `level` key can be used to specify the logging level ("debug" or "info").
+                The `exc_info` key can be used to determine whether exception information should be logged.
+                The `tip` key can be used to specify whether the message is a tip.
+                The `white_lines` key can be used to specify whether white lines should be logged before and/or after the message.
+                Defaults to None.
+
+        Returns:
+            None
+        """
         if options:
             options['level'] = "debug"
         else:
