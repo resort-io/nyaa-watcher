@@ -1,11 +1,15 @@
 import json
 import os
-import re
 from logger import Logger
 from functions import get_json_path, update_to_v111, update_to_v112, update_to_v120
 
 
 def _get_file_version() -> str:
+    """
+    Gets the version of the `config.json` file.
+    :returns: The version of the `config.json` file.
+    """
+
     try:
         file = open(get_json_path("config"), "r")
         config = json.loads(file.read())
@@ -22,6 +26,11 @@ def _get_file_version() -> str:
 
 
 def _generate_files() -> None:
+    """
+    Generates missing JSON files.
+    :returns: None
+    """
+
     try:
         if not os.path.exists(get_json_path("config")):
             file = open(get_json_path("config"), "x")
@@ -318,6 +327,13 @@ class Config:
 
     @staticmethod
     def append_to_history(successes: list, errors: list) -> None:
+        """
+        Appends download and error entries to the 'history.json' file.
+        :param successes: dict list of successful torrent downloads.
+        :param errors: dict list of unsuccessful torrent downloads.
+        :returns: None
+        """
+
         file = open(get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
@@ -347,6 +363,12 @@ class Config:
 
     @staticmethod
     def get_interval_string(interval: int) -> str:
+        """
+        Converts an interval in seconds to a human-readable string.
+        :param interval: The interval in seconds.
+        :returns: A human-readable string of the interval.
+        """
+
         days, remainder = divmod(interval, 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
