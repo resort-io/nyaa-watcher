@@ -4,6 +4,14 @@ from logger import Logger
 
 
 def _apply_fields(webhook_json: dict, notification: discord.Embed, torrent: dict) -> discord.Embed:
+    """
+    Applies the 'show_' fields to a notification.
+    :param webhook_json: A dictionary of a webhook entry.
+    :param notification: A discord.Embed object.
+    :param torrent: A dictionary of a torrent entry.
+    :return: A discord.Embed object with the applied fields.
+    """
+
     for i in range(1, 7):
         if webhook_json.get('notifications').get('show_downloads') == i:
             notification.add_field(name="Downloads", value=torrent.get('nyaa_downloads'))
@@ -21,6 +29,14 @@ def _apply_fields(webhook_json: dict, notification: discord.Embed, torrent: dict
 
 
 def _insert_tags(string: str, webhook_name: str, torrent: dict) -> str:
+    """
+    Replaces tags in a string with values torrent and subscription information.
+    :param string: The string to replace tags in.
+    :param webhook_name: The name of a webhook.
+    :param torrent: A dictionary of a torrent entry.
+    :return: A string with replaced tags.
+    """
+
     string = string.replace("$webhook_name", webhook_name) \
         .replace("$title", torrent.get('title')) \
         .replace("$downloads", torrent.get('nyaa_downloads')) \
@@ -35,6 +51,12 @@ def _insert_tags(string: str, webhook_name: str, torrent: dict) -> str:
 
 
 def _parse_url(url: str) -> list:
+    """
+    Parses a Discord webhook URL to extract the webhook ID and token.
+    :param url: A Discord webhook URL.
+    :return: A list with the webhook ID and token.
+    """
+
     return (
         url.replace("https://discord.com/api/webhooks/", "")
         .replace("https://discordapp.com/api/webhooks/", "")
@@ -42,7 +64,14 @@ def _parse_url(url: str) -> list:
     )
 
 
-def create_webhook(url: str) -> discord.SyncWebhook:
+def create_webhook(url: str) -> discord.SyncWebhook | None:
+    """
+    Creates a Discord webhook object from a webhook URL.
+    :param url: The URL of a Discord webhook.
+    :return: A Discord webhook object.
+    :return: `None` if the webhook URL is invalid.
+    """
+
     discord_webhook = None
     try:
         (webhook_id, token) = _parse_url(url)
@@ -52,7 +81,7 @@ def create_webhook(url: str) -> discord.SyncWebhook:
     return discord_webhook
 
 
-class Webhook:
+class Webhooker:
 
     def __init__(self, webhooks_json: dict) -> None:
         self.json_webhooks = webhooks_json
@@ -72,30 +101,49 @@ class Webhook:
                 if webhook['name'] == "" or webhook['url'] == "":
                     Logger.log("Webhook entries must have values for the 'name' and 'url' properties to connect to a webhook.", {"tip": True})
 
-                webhook_id, token = _parse_url(webhook['url'])
                 try:
+                    webhook_id, token = _parse_url(webhook['url'])
                     discord_webhook = discord.SyncWebhook.partial(webhook_id, token)
                     self.discord_webhooks[webhook['name']] = discord_webhook
+
                     Logger.log(f" - Connected to '{webhook['name']}' webhook.")
                 except Exception as e:
                     Logger.log(f" - Error connecting to '{webhook['name']}' webhook.")
                     Logger.debug(f"{e}", {"exc_info": True})
 
-    def get_json_webhooks(self) -> dict:
-        return {
-            'webhooks': [webhook for webhook in self.json_webhooks['webhooks'] if webhook['url'] != "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING"]
-        }
-
     def get_json_webhook(self, name: str) -> dict | None:
+        """
+        Returns a webhook entry from the 'webhooks' dictionary.
+        :param name: The name of the webhook.
+        :return: The webhook entry dictionary.
+        :return: `None` if the webhook is not found.
+        """
+
         for webhook in self.json_webhooks.get('webhooks'):
             if webhook.get('name') == name:
                 return webhook
         return None
 
     def get_discord_webhook(self, name: str) -> discord.SyncWebhook | None:
+        """
+        Returns a Discord webhook object from the 'discord_webhooks' dictionary.
+        :param name:
+        :return: The Discord webhook object.
+        :return: `None` if the webhook is not found.
+        """
+
         return self.discord_webhooks.get(name, None)
 
     def send_notification(self, webhook_name: str, torrent: dict, webhook: dict = None, url: str = None) -> None:
+        """
+        Sends a notification to a Discord webhook.
+        :param webhook_name: The name of the webhook.
+        :param torrent: A dictionary of a torrent entry.
+        :param webhook: A webhook entry dictionary (Defaults to `None`).
+        :param url: A Discord webhook URL (Defaults to `None`).
+        :return: None
+        """
+
         if not url or not webhook:
             webhook_json = self.get_json_webhook(webhook_name)
             discord_webhook = self.get_discord_webhook(webhook_name)

@@ -4,14 +4,25 @@ import re
 from logger import Logger
 
 
-def _get_json_path(filename: str) -> str:
+def get_json_path(filename: str) -> str:
+    """
+    Returns a filepath string for a JSON file.
+    :param filename: The name of the JSON file (without the file extension).
+    :return: A string containing the filepath to the JSON file.
+    """
+
     version = f"{'json/dev.' if os.environ.get('ENV', 'PRODUCTION').lower() == 'development' else '/'}{filename}.json"
     return os.environ.get("WATCHER_DIR", "/watcher") + version
 
 
 def _get_file_version() -> str:
+    """
+    Gets the version of the `config.json` file.
+    :return: The version of the `config.json` file.
+    """
+
     try:
-        file = open(_get_json_path("config"), "r")
+        file = open(get_json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
@@ -20,33 +31,38 @@ def _get_file_version() -> str:
     if config.get('version'):
         return config.get('version')
 
-    if not os.path.exists(_get_json_path("webhooks")):
+    if not os.path.exists(get_json_path("webhooks")):
         return "1.0.1"
     return "1.1.0"
 
 
 def _generate_files() -> None:
+    """
+    Generates any missing JSON files.
+    :return: None
+    """
+
     try:
-        if not os.path.exists(_get_json_path("config")):
-            file = open(_get_json_path("config"), "x")
+        if not os.path.exists(get_json_path("config")):
+            file = open(get_json_path("config"), "x")
             file.write(json.dumps(_new_config_json(), indent=4))
             file.close()
             Logger.debug("Generated 'config.json'.")
 
-        if not os.path.exists(_get_json_path("history")):
-            file = open(_get_json_path("history"), "x")
+        if not os.path.exists(get_json_path("history")):
+            file = open(get_json_path("history"), "x")
             file.write(json.dumps(new_history_json(), indent=4))
             file.close()
             Logger.debug("Generated 'history.json'.")
 
-        if not os.path.exists(_get_json_path("subscriptions")):
-            file = open(_get_json_path("subscriptions"), "x")
+        if not os.path.exists(get_json_path("subscriptions")):
+            file = open(get_json_path("subscriptions"), "x")
             file.write(json.dumps(_new_subscriptions_json(), indent=4))
             file.close()
             Logger.debug("Generated 'subscriptions.json'.")
 
-        if not os.path.exists(_get_json_path("webhooks")):
-            file = open(_get_json_path("webhooks"), "x")
+        if not os.path.exists(get_json_path("webhooks")):
+            file = open(get_json_path("webhooks"), "x")
             file.write(json.dumps(_new_webhook_json(), indent=4))
             file.close()
             Logger.debug("Generated 'webhooks.json'.")
@@ -54,63 +70,12 @@ def _generate_files() -> None:
         raise ValueError(f"Error generating files: {e}")
 
 
-def _new_config_json() -> dict:
-    return {
-        "version": "1.2.0"
-    }
+def _update_to_v111() -> None:
+    """
+    Updates JSON files from v1.0.0 and v1.0.1 to v1.1.1.
+    :return: None
+    """
 
-
-def new_history_json() -> dict:
-    return {
-        "errors": [],
-        "downloads": []
-    }
-
-
-def _new_subscriptions_json() -> dict:
-    return {
-        "interval_sec": 600,
-        "subscriptions": [
-            {
-                "username": "Username",
-                "rss": "https://nyaa.si/?page=rss&u=USERNAME",
-                "watchlist": [
-                    {
-                        "name": "",
-                        "tags": [],
-                        "regex": [],
-                        "exclude_regex": [],
-                        "webhooks": []
-                    }
-                ],
-                "previous_hash": ""
-            }
-        ]
-    }
-
-
-def _new_webhook_json() -> dict:
-    return {
-        "webhooks": [
-            {
-                "name": "Example Webhook Name",
-                "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-                "notifications": {
-                    "title": "",
-                    "description": "",
-                    "show_category": 3,
-                    "show_downloads": 4,
-                    "show_leechers": 6,
-                    "show_published": 1,
-                    "show_seeders": 5,
-                    "show_size": 2
-                }
-            }
-        ]
-    }
-
-
-def _update_v101_to_v111() -> None:
     if Config.version != "1.0.0" or Config.version != "1.0.1":
         return
 
@@ -118,7 +83,7 @@ def _update_v101_to_v111() -> None:
 
     # Adding missing 'webhooks' property to 'watchlist.json'
     try:
-        file = open(_get_json_path("watchlist"), "r")
+        file = open(get_json_path("watchlist"), "r")
         watchlist = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
@@ -129,28 +94,52 @@ def _update_v101_to_v111() -> None:
             entry['webhooks'] = []
             Logger.log(f"Added 'webhooks' property to watchlist entry: {entry.get('name')}.", {"level": "debug"})
 
-    file = open(_get_json_path("watchlist"), "w")
+    file = open(get_json_path("watchlist"), "w")
     file.write(json.dumps(watchlist, indent=4))
     file.close()
 
     # Adding sample webhook entry to 'webhooks.json', if empty
     try:
-        file = open(_get_json_path("webhooks"), "r")
+        file = open(get_json_path("webhooks"), "r")
         webhooks = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
         raise json.decoder.JSONDecodeError("webhooks.json", e.doc, e.pos)
 
     if len(webhooks.get('webhooks')) == 0:
-        file = open(_get_json_path("webhooks"), "w")
-        file.write(json.dumps(_new_webhook_json(), indent=4))
+        new_webhook_json = {
+            "webhooks": [
+                {
+                    "name": "Example Webhook Name",
+                    "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+                    "notifications": {
+                        "title": "",
+                        "description": "",
+                        "show_category": 3,
+                        "show_downloads": 4,
+                        "show_leechers": 6,
+                        "show_published": 1,
+                        "show_seeders": 5,
+                        "show_size": 2
+                    }
+                }
+            ]
+        }
+
+        file = open(get_json_path("webhooks"), "w")
+        file.write(json.dumps(new_webhook_json, indent=4))
         file.close()
 
     Logger.log("Updated to v1.1.1.")
     Config.version = "1.1.1"
 
 
-def _update_v111_to_v112() -> None:
+def _update_to_v112() -> None:
+    """
+    Updates JSON files from v1.1.0 and v1.1.1 to v1.1.2.
+    :return: None
+    """
+
     if Config.version != "1.1.0" or Config.version != "1.1.1":
         return
 
@@ -158,7 +147,7 @@ def _update_v111_to_v112() -> None:
 
     # Adding 'errors' property and changing 'history' to 'downloads' in 'history.json'
     try:
-        file = open(_get_json_path("history"), "r")
+        file = open(get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
@@ -169,13 +158,13 @@ def _update_v111_to_v112() -> None:
         "errors": history.get('errors', [])
     }
 
-    file = open(_get_json_path("history"), "w")
+    file = open(get_json_path("history"), "w")
     file.write(json.dumps(history, indent=4))
     file.close()
 
     # Change value name and adding 'version' property in 'config.json'
     try:
-        file = open(_get_json_path("config"), "r")
+        file = open(get_json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
@@ -187,7 +176,7 @@ def _update_v111_to_v112() -> None:
         "version": "1.1.2"
     }
 
-    file = open(_get_json_path("config"), "w")
+    file = open(get_json_path("config"), "w")
     file.write(json.dumps(config, indent=4))
     file.close()
 
@@ -195,7 +184,12 @@ def _update_v111_to_v112() -> None:
     Config.version = "1.1.2"
 
 
-def _update_v112_to_v120() -> None:
+def _update_to_v120() -> None:
+    """
+    Updates JSON files from v1.1.2 to v1.2.0.
+    :return: None
+    """
+
     if Config.version != "1.1.2":
         return
 
@@ -203,7 +197,7 @@ def _update_v112_to_v120() -> None:
 
     # Get values and update the 'version' value in 'config.json'
     try:
-        file = open(_get_json_path("config"), "r")
+        file = open(get_json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
@@ -214,7 +208,7 @@ def _update_v112_to_v120() -> None:
 
     # Update 'watchlist.json' and switch to 'subscriptions.json'
     try:
-        file = open(_get_json_path("watchlist"), "r")
+        file = open(get_json_path("watchlist"), "r")
         watchlist = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
@@ -244,13 +238,13 @@ def _update_v112_to_v120() -> None:
         ]
     }
 
-    file = open(_get_json_path("subscriptions"), "w")
+    file = open(get_json_path("subscriptions"), "w")
     file.write(json.dumps(subscriptions, indent=4))
     file.close()
 
     # Adding 'uploader' property to 'history.json'
     try:
-        file = open(_get_json_path("history"), "r")
+        file = open(get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
@@ -266,7 +260,7 @@ def _update_v112_to_v120() -> None:
             "nyaa_hash": entry.get('nyaa_hash')
         })
 
-    file = open(_get_json_path("history"), "w")
+    file = open(get_json_path("history"), "w")
     file.write(json.dumps(new_history, indent=4))
     file.close()
 
@@ -275,7 +269,7 @@ def _update_v112_to_v120() -> None:
         "version": "1.2.0"
     }
 
-    file = open(_get_json_path("config"), "w")
+    file = open(get_json_path("config"), "w")
     file.write(json.dumps(config, indent=4))
     file.close()
 
@@ -283,9 +277,91 @@ def _update_v112_to_v120() -> None:
     Config.version = "1.2.0"
 
 
+def _new_config_json() -> dict:
+    """
+    Creates a new 'config.json' dictionary of the latest version.
+    :return: A default 'config.json' dictionary.
+    """
+    return {
+        "version": "1.2.0"
+    }
+
+
+def new_history_json() -> dict:
+    """
+    Creates a new 'history.json' dictionary of the latest version.
+    :return: A default 'history.json' dictionary.
+    """
+
+    return {
+        "errors": [],
+        "downloads": []
+    }
+
+
+def _new_subscriptions_json() -> dict:
+    """
+    Creates a new 'subscriptions.json' dictionary of the latest version.
+    :return: A default 'subscriptions.json' dictionary.
+    """
+
+    return {
+        "interval_sec": 600,
+        "subscriptions": [
+            {
+                "username": "Username",
+                "rss": "https://nyaa.si/?page=rss&u=USERNAME",
+                "watchlist": [
+                    {
+                        "name": "",
+                        "tags": [],
+                        "regex": [],
+                        "exclude_regex": [],
+                        "webhooks": []
+                    }
+                ],
+                "previous_hash": ""
+            }
+        ]
+    }
+
+
+def _new_webhook_json() -> dict:
+    """
+    Creates a new 'webhooks.json' dictionary of the latest version.
+    :return: A default 'webhooks.json' dictionary.
+    """
+
+    return {
+        "webhooks": [
+            {
+                "name": "Example Webhook Name",
+                "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+                "notifications": {
+                    "title": "",
+                    "description": "",
+                    "show_category": 3,
+                    "show_downloads": 4,
+                    "show_leechers": 6,
+                    "show_published": 1,
+                    "show_seeders": 5,
+                    "show_size": 2
+                }
+            }
+        ]
+    }
+
+
 def _verify_config_parse() -> None:
+    """
+    Verifies the 'config.json' file.
+    :return: None
+    :except json.decoder.JSONDecodeError: If the 'config.json' file cannot be decoded.
+    :except Exception: If the 'config.json' file contains invalid properties.
+    """
+
     Logger.debug("Verifying 'config.json'...")
-    path = _get_json_path("config")
+    path = get_json_path("config")
 
     if not os.path.exists(path):
         Logger.log("Cannot find 'config.json'. Creating file...")
@@ -310,8 +386,15 @@ def _verify_config_parse() -> None:
 
 
 def _verify_subscriptions_parse() -> None:
+    """
+    Verifies the 'subscriptions.json' file.
+    :return: None
+    :except json.decoder.JSONDecodeError: If the 'subscriptions.json' file cannot be decoded.
+    :except Exception: If the 'subscriptions.json' file contains invalid properties.
+    """
+
     Logger.debug("Verifying 'subscriptions.json'...")
-    path = _get_json_path("subscriptions")
+    path = get_json_path("subscriptions")
 
     if not os.path.exists(path):
         Logger.log("Cannot find 'subscriptions.json'. Creating file...")
@@ -340,6 +423,12 @@ def _verify_subscriptions_parse() -> None:
 
 
 def _verify_subscriptions_entry(sub: dict) -> dict:
+    """
+    Verifies a subscription entry in the 'subscriptions.json' file.
+    :param sub: A dictionary of the subscription entry.
+    :return: A dictionary with `result` and `message` values for the verification.
+    """
+
     if not sub.get('username') or not sub.get('rss') or not sub.get('watchlist') or sub.get('previous_hash') is None:
         return {
             "result": False,
@@ -377,12 +466,19 @@ def _verify_subscriptions_entry(sub: dict) -> dict:
                 "message": "one or more 'watchlist' entries that contains no 'tags' or 'regex' values."
             }
 
-    return {"result": True}
+    return {"result": True, "message": "success"}
 
 
 def _verify_history_parse() -> None:
+    """
+    Verifies the 'history.json' file.
+    :return: None
+    :except json.decoder.JSONDecodeError: If the 'history.json' file cannot be decoded.
+    :except Exception: If the 'history.json' file contains invalid properties.
+    """
+
     Logger.debug("Verifying 'history.json'...")
-    path = _get_json_path("history")
+    path = get_json_path("history")
 
     if not os.path.exists(path):
         Logger.log("Cannot find 'history.json'. Creating file...")
@@ -413,8 +509,15 @@ def _verify_history_parse() -> None:
 
 
 def _verify_webhooks_parse() -> None:
+    """
+    Verifies the 'webhooks.json' file.
+    :return: None
+    :except json.decoder.JSONDecodeError: If the 'webhooks.json' file cannot be decoded.
+    :except Exception: If the 'webhooks.json' file contains invalid properties.
+    """
+
     Logger.debug("Verifying 'webhooks.json'...")
-    path = _get_json_path("webhooks")
+    path = get_json_path("webhooks")
 
     if not os.path.exists(path):
         Logger.log("Cannot find 'webhooks.json'. Creating file...")
@@ -438,6 +541,12 @@ def _verify_webhooks_parse() -> None:
 
 
 def _verify_webhook_entry(webhook: dict) -> dict:
+    """
+    Verifies a webhook entry in the 'webhooks.json' file.
+    :param webhook: A dictionary of the webhook entry.
+    :return: A dictionary with `result` and `message` values for the verification.
+    """
+
     properties = ['name', 'url', 'notifications']
     for key in properties:
         if key not in webhook:
@@ -468,7 +577,7 @@ def _verify_webhook_entry(webhook: dict) -> dict:
             "message": f"'{webhook.get('name')}' webhook contains one or more duplicate 'show_' properties. Change the webhook properties and restart the watcher"
         }
 
-    return {"result": True}
+    return {"result": True, "message": "success"}
 
 
 class Config:
@@ -477,13 +586,18 @@ class Config:
 
     @staticmethod
     def update_and_verify() -> None:
+        """
+        Updates the JSON files and verifies the contents.
+        :return: None
+        """
+
         _generate_files()  # Generate missing files
 
         Logger.log("Checking for updates...")
         Config.version = _get_file_version()
-        _update_v101_to_v111()
-        _update_v111_to_v112()
-        _update_v112_to_v120()
+        _update_to_v111()
+        _update_to_v112()
+        _update_to_v120()
         Logger.debug("Done checking.")
 
         Logger.log("Verifying files...")
@@ -495,7 +609,14 @@ class Config:
 
     @staticmethod
     def append_to_history(successes: list, errors: list) -> None:
-        file = open(_get_json_path("history"), "r")
+        """
+        Appends download and error entries to the 'history.json' file.
+        :param successes: A list of dictionaries for successful torrent downloads.
+        :param errors: A list of dictionaries for unsuccessful torrent downloads.
+        :return: None
+        """
+
+        file = open(get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
 
@@ -517,13 +638,19 @@ class Config:
                 "nyaa_hash": error.get('nyaa_infohash')
             })
 
-        file = open(_get_json_path("history"), "w")
+        file = open(get_json_path("history"), "w")
         file.write(json.dumps(history, indent=4))
         file.close()
         Logger.debug(f"Appended {len(successes)} download{'' if len(successes) == 1 else 's'} and {len(errors)} error{'' if len(errors) == 1 else 's'} to 'history.json'.")
 
     @staticmethod
     def get_interval_string(interval: int) -> str:
+        """
+        Converts an interval in seconds to a human-readable string.
+        :param interval: The interval in seconds.
+        :return: A human-readable string of the interval.
+        """
+
         days, remainder = divmod(interval, 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
@@ -541,38 +668,65 @@ class Config:
 
     @staticmethod
     def get_subscriptions() -> dict:
-        file = open(_get_json_path("subscriptions"), "r")
+        """
+        Gets the subscriptions from the 'subscriptions.json' file.
+        :return: A dictionary of the subscriptions file.
+        """
+
+        file = open(get_json_path("subscriptions"), "r")
         subscriptions = json.loads(file.read())
         file.close()
         return subscriptions
 
     @staticmethod
     def get_history() -> dict:
-        file = open(_get_json_path("history"), "r")
+        """
+        Gets the history from the 'history.json' file.
+        :return: A dictionary of the history file.
+        """
+
+        file = open(get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
         return history
 
     @staticmethod
     def get_interval() -> int:
+        """
+        Gets the `INTERVAL_SEC` environment variable if set, or the `interval_sec` value from the 'subscriptions.json' file.
+        :return: The `INTERVAL_SEC` or `interval_sec` integer value (Defaults to 600).
+        """
+
         if os.environ.get("INTERVAL_SEC"):
             return int(os.environ.get("INTERVAL_SEC"))
 
-        file = open(_get_json_path("subscriptions"), "r")
+        file = open(get_json_path("subscriptions"), "r")
         config = json.loads(file.read())
         file.close()
         return int(config.get('interval_sec', 600))
 
     @staticmethod
     def get_webhooks() -> dict:
-        file = open(_get_json_path("webhooks"), "r")
+        """
+        Gets the webhooks from the 'webhooks.json' file.
+        :return: A dictionary of the webhooks file.
+        """
+
+        file = open(get_json_path("webhooks"), "r")
         webhooks = json.loads(file.read())
         file.close()
         return webhooks
 
     @staticmethod
     def set_previous_hash(sub_name: str, hash_value: str) -> None:
-        file = open(_get_json_path("subscriptions"), "r")
+        """
+        Sets the previous hash value for a subscription in the 'subscriptions.json'.
+        :param sub_name: The name of the subscription.
+        :param hash_value: The hash value to set.
+        :return: None
+        """
+
+        file = open(get_json_path("subscriptions"), "r")
         subscriptions = json.loads(file.read())
         file.close()
 
@@ -581,6 +735,6 @@ class Config:
                 sub['previous_hash'] = hash_value
                 break
 
-        file = open(_get_json_path("subscriptions"), "w")
+        file = open(get_json_path("subscriptions"), "w")
         file.write(json.dumps(subscriptions, indent=4))
         file.close()
