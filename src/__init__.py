@@ -7,7 +7,7 @@ from config import Config
 from dotenv import load_dotenv
 from logger import Logger
 from watcher import Watcher
-from webhook import Webhook
+from webhooker import Webhooker
 from functions import download_torrent, fetch
 
 load_dotenv()
@@ -35,18 +35,18 @@ def main() -> None:
         webhooks = Config.get_webhooks()
 
         watcher = Watcher(subscriptions, history)
-        webhook = Webhook(webhooks)
+        webhooker = Webhooker(webhooks)
 
         Logger.debug(
             f"INTERVAL: {interval} seconds.\n"
             f"WATCHLIST: {len(subscriptions.get('subscriptions'))} entr{'y' if len(subscriptions.get('subscriptions')) == 1 else 'ies'}.\n"
             f"HISTORY: {len(history.get('downloads'))} download(s) and {len(history.get('errors'))} error(s).\n"
-            f"WEBHOOKS: {len(webhook.get_json_webhooks().get('webhooks'))} entr{'y' if len(webhook.get_json_webhooks().get('webhooks')) == 1 else 'ies'}."
+            f"WEBHOOKS: {len(webhooker.get_json_webhooks().get('webhooks'))} entr{'y' if len(webhooker.get_json_webhooks().get('webhooks')) == 1 else 'ies'}."
         )
         Logger.log(f"Done! Watcher started (v{Config.version}).")
 
         scheduler = sched.scheduler(time.time, time.sleep)
-        scheduler.enter(1, 1, fetch, (scheduler, watcher, interval, webhook))
+        scheduler.enter(1, 1, fetch, (scheduler, watcher, interval, webhooker))
         scheduler.run()
 
     except json.decoder.JSONDecodeError as e:

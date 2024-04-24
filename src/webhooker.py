@@ -52,7 +52,7 @@ def create_webhook(url: str) -> discord.SyncWebhook:
     return discord_webhook
 
 
-class Webhook:
+class Webhooker:
 
     def __init__(self, webhooks_json: dict) -> None:
         self.json_webhooks = webhooks_json

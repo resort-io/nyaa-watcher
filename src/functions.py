@@ -6,7 +6,7 @@ from config import Config
 from datetime import datetime
 from logger import Logger
 from watcher import Watcher
-from webhook import Webhook
+from webhooker import Webhooker
 
 
 def download_torrent(title: str, url: str) -> dict:
@@ -22,7 +22,7 @@ def download_torrent(title: str, url: str) -> dict:
         return {"status": 500, "message": str(e)}
 
 
-def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook, reschedule: bool = True) -> None:
+def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooker, reschedule: bool = True) -> None:
     new_torrents = watcher.fetch_all_feeds()
 
     # No new torrents
@@ -47,7 +47,7 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook, r
                 successes.append(torrent)
 
                 for webhook_name in torrent.get('watcher_webhooks'):
-                    webhook.send_notification(webhook_name, torrent)
+                    webhooker.send_notification(webhook_name, torrent)
 
             else:
                 Logger.log(f" - Error: {torrent.get('title')} (HTTP Status Code: {download.get('status')}.")
@@ -64,4 +64,4 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhook: Webhook, r
 
     # Schedule next check
     if reschedule:
-        scheduler.enter(interval, 1, fetch, (scheduler, watcher, interval, webhook))
+        scheduler.enter(interval, 1, fetch, (scheduler, watcher, interval, webhooker))
