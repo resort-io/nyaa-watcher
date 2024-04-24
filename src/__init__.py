@@ -39,9 +39,9 @@ def main() -> None:
 
         Logger.debug(
             f"INTERVAL: {interval} seconds.\n"
-            f"WATCHLIST: {len(subscriptions.get('subscriptions'))} entr{'y' if len(subscriptions.get('subscriptions')) == 1 else 'ies'}.\n"
+            f"SUBSCRIPTIONS: {len(subscriptions.get('subscriptions'))} entries.\n"
             f"HISTORY: {len(history.get('downloads'))} download(s) and {len(history.get('errors'))} error(s).\n"
-            f"WEBHOOKS: {len(webhooker.get_json_webhooks().get('webhooks'))} entr{'y' if len(webhooker.get_json_webhooks().get('webhooks')) == 1 else 'ies'}."
+            f"WEBHOOKS: {len(webhooks.get('webhooks'))} entries."
         )
         Logger.log(f"Done! Watcher started (v{Config.version}).")
 
@@ -49,6 +49,9 @@ def main() -> None:
         scheduler.enter(1, 1, fetch, (scheduler, watcher, interval, webhooker))
         scheduler.run()
 
+    except KeyboardInterrupt:
+        Logger.log("Watcher exited.", {"white_lines": "bt"})
+        exit(0)
     except json.decoder.JSONDecodeError as e:
         line = e.doc.split("\n")[e.lineno - 1].replace("  ", "")
         message = "'" + e.msg + "'" if '.json' in e.msg else 'JSON'
@@ -56,9 +59,6 @@ def main() -> None:
         Logger.log(f"Parse Error: {message} syntax error found on line {e.lineno} at column {e.pos}.\n"
                    f"    {line}\nWatcher exited.", {"white_lines": "b"})
         Logger.debug(f"{e}", {"exc_info": True})
-    except KeyboardInterrupt:
-        Logger.log("Watcher exited.", {"white_lines": "bt"})
-        exit(0)
     except Exception as e:
         Logger.log(f"{e}\nWatcher exited.", {"white_lines": "b"})
         Logger.debug(f"{e}", {"exc_info": True})
