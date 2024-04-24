@@ -1,7 +1,6 @@
 import json
 import os
 import re
-
 import requests
 import sched
 import time
@@ -15,15 +14,12 @@ from webhooker import Webhooker
 def download_torrent(title: str, url: str) -> dict:
     """
     Downloads a torrent file from a given URL.
-
-    Args:
-        title (str): The title of the torrent for the filename.
-        url (str): The URL where the torrent file can be downloaded.
-
-    Returns:
-        dict: A dictionary containing the status of the download. If successful, the dictionary's `status` value code will be `200`.
+    :param title: The title of the torrent for the filename.
+    :param url: The URL where the torrent file can be downloaded.
+    :return: A dictionary containing the status of the download. If successful, the dictionary's `status` value code will be `200`.
         If an error occurs, the dictionary's `status` value will contain the status code and the `message` value will contain an error message.
     """
+
     file_path = os.environ.get("DOWNLOADS_DIR", "/downloads") + f"/{title}.torrent"
     try:
         response = requests.get(url)
@@ -39,23 +35,19 @@ def download_torrent(title: str, url: str) -> dict:
 def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooker, reschedule: bool = True) -> None:
     """
     Fetches all new torrents and schedules the next check.
-
-    Args:
-        scheduler (sched): The scheduler object used to schedule the next check.
-        watcher (Watcher): The Watcher object used to fetch all new torrents.
-        interval (int): The interval (in seconds) at which to check for new torrents.
-        webhooker (Webhooker): The Webhooker object used to send Discord notifications.
-        reschedule (bool, optional): Whether to reschedule the next check. Defaults to `True`.
-
-    Returns:
-        None
+    :param scheduler: The scheduler object used to schedule the next check.
+    :param watcher: The Watcher object used to fetch all new torrents.
+    :param interval: The interval (in seconds) at which to check for new torrents.
+    :param webhooker: The Webhooker object used to send Discord notifications.
+    :param reschedule: Whether to reschedule the next check (Defaults to `True`).
+    :return: None
     """
+
     new_torrents = watcher.fetch_all_feeds()
 
     # No new torrents
     if len(new_torrents) == 0:
-        interval_string = Config.get_interval_string(interval)
-        Logger.log(f"Found 0 new uploads.\nSearching for new uploads in {interval_string}.")
+        Logger.log("Found 0 new uploads.")
 
     # New torrents
     else:
@@ -73,7 +65,7 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooke
                 Logger.log(f" - Downloaded: {torrent.get('title')}")
                 successes.append(torrent)
 
-                for webhook_name in torrent.get('watcher_webhooks'):
+                for webhook_name in torrent.get('webhooks'):
                     webhooker.send_notification(webhook_name, torrent)
 
             else:
@@ -85,25 +77,23 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooke
         watcher.append_to_history(successes)
         Config.append_to_history(successes, errors)
 
-        interval_string = Config.get_interval_string(interval)
         error_string = f" Finished with {len(errors)} error{'' if len(errors) == 1 else 's'}." if len(errors) > 0 else ""
-        Logger.log(f"Done!{error_string if len(errors) > 0 else ''}\nSearching for new uploads in {interval_string}.")
+        Logger.log(f"Done!{error_string if len(errors) > 0 else ''}.")
 
     # Schedule next check
     if reschedule:
+        interval_string = Config.get_interval_string(interval)
+        Logger.log(f"Searching for new uploads in {interval_string}.")
         scheduler.enter(interval, 1, fetch, (scheduler, watcher, interval, webhooker))
 
 
 def get_json_path(filename: str) -> str:
     """
     Returns a filepath string for a JSON file.
-
-    Args:
-        filename (str): The name of the JSON file (without the file extension).
-
-    Returns:
-        str: A string containing the filepath to the JSON file.
+    :param filename: The name of the JSON file (without the file extension).
+    :return: A string containing the filepath to the JSON file.
     """
+
     version = f"{'json/dev.' if os.environ.get('ENV', 'PRODUCTION').lower() == 'development' else '/'}{filename}.json"
     return os.environ.get("WATCHER_DIR", "/watcher") + version
 
@@ -111,10 +101,9 @@ def get_json_path(filename: str) -> str:
 def update_to_v111() -> None:
     """
     Updates JSON files from v1.0.0 and v1.0.1 to v1.1.1.
-
-    Returns:
-        None
+    :return: None
     """
+
     if Config.version != "1.0.0" or Config.version != "1.0.1":
         return
 
@@ -176,10 +165,9 @@ def update_to_v111() -> None:
 def update_to_v112() -> None:
     """
     Updates JSON files from v1.1.0 and v1.1.1 to v1.1.2.
-
-    Returns:
-        None
+    :return: None
     """
+
     if Config.version != "1.1.0" or Config.version != "1.1.1":
         return
 
@@ -227,10 +215,9 @@ def update_to_v112() -> None:
 def update_to_v120() -> None:
     """
     Updates JSON files from v1.1.2 to v1.2.0.
-
-    Returns:
-        None
+    :return: None
     """
+
     if Config.version != "1.1.2":
         return
 

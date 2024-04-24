@@ -7,7 +7,7 @@ from functions import get_json_path, update_to_v111, update_to_v112, update_to_v
 def _get_file_version() -> str:
     """
     Gets the version of the `config.json` file.
-    :returns: The version of the `config.json` file.
+    :return: The version of the `config.json` file.
     """
 
     try:
@@ -27,8 +27,8 @@ def _get_file_version() -> str:
 
 def _generate_files() -> None:
     """
-    Generates missing JSON files.
-    :returns: None
+    Generates any missing JSON files.
+    :return: None
     """
 
     try:
@@ -60,12 +60,21 @@ def _generate_files() -> None:
 
 
 def _new_config_json() -> dict:
+    """
+    Creates a new 'config.json' dictionary of the latest version.
+    :return: A default 'config.json' dictionary.
+    """
     return {
         "version": "1.2.0"
     }
 
 
 def new_history_json() -> dict:
+    """
+    Creates a new 'history.json' dictionary of the latest version.
+    :return: A default 'history.json' dictionary.
+    """
+
     return {
         "errors": [],
         "downloads": []
@@ -73,6 +82,11 @@ def new_history_json() -> dict:
 
 
 def _new_subscriptions_json() -> dict:
+    """
+    Creates a new 'subscriptions.json' dictionary of the latest version.
+    :return: A default 'subscriptions.json' dictionary.
+    """
+
     return {
         "interval_sec": 600,
         "subscriptions": [
@@ -95,6 +109,11 @@ def _new_subscriptions_json() -> dict:
 
 
 def _new_webhook_json() -> dict:
+    """
+    Creates a new 'webhooks.json' dictionary of the latest version.
+    :return: A default 'webhooks.json' dictionary.
+    """
+
     return {
         "webhooks": [
             {
@@ -116,6 +135,13 @@ def _new_webhook_json() -> dict:
 
 
 def _verify_config_parse() -> None:
+    """
+    Verifies the 'config.json' file.
+    :return: None
+    :except json.decoder.JSONDecodeError: If the 'config.json' file cannot be decoded.
+    :except Exception: If the 'config.json' file contains invalid properties.
+    """
+
     Logger.debug("Verifying 'config.json'...")
     path = get_json_path("config")
 
@@ -142,6 +168,13 @@ def _verify_config_parse() -> None:
 
 
 def _verify_subscriptions_parse() -> None:
+    """
+    Verifies the 'subscriptions.json' file.
+    :return: None
+    :except json.decoder.JSONDecodeError: If the 'subscriptions.json' file cannot be decoded.
+    :except Exception: If the 'subscriptions.json' file contains invalid properties.
+    """
+
     Logger.debug("Verifying 'subscriptions.json'...")
     path = get_json_path("subscriptions")
 
@@ -172,6 +205,12 @@ def _verify_subscriptions_parse() -> None:
 
 
 def _verify_subscriptions_entry(sub: dict) -> dict:
+    """
+    Verifies a subscription entry in the 'subscriptions.json' file.
+    :param sub: A dictionary of the subscription entry.
+    :return: A dictionary with `result` and `message` values for the verification.
+    """
+
     if not sub.get('username') or not sub.get('rss') or not sub.get('watchlist') or sub.get('previous_hash') is None:
         return {
             "result": False,
@@ -209,10 +248,17 @@ def _verify_subscriptions_entry(sub: dict) -> dict:
                 "message": "one or more 'watchlist' entries that contains no 'tags' or 'regex' values."
             }
 
-    return {"result": True}
+    return {"result": True, "message": "success"}
 
 
 def _verify_history_parse() -> None:
+    """
+    Verifies the 'history.json' file.
+    :return: None
+    :except json.decoder.JSONDecodeError: If the 'history.json' file cannot be decoded.
+    :except Exception: If the 'history.json' file contains invalid properties.
+    """
+
     Logger.debug("Verifying 'history.json'...")
     path = get_json_path("history")
 
@@ -245,6 +291,13 @@ def _verify_history_parse() -> None:
 
 
 def _verify_webhooks_parse() -> None:
+    """
+    Verifies the 'webhooks.json' file.
+    :return: None
+    :except json.decoder.JSONDecodeError: If the 'webhooks.json' file cannot be decoded.
+    :except Exception: If the 'webhooks.json' file contains invalid properties.
+    """
+
     Logger.debug("Verifying 'webhooks.json'...")
     path = get_json_path("webhooks")
 
@@ -270,6 +323,12 @@ def _verify_webhooks_parse() -> None:
 
 
 def _verify_webhook_entry(webhook: dict) -> dict:
+    """
+    Verifies a webhook entry in the 'webhooks.json' file.
+    :param webhook: A dictionary of the webhook entry.
+    :return: A dictionary with `result` and `message` values for the verification.
+    """
+
     properties = ['name', 'url', 'notifications']
     for key in properties:
         if key not in webhook:
@@ -300,7 +359,7 @@ def _verify_webhook_entry(webhook: dict) -> dict:
             "message": f"'{webhook.get('name')}' webhook contains one or more duplicate 'show_' properties. Change the webhook properties and restart the watcher"
         }
 
-    return {"result": True}
+    return {"result": True, "message": "success"}
 
 
 class Config:
@@ -309,6 +368,11 @@ class Config:
 
     @staticmethod
     def update_and_verify() -> None:
+        """
+        Updates the JSON files and verifies the contents.
+        :return: None
+        """
+
         _generate_files()  # Generate missing files
 
         Logger.log("Checking for updates...")
@@ -329,9 +393,9 @@ class Config:
     def append_to_history(successes: list, errors: list) -> None:
         """
         Appends download and error entries to the 'history.json' file.
-        :param successes: dict list of successful torrent downloads.
-        :param errors: dict list of unsuccessful torrent downloads.
-        :returns: None
+        :param successes: A list of dictionaries for successful torrent downloads.
+        :param errors: A list of dictionaries for unsuccessful torrent downloads.
+        :return: None
         """
 
         file = open(get_json_path("history"), "r")
@@ -366,7 +430,7 @@ class Config:
         """
         Converts an interval in seconds to a human-readable string.
         :param interval: The interval in seconds.
-        :returns: A human-readable string of the interval.
+        :return: A human-readable string of the interval.
         """
 
         days, remainder = divmod(interval, 86400)
@@ -386,6 +450,11 @@ class Config:
 
     @staticmethod
     def get_subscriptions() -> dict:
+        """
+        Gets the subscriptions from the 'subscriptions.json' file.
+        :return: A dictionary of the subscriptions file.
+        """
+
         file = open(get_json_path("subscriptions"), "r")
         subscriptions = json.loads(file.read())
         file.close()
@@ -393,6 +462,11 @@ class Config:
 
     @staticmethod
     def get_history() -> dict:
+        """
+        Gets the history from the 'history.json' file.
+        :return: A dictionary of the history file.
+        """
+
         file = open(get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
@@ -400,6 +474,11 @@ class Config:
 
     @staticmethod
     def get_interval() -> int:
+        """
+        Gets the `INTERVAL_SEC` environment variable if set, or the `interval_sec` value from the 'subscriptions.json' file.
+        :return: The `INTERVAL_SEC` or `interval_sec` integer value (Defaults to 600).
+        """
+
         if os.environ.get("INTERVAL_SEC"):
             return int(os.environ.get("INTERVAL_SEC"))
 
@@ -410,6 +489,11 @@ class Config:
 
     @staticmethod
     def get_webhooks() -> dict:
+        """
+        Gets the webhooks from the 'webhooks.json' file.
+        :return: A dictionary of the webhooks file.
+        """
+
         file = open(get_json_path("webhooks"), "r")
         webhooks = json.loads(file.read())
         file.close()
@@ -417,6 +501,13 @@ class Config:
 
     @staticmethod
     def set_previous_hash(sub_name: str, hash_value: str) -> None:
+        """
+        Sets the previous hash value for a subscription in the 'subscriptions.json'.
+        :param sub_name: The name of the subscription.
+        :param hash_value: The hash value to set.
+        :return: None
+        """
+
         file = open(get_json_path("subscriptions"), "r")
         subscriptions = json.loads(file.read())
         file.close()
