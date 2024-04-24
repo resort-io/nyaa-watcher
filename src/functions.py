@@ -13,6 +13,17 @@ from webhooker import Webhooker
 
 
 def download_torrent(title: str, url: str) -> dict:
+    """
+    Downloads a torrent file from a given URL.
+
+    Args:
+        title (str): The title of the torrent for the filename.
+        url (str): The URL where the torrent file can be downloaded.
+
+    Returns:
+        dict: A dictionary containing the status of the download. If successful, the dictionary's `status` value code will be `200`.
+        If an error occurs, the dictionary's `status` value will contain the status code and the `message` value will contain an error message.
+    """
     file_path = os.environ.get("DOWNLOADS_DIR", "/downloads") + f"/{title}.torrent"
     try:
         response = requests.get(url)
@@ -20,12 +31,25 @@ def download_torrent(title: str, url: str) -> dict:
             with open(file_path, "wb") as f:
                 f.write(response.content)
             time.sleep(0.01)  # Wait for file
-        return {"status": response.status_code}
+        return {"status": response.status_code, "message": "success" if response.status_code == 200 else "Error occurred while downloading."}
     except Exception as e:
         return {"status": 500, "message": str(e)}
 
 
 def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooker, reschedule: bool = True) -> None:
+    """
+    Fetches all new torrents and schedules the next check.
+
+    Args:
+        scheduler (sched): The scheduler object used to schedule the next check.
+        watcher (Watcher): The Watcher object used to fetch all new torrents.
+        interval (int): The interval (in seconds) at which to check for new torrents.
+        webhooker (Webhooker): The Webhooker object used to send Discord notifications.
+        reschedule (bool, optional): Whether to reschedule the next check. Defaults to `True`.
+
+    Returns:
+        None
+    """
     new_torrents = watcher.fetch_all_feeds()
 
     # No new torrents
@@ -71,11 +95,26 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooke
 
 
 def get_json_path(filename: str) -> str:
+    """
+    Returns a filepath string for a JSON file.
+
+    Args:
+        filename (str): The name of the JSON file (without the file extension).
+
+    Returns:
+        str: A string containing the filepath to the JSON file.
+    """
     version = f"{'json/dev.' if os.environ.get('ENV', 'PRODUCTION').lower() == 'development' else '/'}{filename}.json"
     return os.environ.get("WATCHER_DIR", "/watcher") + version
 
 
 def update_to_v111() -> None:
+    """
+    Updates JSON files from v1.0.0 and v1.0.1 to v1.1.1.
+
+    Returns:
+        None
+    """
     if Config.version != "1.0.0" or Config.version != "1.0.1":
         return
 
@@ -135,6 +174,12 @@ def update_to_v111() -> None:
 
 
 def update_to_v112() -> None:
+    """
+    Updates JSON files from v1.1.0 and v1.1.1 to v1.1.2.
+
+    Returns:
+        None
+    """
     if Config.version != "1.1.0" or Config.version != "1.1.1":
         return
 
@@ -180,6 +225,12 @@ def update_to_v112() -> None:
 
 
 def update_to_v120() -> None:
+    """
+    Updates JSON files from v1.1.2 to v1.2.0.
+
+    Returns:
+        None
+    """
     if Config.version != "1.1.2":
         return
 
