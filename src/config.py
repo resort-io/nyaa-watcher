@@ -2,16 +2,12 @@ import json
 import os
 import re
 from logger import Logger
-
-
-def _get_json_path(filename: str) -> str:
-    version = f"{'json/dev.' if os.environ.get('ENV', 'PRODUCTION').lower() == 'development' else '/'}{filename}.json"
-    return os.environ.get("WATCHER_DIR", "/watcher") + version
+from functions import get_json_path, update_to_v111, update_to_v112, update_to_v120
 
 
 def _get_file_version() -> str:
     try:
-        file = open(_get_json_path("config"), "r")
+        file = open(get_json_path("config"), "r")
         config = json.loads(file.read())
         file.close()
     except json.decoder.JSONDecodeError as e:
@@ -20,33 +16,33 @@ def _get_file_version() -> str:
     if config.get('version'):
         return config.get('version')
 
-    if not os.path.exists(_get_json_path("webhooks")):
+    if not os.path.exists(get_json_path("webhooks")):
         return "1.0.1"
     return "1.1.0"
 
 
 def _generate_files() -> None:
     try:
-        if not os.path.exists(_get_json_path("config")):
-            file = open(_get_json_path("config"), "x")
+        if not os.path.exists(get_json_path("config")):
+            file = open(get_json_path("config"), "x")
             file.write(json.dumps(_new_config_json(), indent=4))
             file.close()
             Logger.debug("Generated 'config.json'.")
 
-        if not os.path.exists(_get_json_path("history")):
-            file = open(_get_json_path("history"), "x")
+        if not os.path.exists(get_json_path("history")):
+            file = open(get_json_path("history"), "x")
             file.write(json.dumps(new_history_json(), indent=4))
             file.close()
             Logger.debug("Generated 'history.json'.")
 
-        if not os.path.exists(_get_json_path("subscriptions")):
-            file = open(_get_json_path("subscriptions"), "x")
+        if not os.path.exists(get_json_path("subscriptions")):
+            file = open(get_json_path("subscriptions"), "x")
             file.write(json.dumps(_new_subscriptions_json(), indent=4))
             file.close()
             Logger.debug("Generated 'subscriptions.json'.")
 
-        if not os.path.exists(_get_json_path("webhooks")):
-            file = open(_get_json_path("webhooks"), "x")
+        if not os.path.exists(get_json_path("webhooks")):
+            file = open(get_json_path("webhooks"), "x")
             file.write(json.dumps(_new_webhook_json(), indent=4))
             file.close()
             Logger.debug("Generated 'webhooks.json'.")
@@ -110,182 +106,9 @@ def _new_webhook_json() -> dict:
     }
 
 
-def _update_v101_to_v111() -> None:
-    if Config.version != "1.0.0" or Config.version != "1.0.1":
-        return
-
-    Logger.debug("Updating to v1.1.1...")
-
-    # Adding missing 'webhooks' property to 'watchlist.json'
-    try:
-        file = open(_get_json_path("watchlist"), "r")
-        watchlist = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
-
-    for entry in watchlist.get('watchlist'):
-        if 'webhooks' not in entry:
-            entry['webhooks'] = []
-            Logger.log(f"Added 'webhooks' property to watchlist entry: {entry.get('name')}.", {"level": "debug"})
-
-    file = open(_get_json_path("watchlist"), "w")
-    file.write(json.dumps(watchlist, indent=4))
-    file.close()
-
-    # Adding sample webhook entry to 'webhooks.json', if empty
-    try:
-        file = open(_get_json_path("webhooks"), "r")
-        webhooks = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("webhooks.json", e.doc, e.pos)
-
-    if len(webhooks.get('webhooks')) == 0:
-        file = open(_get_json_path("webhooks"), "w")
-        file.write(json.dumps(_new_webhook_json(), indent=4))
-        file.close()
-
-    Logger.log("Updated to v1.1.1.")
-    Config.version = "1.1.1"
-
-
-def _update_v111_to_v112() -> None:
-    if Config.version != "1.1.0" or Config.version != "1.1.1":
-        return
-
-    Logger.debug("Updating to v1.1.2...")
-
-    # Adding 'errors' property and changing 'history' to 'downloads' in 'history.json'
-    try:
-        file = open(_get_json_path("history"), "r")
-        history = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
-
-    history = {
-        "downloads": history.get('history', []),
-        "errors": history.get('errors', [])
-    }
-
-    file = open(_get_json_path("history"), "w")
-    file.write(json.dumps(history, indent=4))
-    file.close()
-
-    # Change value name and adding 'version' property in 'config.json'
-    try:
-        file = open(_get_json_path("config"), "r")
-        config = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
-
-    config = {
-        "nyaa_rss": config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=NYAA_USERNAME"),
-        "interval_sec": config.get('watcher_interval_seconds', 600),
-        "version": "1.1.2"
-    }
-
-    file = open(_get_json_path("config"), "w")
-    file.write(json.dumps(config, indent=4))
-    file.close()
-
-    Logger.log("Updated to v1.1.2.")
-    Config.version = "1.1.2"
-
-
-def _update_v112_to_v120() -> None:
-    if Config.version != "1.1.2":
-        return
-
-    Logger.debug("Updating to v1.2.0...")
-
-    # Get values and update the 'version' value in 'config.json'
-    try:
-        file = open(_get_json_path("config"), "r")
-        config = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
-
-    interval = config.get('watcher_interval_seconds', 600)
-    rss = config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=USERNAME")
-
-    # Update 'watchlist.json' and switch to 'subscriptions.json'
-    try:
-        file = open(_get_json_path("watchlist"), "r")
-        watchlist = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
-
-    username = re.search(r"u=[^&]*", rss).group().replace(r"u=", "")
-
-    new_watchlist = []
-    for entry in watchlist.get('watchlist'):
-        new_watchlist.append({
-            "name": entry.get('name'),
-            "tags": entry.get('tags', []),
-            "regex": entry.get('regex', []),
-            "exclude_regex": entry.get('exclude_regex', []),
-            "webhooks": entry.get('webhooks', [])
-        })
-
-    subscriptions = {
-        "interval_sec": interval,
-        "subscriptions": [
-            {
-                "username": username,
-                "rss": rss,
-                "watchlist": new_watchlist,
-                "previous_hash": ""
-            }
-        ]
-    }
-
-    file = open(_get_json_path("subscriptions"), "w")
-    file.write(json.dumps(subscriptions, indent=4))
-    file.close()
-
-    # Adding 'uploader' property to 'history.json'
-    try:
-        file = open(_get_json_path("history"), "r")
-        history = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
-
-    new_history = []
-    for entry in history.get('downloads'):
-        new_history.append({
-            "uploader": entry.get('uploader', username),
-            "torrent_title": entry.get('torrent_title'),
-            "date_downloaded": entry.get('date_downloaded'),
-            "nyaa_page": entry.get('nyaa_page'),
-            "nyaa_hash": entry.get('nyaa_hash')
-        })
-
-    file = open(_get_json_path("history"), "w")
-    file.write(json.dumps(new_history, indent=4))
-    file.close()
-
-    # Update 'version' value in 'config.json'
-    config = {
-        "version": "1.2.0"
-    }
-
-    file = open(_get_json_path("config"), "w")
-    file.write(json.dumps(config, indent=4))
-    file.close()
-
-    Logger.log("Updated to v1.2.0.")
-    Config.version = "1.2.0"
-
-
 def _verify_config_parse() -> None:
     Logger.debug("Verifying 'config.json'...")
-    path = _get_json_path("config")
+    path = get_json_path("config")
 
     if not os.path.exists(path):
         Logger.log("Cannot find 'config.json'. Creating file...")
@@ -311,7 +134,7 @@ def _verify_config_parse() -> None:
 
 def _verify_subscriptions_parse() -> None:
     Logger.debug("Verifying 'subscriptions.json'...")
-    path = _get_json_path("subscriptions")
+    path = get_json_path("subscriptions")
 
     if not os.path.exists(path):
         Logger.log("Cannot find 'subscriptions.json'. Creating file...")
@@ -382,7 +205,7 @@ def _verify_subscriptions_entry(sub: dict) -> dict:
 
 def _verify_history_parse() -> None:
     Logger.debug("Verifying 'history.json'...")
-    path = _get_json_path("history")
+    path = get_json_path("history")
 
     if not os.path.exists(path):
         Logger.log("Cannot find 'history.json'. Creating file...")
@@ -414,7 +237,7 @@ def _verify_history_parse() -> None:
 
 def _verify_webhooks_parse() -> None:
     Logger.debug("Verifying 'webhooks.json'...")
-    path = _get_json_path("webhooks")
+    path = get_json_path("webhooks")
 
     if not os.path.exists(path):
         Logger.log("Cannot find 'webhooks.json'. Creating file...")
@@ -481,9 +304,9 @@ class Config:
 
         Logger.log("Checking for updates...")
         Config.version = _get_file_version()
-        _update_v101_to_v111()
-        _update_v111_to_v112()
-        _update_v112_to_v120()
+        update_to_v111()
+        update_to_v112()
+        update_to_v120()
         Logger.debug("Done checking.")
 
         Logger.log("Verifying files...")
@@ -495,7 +318,7 @@ class Config:
 
     @staticmethod
     def append_to_history(successes: list, errors: list) -> None:
-        file = open(_get_json_path("history"), "r")
+        file = open(get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
 
@@ -517,7 +340,7 @@ class Config:
                 "nyaa_hash": error.get('nyaa_infohash')
             })
 
-        file = open(_get_json_path("history"), "w")
+        file = open(get_json_path("history"), "w")
         file.write(json.dumps(history, indent=4))
         file.close()
         Logger.debug(f"Appended {len(successes)} download{'' if len(successes) == 1 else 's'} and {len(errors)} error{'' if len(errors) == 1 else 's'} to 'history.json'.")
@@ -541,14 +364,14 @@ class Config:
 
     @staticmethod
     def get_subscriptions() -> dict:
-        file = open(_get_json_path("subscriptions"), "r")
+        file = open(get_json_path("subscriptions"), "r")
         subscriptions = json.loads(file.read())
         file.close()
         return subscriptions
 
     @staticmethod
     def get_history() -> dict:
-        file = open(_get_json_path("history"), "r")
+        file = open(get_json_path("history"), "r")
         history = json.loads(file.read())
         file.close()
         return history
@@ -558,21 +381,21 @@ class Config:
         if os.environ.get("INTERVAL_SEC"):
             return int(os.environ.get("INTERVAL_SEC"))
 
-        file = open(_get_json_path("subscriptions"), "r")
+        file = open(get_json_path("subscriptions"), "r")
         config = json.loads(file.read())
         file.close()
         return int(config.get('interval_sec', 600))
 
     @staticmethod
     def get_webhooks() -> dict:
-        file = open(_get_json_path("webhooks"), "r")
+        file = open(get_json_path("webhooks"), "r")
         webhooks = json.loads(file.read())
         file.close()
         return webhooks
 
     @staticmethod
     def set_previous_hash(sub_name: str, hash_value: str) -> None:
-        file = open(_get_json_path("subscriptions"), "r")
+        file = open(get_json_path("subscriptions"), "r")
         subscriptions = json.loads(file.read())
         file.close()
 
@@ -581,6 +404,6 @@ class Config:
                 sub['previous_hash'] = hash_value
                 break
 
-        file = open(_get_json_path("subscriptions"), "w")
+        file = open(get_json_path("subscriptions"), "w")
         file.write(json.dumps(subscriptions, indent=4))
         file.close()
