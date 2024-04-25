@@ -448,19 +448,7 @@ def _verify_subscriptions_entry(sub: dict) -> dict:
         }
 
     for watchlist in sub.get('watchlist'):
-        if not all(watchlist.get('name') and watchlist.get('tags') and watchlist.get('regex') and watchlist.get('exclude_regex') and watchlist.get('webhooks')):
-            return {
-                "result": False,
-                "message": "one or more 'watchlist' entries that contains missing or invalid properties"
-            }
-
-        if watchlist.get('name') == "":
-            return {
-                "result": False,
-                "message": "one or more 'watchlist' entries that contains no 'name' value"
-            }
-
-        if len(watchlist.get('tags')) + len(watchlist.get('regex')) == 0:
+        if len(watchlist.get('tags', []) + watchlist.get('regex', [])) == 0:
             return {
                 "result": False,
                 "message": "one or more 'watchlist' entries that contains no 'tags' or 'regex' values."
