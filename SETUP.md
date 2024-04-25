@@ -7,7 +7,7 @@
 * [Files](#files)
   * [*config.json*](#configjson)
   * [*history.json*](#historyjson)
-  * [*watchlist.json*](#watchlistjson)
+  * [*subscriptions.json*](#subscriptionsjson)
   * [*webhooks.json*](#webhooksjson)
 * [Regular Expressions](#regular-expressions)
 * [Example Notifications](#example-notifications)
@@ -19,22 +19,25 @@ The watcher will generate JSON files on initial startup or if they are missing f
 **To begin watching** follow these steps:
 
 1. Start the watcher to generate the JSON files.
-2. Add an entry to `watchlist.json` with a `name` value and at least one `tag` and/or `regex` value.
-3. Add a Nyaa RSS URL to `config.json` within the `nyaa_rss` property.
-4. (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the `name` to one or more `watchlist.json` entries in the `webhooks` property.
-5. Restart the watcher.
+2. Add in `interval_sec` value to `subscriptions.json`.
+3. Add an entry to `subscriptions.json` with a `username` value and an `rss` value of the user's RSS URL.
+4. Add a `watchlist` entry to the subscription with at least one `tag` and/or `regex` value.
+5. (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the `name` value in one or more watchlist entries in the `webhooks` property.
+6. Restart the watcher.
 
-### Triggering Download 
+### Triggering Download
 
 The watcher will download a torrent file when one of the following conditions are met with the title of the torrent:
 
-* **One or more** `tag` values matches a string sequence and there are **no** `regex` patterns presents.
-* **One or more** `regex` patterns matches a string sequence and there are **no** `tag` values present.
-* Both **one or more** `tag` values and **one or more** `regex` patterns matches a string sequence.
+* **One or more** `tag` value matches a string sequence and there are **no** `regex` patterns present.
+* **One or more** `regex` pattern matches a string sequence and there are **no** `tag` values present.
+* Both **one or more** `tag` value and **one or more** `regex` pattern matches a string sequence.
+
+In any case, if a `exclude_regex` pattern matches a string sequence, the torrent file will **not** be downloaded.
 
 ## Docker
 
-All image versions can be found on [Docker Hub](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags).
+All image tags can be found on [Docker Hub](https://hub.docker.com/r/resortdocker/nyaa-watcher/tags).
 
 ```docker
 docker run
@@ -49,7 +52,7 @@ docker run
 docker run
   --name=nyaa-watcher
   -e LOG_LEVEL=DEBUG
-  -e SHOW_TIPS=false
+  -e LOG_TIPS=false
   -v /path/to/torrent-client/watch:/downloads
   -v /path/to/appdata/nyaa-watcher:/watcher
   --restart unless-stopped
@@ -60,29 +63,25 @@ docker run
 
 The syntax for the volume parameter is `<host>:<container>`.
 
-| Parameter       | Description                                                                    |
-|-----------------|--------------------------------------------------------------------------------|
-| `-v /downloads` | Directory for downloaded torrent files.                                        |
-| `-v /watcher`   | Directory for watcher JSON files.                                              |
-| `-e LOG_LEVEL`  | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
-| `-e SHOW_TIPS`  | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
+| Parameter       | Description                                                   |
+|-----------------|---------------------------------------------------------------|
+| `-v /downloads` | Directory for downloaded torrent files.                       |
+| `-v /watcher`   | Directory for watcher JSON files.                             |
+| `-e LOG_LEVEL`  | Log information level (Optional). `INFO` (default) or `DEBUG` |
+| `-e LOG_TIPS`   | Show tips in the log (Optional). `true` (default) or `false`  |
 
 
 ## Files
 
 ### `config.json`
 
-Contains the configuration information for the watcher.
+Contains the configuration for the watcher.
 
-* `nyaa_rss [str]` - URL for a Nyaa user's RSS feed.
-* `interval_sec [int]` - Number of seconds between each RSS fetch. Must be **equal to or greater than 60 seconds**.
 * `version [str]` - Version of the watcher.
 
 ```json
 {
-    "nyaa_rss": "https://nyaa.si/?page=rss&u=NYAA_USERNAME",
-    "interval_sec": 600,
-    "version": "1.1.2"
+    "version": "1.2.0"
 }
 ```
 
@@ -95,6 +94,7 @@ Contains lists of information for each successful and failed torrent downloads. 
 
 Each entry contains the following properties:
 
+* `uploader [str]` - Nyaa username of the uploader.
 * `torrent_title [str]` - Title of the torrent.
 * `date_downloaded | date_failed [datetime]` - Date and time when the torrent file downloaded/failed.
 * `nyaa_page [str]` - Nyaa page URL of the torrent.
@@ -107,25 +107,43 @@ Each entry contains the following properties:
 }
 ```
 
-### `watchlist.json`
+### `subscriptions.json`
 
-Contains each of the series you want to the watcher to download.
+Contains each user's RSS feed and the uploads you want to watch.
 
-* `name [str]` - Name for to identify the entry (Not used when searching).
-* `tags [list]` - List of strings to search for within torrent titles.
-* `regex [list]` - List of regular expression patterns to search for within torrent titles (No delimiters or flags).
-* `webhooks [list]` - (**Optional**) List of strings with the `name` values from `webhooks.json` that will be notified when a torrent file downloads.
+* `interval_sec [int]` - Number of seconds between each RSS fetch. Must be **equal to or greater than 60 seconds**.
+* `subscriptions [list]` - List of Nyaa RSS feeds to watch.
+  * `username [str]` - Nyaa username for the RSS feed.
+  * `rss [str]` - RSS URL for the Nyaa user's feed.
+  * `watchlist [list]` - List of watchlist entries.
+    * `name [str]` - Name for to identify the entry (Not used when searching) (Optional).
+    * `tags [list]` - List of strings to search for within torrent titles.
+    * `regex [list]` - List of regular expression patterns to search for within torrent titles (No delimiters or flags).
+    * `exclude_regex [list]` - List of regular expression patterns to search for within torrent titles, and will prevent a torrent file from downloading if found (No delimiters or flags) (Optional). 
+    * `webhooks [list]` - List of strings with the `name` values from `webhooks.json` that will be notified when a torrent file downloads (Optional).
+  * `previous_hash [str]` - Previous hash value of the RSS feed (Automatically updated by the watcher).
 
-Each watchlist entry must have `name` value and **at least one `tag` or `regex`** value.
+Each subscription entry must have the `username`, `rss`, and `watchlist` values.
+
+Each watchlist entry must have and **at least one `tag` or `regex`** value.
 
 ```json
 {
-    "watchlist": [
+    "interval_sec": 600,
+    "subscriptions": [
         {
-            "name": "",
-            "tags": [],
-            "regex": [],
-            "webhooks": []
+            "username": "Username",
+            "rss": "https://nyaa.si/?page=rss&u=USERNAME",
+            "watchlist": [
+                {
+                    "name": "",
+                    "tags": [],
+                    "regex": [],
+                    "exclude_regex": [],
+                    "webhooks": []
+                }
+            ],
+            "previous_hash": ""
         }
     ]
 }
@@ -133,37 +151,59 @@ Each watchlist entry must have `name` value and **at least one `tag` or `regex`*
 
 See [Regular Expressions](#regular-expressions) below for more information.
 
-#### Example `watchlist.json`
+#### Example `subscriptions.json`
 
-* `Nyaa Username - Demon Slayer` - Watcher downloads a torrent file when the title contains "***Demon Slayer***" or "***Kimetsu no Yaiba***" **and** is numbered **using the `S00E00` format**.
-* `Nyaa Username - One Piece` - Watcher downloads a torrent file when the title contains "***One Piece - XXXX***" with an **episode number greater than *1063***.
+The `name`, `exclude_regex`, and `webhooks` properties in each watchlist entry are optional.
 
 ```json
 {
-    "watchlist": [
+    "interval_sec": 600,
+    "subscriptions": [
         {
-            "name": "Nyaa Username - Demon Slayer",
-            "tags": [
-              "Demon Slayer",
-              "Kimetsu no Yaiba"
+            "username": "Foo",
+            "rss": "https://nyaa.si/?page=rss&u=Foo",
+            "watchlist": [
+                {
+                    "name": "Demon Slayer",
+                    "tags": [
+                        "Demon Slayer",
+                        "Kimetsu no Yaiba"
+                    ],
+                    "regex": [
+                        "S[0-9]{2}E[0-9]{2}"
+                    ],
+                    "webhooks": [
+                        "Friends Server"
+                    ]
+                },
+                {
+                    "name": "Unnamed Memory",
+                    "regex": [
+                        "One Piece - (1[0-9][6-9][3-9]|1[0-9][7-9][0-9]|1[1-9][0-9]{2}|[2-9][0-9]{3})"
+                    ],
+                    "exclude_regex": [
+                        "x264"
+                    ],
+                    "webhooks": [
+                        "Notification Server"
+                    ]
+                }
             ],
-            "regex": [
-              "S[0-9]{2}E[0-9]{2}"
-            ],
-            "webhooks": [
-              "Friends Server"
-            ]
+            "previous_hash": "23870945yufh2w837u49ifwh0834957ufh203847"
         },
         {
-            "name": "Nyaa Username - One Piece",
-            "tags": [],
-            "regex": [
-              "One Piece - (1[0-9][6-9][3-9]|1[0-9][7-9][0-9]|1[1-9][0-9]{2}|[2-9][0-9]{3})"
+            "username": "Bar",
+            "rss": "https://nyaa.si/?page=rss&u=Bar",
+            "watchlist": [
+                {
+                    "tags": [
+                        "My Hero Academia",
+                        "Boku no Hero Academia"
+                    ]
+                }
             ],
-            "webhooks": [
-              "Notification Server"
-            ]
-        }
+            "previous_hash": "09q873w4yt0qw9834yhfg089yq083794uyf7689r"
+          }
     ]
 }
 ```
@@ -171,6 +211,8 @@ See [Regular Expressions](#regular-expressions) below for more information.
 ### `webhooks.json`
 
 Contains the information for the Discord webhooks and notification customization.
+
+Multiple `webhooks.json` entries can use the same `url` value.
 
 * `name [str]` - Name to the webhook. This is the value used in the `webhooks` property in `watchlist.json`.
 * `url [str]` - URL for the Discord webhook.
@@ -183,8 +225,6 @@ Contains the information for the Discord webhooks and notification customization
   * `show_published [int]` - (0 to 6) Date and time the torrent was published. 
   * `show_seeders [int]` - (0 to 6) Number of seeders for the torrent.
   * `show_size [int]` - (0 to 6) Size of the torrent. 
-
-**Note**: A single webhook URL can be used for multiple webhooks.
 
 ```json
 {
@@ -211,14 +251,16 @@ Contains the information for the Discord webhooks and notification customization
 
 Use tokens to insert torrent information into the `title` and `description` values:
 
-* `$webhook_name` - Name of the webhook.
-* `$title` - Title of the torrent.
-* `$downloads` - Number of downloads for the torrent.
-* `$seeders` - Number of seeders for the torrent.
-* `$leechers` - Number of leechers for the torrent.
-* `$size` - Size of the torrent (e.g., *178.2 MiB*).
-* `$published` - Date and time the torrent was published (e.g., *Fri, 20 Apr 2023 20:47*).
 * `$category` - Nyaa category for the torrent (e.g., *Anime - English-translated*).
+* `$downloads` - Number of downloads for the torrent.
+* `$leechers` - Number of leechers for the torrent.
+* `$published` - Date and time the torrent was published (e.g., *Fri, 20 Apr 2023 20:47*).
+* `$seeders` - Number of seeders for the torrent.
+* `$size` - Size of the torrent (e.g., *178.2 MiB*).
+* `$title` - Title of the torrent.
+* `$uploader` - Nyaa username of the uploader.
+* `$watchlist` - Name of the watchlist entry (Defaults to *Unknown Watchlist*).
+* `$webhook_name` - Name of the webhook.
 
 #### Torrent Info Placement
 
