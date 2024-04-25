@@ -153,7 +153,7 @@ See [Regular Expressions](#regular-expressions) below for more information.
 
 #### Example `subscriptions.json`
 
-The `name`, `exclude_regex`, and `webhooks` properties in each watchlist entry are optional.
+Each watchlist entry must contain at least one `tag` and/or `regex` value, but the `name`, `exclude_regex`, and `webhooks` values are optional.
 
 ```json
 {
@@ -260,7 +260,7 @@ Use tokens to insert torrent information into the `title` and `description` valu
 * `$title` - Title of the torrent.
 * `$uploader` - Nyaa username of the uploader.
 * `$watchlist` - Name of the watchlist entry (Defaults to *Unknown Watchlist*).
-* `$webhook_name` - Name of the webhook.
+* `$webhook` - Name of the webhook.
 
 #### Torrent Info Placement
 
@@ -288,7 +288,7 @@ See the [Example Notifications](#example-notifications) section for images of no
             "name": "Friends Server",
             "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
             "notifications": {
-                "title": "Nyaa User uploaded a new torrent!",
+                "title": "$uploader uploaded a new torrent!",
                 "description": "Starting download for $title.",
                 "show_category": 0,
                 "show_downloads": 0,
