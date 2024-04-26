@@ -51,7 +51,7 @@ def _generate_files() -> None:
 
         if not os.path.exists(get_json_path("history")):
             file = open(get_json_path("history"), "x")
-            file.write(json.dumps(new_history_json(), indent=4))
+            file.write(json.dumps(_new_history_json(), indent=4))
             file.close()
             Logger.debug("Generated 'history.json'.")
 
@@ -287,7 +287,7 @@ def _new_config_json() -> dict:
     }
 
 
-def new_history_json() -> dict:
+def _new_history_json() -> dict:
     """
     Creates a new 'history.json' dictionary of the latest version.
     :return: A default 'history.json' dictionary.
@@ -471,7 +471,7 @@ def _verify_history_parse() -> None:
     if not os.path.exists(path):
         Logger.log("Cannot find 'history.json'. Creating file...")
         file = open(path, "x")
-        file.write(json.dumps(new_history_json(), indent=4))
+        file.write(json.dumps(_new_history_json(), indent=4))
         file.close()
         Logger.log("Created 'history.json'.")
         return
