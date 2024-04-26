@@ -2,7 +2,7 @@
 
 # Setup
 
-* [Get Started](#get-started)
+* [Getting Started](#getting-started)
 * [Docker](#docker)
 * [Files](#files)
   * [*config.json*](#configjson)
@@ -12,7 +12,7 @@
 * [Regular Expressions](#regular-expressions)
 * [Example Notifications](#example-notifications)
 
-## Get Started
+## Getting Started
 
 The watcher will generate JSON files on initial startup or if they are missing from the `/watcher` container directory. Also, the watcher will need to be restarted when making any changes to the files.
 
@@ -25,15 +25,17 @@ The watcher will generate JSON files on initial startup or if they are missing f
 5. (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the `name` value in one or more watchlist entries in the `webhooks` property.
 6. Restart the watcher.
 
-> ### Triggering Download
->
-> The watcher will download a torrent file when one of the following conditions are met with the title of the torrent:
->
-> * **One or more** `tag` value matches a string sequence and there are **no** `regex` patterns present.
-> * **One or more** `regex` pattern matches a string sequence and there are **no** `tag` values present.
-> * Both **one or more** `tag` value and **one or more** `regex` pattern matches a string sequence.
->
-> In any case, if a `exclude_regex` pattern matches a string sequence, the torrent file will **not** be downloaded.
+> Visit the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki) for more information on Getting Started.
+
+### Triggering Download
+
+The watcher will download a torrent file when one of the following conditions are met with the title of the torrent:
+
+* **One or more** `tag` value matches a string sequence and there are **no** `regex` patterns present.
+* **One or more** `regex` pattern matches a string sequence and there are **no** `tag` values present.
+* Both **one or more** `tag` value and **one or more** `regex` pattern matches a string sequence.
+
+In any case, if a `exclude_regex` pattern matches a string sequence, the torrent file will **not** be downloaded.
 
 ## Docker
 
@@ -92,13 +94,13 @@ Contains lists of information for each successful and failed torrent downloads. 
 * `downloads [list]` - List of successful downloads.
 * `errors [list]` - List of failed downloads.
 
-> Each entry contains the following properties:
->
-> * `uploader [str]` - Nyaa username of the uploader.
-> * `torrent_title [str]` - Title of the torrent.
-> * `date_downloaded | date_failed [datetime]` - Date and time when the torrent file downloaded/failed.
-> * `nyaa_page [str]` - Nyaa page URL of the torrent.
-> * `nyaa_hash [str]` - Unique identifier of the torrent.
+Each entry contains the following properties:
+
+* `uploader [str]` - Nyaa username of the uploader.
+* `torrent_title [str]` - Title of the torrent.
+* `date_downloaded | date_failed [datetime]` - Date and time when the torrent file downloaded/failed.
+* `nyaa_page [str]` - Nyaa page URL of the torrent.
+* `nyaa_hash [str]` - Unique identifier of the torrent.
 
 ```json
 {
@@ -123,8 +125,11 @@ Contains each user's RSS feed and the uploads you want to watch.
     * `webhooks [list]` - List of strings with the `name` values from `webhooks.json` that will be notified when a torrent file downloads (Optional).
   * `previous_hash [str]` - Previous hash value of the RSS feed (Automatically updated by the watcher).
 
-> * Each subscription entry must have the `username`, `rss`, and `watchlist` values.
-> * Each watchlist entry must have and **at least one `tag` or `regex`** value.
+Each `subscriptions` entry must have a `username`, `rss`, and a `watchlist` value.
+
+Each `watchlist` entry must have and **at least one `tag` or `regex`** value. All other values are optional.
+
+> Generate a custom `subscriptions.json` JSON string with [this online Python script](https://www.online-python.com/5w9JMmfQid).
 
 ```json
 {
@@ -148,10 +153,7 @@ Contains each user's RSS feed and the uploads you want to watch.
 }
 ```
 
-> Generate a custom `subscriptions.json` JSON string with [this online Python script](https://www.online-python.com/5w9JMmfQid).
-
-
-See [Regular Expressions](#regular-expressions) below for more information.
+> See [Regular Expressions](#regular-expressions) below for more information.
 
 #### Example `subscriptions.json`
 
@@ -226,7 +228,9 @@ Contains the information for the Discord webhooks and notification customization
   * `show_seeders [int]` - (0 to 6) Number of seeders for the torrent.
   * `show_size [int]` - (0 to 6) Size of the torrent.
 
-> Multiple `webhooks.json` entries can use the same `url` value.
+Multiple `webhooks.json` entries can use the same `url` value.
+
+> Generate a custom `webhooks.json` JSON string with [this online Python script](https://www.online-python.com/tmoXYrqd6A).
 
 ```json
 {
@@ -249,36 +253,34 @@ Contains the information for the Discord webhooks and notification customization
 }
 ```
 
-> Generate a custom `webhooks.json` JSON string with [this online Python script](https://www.online-python.com/5w9JMmfQid).
+### Torrent Info Tokens
 
-> #### Torrent Info Tokens
->
-> Use tokens to insert torrent information into the `title` and `description` values:
->
-> * `$category` - Nyaa category for the torrent (e.g., *Anime - English-translated*).
-> * `$downloads` - Number of downloads for the torrent.
-> * `$leechers` - Number of leechers for the torrent.
-> * `$published` - Date and time the torrent was published (e.g., *Fri, 20 Apr 2023 20:47*).
-> * `$seeders` - Number of seeders for the torrent.
-> * `$size` - Size of the torrent (e.g., *178.2 MiB*).
-> * `$title` - Title of the torrent.
-> * `$uploader` - Nyaa username of the uploader.
-> * `$watchlist` - Name of the watchlist entry (Defaults to *Unknown Watchlist*).
-> * `$webhook` - Name of the webhook.
+Use tokens to insert torrent information into the `title` and `description` values:
 
-> #### Torrent Info Placement
->
-> The **`show_` properties** represent where torrent information will be placed within the notification on a **3x2** grid, ranging from `0` to `6`:
->
-> * `0` - **Disabled**
-> * `1` - **Top Left**
-> * `2` - **Top Middle**
-> * `3` - **Top Right**
-> * `4` - **Bottom Left**
-> * `5` - **Bottom Middle**
-> * `6` - **Bottom Right**
+* `$category` - Nyaa category for the torrent (e.g., *Anime - English-translated*).
+* `$downloads` - Number of downloads for the torrent.
+* `$leechers` - Number of leechers for the torrent.
+* `$published` - Date and time the torrent was published (e.g., *Fri, 20 Apr 2023 20:47*).
+* `$seeders` - Number of seeders for the torrent.
+* `$size` - Size of the torrent (e.g., *178.2 MiB*).
+* `$title` - Title of the torrent.
+* `$uploader` - Nyaa username of the uploader.
+* `$watchlist` - Name of the watchlist entry (Defaults to *Unknown Watchlist*).
+* `$webhook` - Name of the webhook.
 
-See the [Example Notifications](#example-notifications) section for images of notifications.
+### Torrent Info Placement
+
+The **`show_` properties** represent where torrent information will be placed within the notification on a **3x2** grid, ranging from `0` to `6`:
+
+* `0` - **Disabled**
+* `1` - **Top Left**
+* `2` - **Top Middle**
+* `3` - **Top Right**
+* `4` - **Bottom Left**
+* `5` - **Bottom Middle**
+* `6` - **Bottom Right**
+
+> See the [Example Notifications](#example-notifications) section for images of notifications.
 
 #### Example `webhooks.json`
 
@@ -361,3 +363,7 @@ so you may want to use a `regex` value with both the title and episode number pa
 `Notifications Server`
 
 ![Nyaa Watcher Webhook Notification Example #2](https://raw.githubusercontent.com/resort-io/assets/main/nyaa-watcher/img/notification-example-2.png)
+
+## More Information
+
+Visit the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki) for more information.
