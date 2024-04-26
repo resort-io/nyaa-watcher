@@ -1,8 +1,8 @@
 import feedparser
 import os
 import re
-from logger import Logger
 from config import Config
+from logger import Logger
 
 
 def _sort_torrents(torrents: list) -> list:
@@ -11,6 +11,7 @@ def _sort_torrents(torrents: list) -> list:
     :param torrents: A list of dictionaries, each representing an RSS torrent entry.
     :return: A list of sorted torrent dictionaries, ordered by their 'title' key in ascending order.
     """
+
     torrent_titles = [(torrent['title'], torrent) for torrent in torrents]
     torrent_titles.sort()
     return [pair[1] for pair in torrent_titles]
@@ -33,6 +34,7 @@ class Watcher:
                 'nyaa_infohash': The hash of the torrent given by Nyaa.
         :return: None
         """
+
         for torrent in torrents:
             self.history.get('downloads').append({
                 "uploader": torrent.get('uploader'),
@@ -51,6 +53,7 @@ class Watcher:
         :param prev_hash: The last torrent hash of the previous fetch (Defaults to None).
         :return: A list of dictionaries, each representing a torrents from a given subscription to be downloaded.
         """
+
         log_entries = os.environ.get("LOG_RSS_ENTRIES", "false").lower() == "true"
 
         feed = feedparser.parse(rss)
@@ -134,6 +137,7 @@ class Watcher:
         Fetches all RSS feeds from the subscriptions and filters the torrents based on the watchlist.
         :return: A list of dictionaries, each representing a torrents from all subscriptions to be downloaded.
         """
+
         queue = []
         Logger.log()
         for sub in self.subscriptions.get("subscriptions"):
