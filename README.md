@@ -13,6 +13,8 @@
 
 ## Usage
 
+See the [setup documentation](./SETUP.md) or [Wiki pages](https://github.com/resort-io/nyaa-watcher/wiki) for more information.
+
 ### [docker cli](https://docs.docker.com/engine/reference/commandline/cli/)
 
 ```docker
@@ -26,7 +28,7 @@ docker run
 
 ### Parameters
 
-The syntax for the volume parameter is `<host>:<container>`. See the [setup documentation](./SETUP.md) for more information.
+The syntax for the volume parameter is `<host>:<container>`. 
 
 | Parameter       | Description                                                   |
 |-----------------|---------------------------------------------------------------|
