@@ -113,21 +113,21 @@ Each entry contains the following properties:
 
 Contains each user's RSS feed and the uploads you want to watch.
 
-* `interval_sec [int]` - Number of seconds between each RSS fetch. Must be **equal to or greater than 60 seconds**.
-* `subscriptions [list]` - List of Nyaa RSS feeds to watch.
-  * `username [str]` - Nyaa username for the RSS feed.
-  * `rss [str]` - RSS URL for the Nyaa user's feed.
+* `interval_sec [int]` - Number of seconds between each RSS fetch (Must be **at least 60 seconds**).
+* `subscriptions [list]` - List of Nyaa RSS subscriptions to watch.
+  * `username [str]` - Name to identify the subscription entry.
+  * `rss [str]` - RSS URL of the Nyaa user.
   * `watchlist [list]` - List of watchlist entries.
-    * `name [str]` - Name for to identify the entry (Not used when searching) (Optional).
+    * `name [str]` - Name to identify the watchlist entry (Optional; not used for searching).
     * `tags [list]` - List of strings to search for within torrent titles.
     * `regex [list]` - List of regular expression patterns to search for within torrent titles (No delimiters or flags).
-    * `exclude_regex [list]` - List of regular expression patterns to search for within torrent titles, and will prevent a torrent file from downloading if found (No delimiters or flags) (Optional). 
+    * `exclude_regex [list]` - List of regular expression patterns to search for within torrent titles, and will prevent a download if found (No delimiters or flags) (Optional). 
     * `webhooks [list]` - List of strings with the `name` values from `webhooks.json` that will be notified when a torrent file downloads (Optional).
-  * `previous_hash [str]` - Previous hash value of the RSS feed (Automatically updated by the watcher).
+  * `previous_hash [str]` - Previous hash value of most recent RSS fetch (Automatically updated by the watcher).
 
-Each `subscriptions` entry must have a `username`, `rss`, and a `watchlist` value.
-
-Each `watchlist` entry must have and **at least one `tag` or `regex`** value. All other values are optional.
+> #### Important Notes
+> * Each `subscriptions` entry must have a `username`, `rss`, and a `watchlist` value. 
+> * Each `watchlist` entry must have and **at least one `tag` or `regex`** value. All other values are optional.
 
 > Generate a custom `subscriptions.json` JSON string with [this online Python script](https://www.online-python.com/5w9JMmfQid).
 
@@ -157,8 +157,6 @@ Each `watchlist` entry must have and **at least one `tag` or `regex`** value. Al
 
 #### Example `subscriptions.json`
 
-Each `watchlist` entry must contain at least one `tag` and/or `regex` value. The `name`, `exclude_regex`, and `webhooks` values are optional.
-
 ```json
 {
     "interval_sec": 600,
@@ -181,7 +179,7 @@ Each `watchlist` entry must contain at least one `tag` and/or `regex` value. The
                     ]
                 },
                 {
-                    "name": "Unnamed Memory",
+                    "name": "One Piece",
                     "regex": [
                         "One Piece - (1[0-9][6-9][3-9]|1[0-9][7-9][0-9]|1[1-9][0-9]{2}|[2-9][0-9]{3})"
                     ],
@@ -326,8 +324,8 @@ The **`show_` properties** represent where torrent information will be placed wi
 
 Below are examples of regular expressions that can be modified for your needs.
 
-Titles with the `00` format may the words ***720p*** or ***1080p*** within them which will interfere with the matching,
-so you may want to use a `regex` value with both the title and episode number pattern.
+Titles with the `00` format may contain the words ***720p*** or ***1080p***, which may interfere with searching,
+so you may want to use a `regex` value (or combination with a `tags` value) that contains the **series title and the numbering pattern**.
 
 > Visit [Regex101](https://regex101.com/) for more information on creating and testing patterns.
 

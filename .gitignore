@@ -2,7 +2,6 @@
 src/downloads/
 __tests__/
 dev.*.json
-CONTRIBUTING.md
 
 ### Environment & OS ###
 .DS_Store
