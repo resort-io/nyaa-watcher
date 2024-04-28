@@ -2,7 +2,7 @@
 
 # Changelog
 
-## [1.2.0](https://github.com/resort-io/nyaa-watcher/releases/tag/v1.2.0) *(04/26/2024)*
+## [1.2.0](https://github.com/resort-io/nyaa-watcher/releases/tag/v1.2.0) *(04/29/2024)*
 
 * Added feature to watch and download torrents from multiple Nyaa RSS feeds.
   * Renamed `watchlist.json` to `subscriptions.json`.
@@ -13,6 +13,7 @@
   * Moved the `nyaa_rss` and `interval_sec` properties from `config.json` into `subscriptions.json`.
 * Added `excl_regex` property to watchlist entries in `subscriptions.json`.
 * Changed `subscriptions.json` verification to only require at least one `tag` or `regex` value; all other values are optional.
+* Created scripts that generate custom `subscriptions.json` and `watchlist.json` JSON strings.
 * Removed initial RSS connection test.
 * Renamed `$webhook_name` string token to `$webhook`.
 * Renamed `SHOW_TIPS` environment variable to `LOG_TIPS`.

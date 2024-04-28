@@ -2,7 +2,6 @@
 src/downloads/
 __tests__/
 dev.*.json
-CONTRIBUTING.md
 
 ### Environment & OS ###
 .DS_Store
@@ -38,6 +37,7 @@ MANIFEST
 .github/
 .gitignore
 CHANGELOG.md
+CONTRIBUTING.md
 Dockerfile
 LICENSE
 README.md

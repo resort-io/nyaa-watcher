@@ -13,7 +13,7 @@
 
 ## Usage
 
-See the [setup documentation](./SETUP.md) or [Wiki pages](https://github.com/resort-io/nyaa-watcher/wiki) for more information.
+See the [setup documentation](./SETUP.md) or [Wiki pages](https://github.com/resort-io/nyaa-watcher/wiki) for more information on Getting Started.
 
 ### [docker cli](https://docs.docker.com/engine/reference/commandline/cli/)
 
