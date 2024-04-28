@@ -14,28 +14,31 @@
 
 ## Getting Started
 
-The watcher will generate JSON files on initial startup or if they are missing from the `/watcher` container directory. Also, the watcher will need to be restarted when making any changes to the files.
-
 **To begin watching** follow these steps:
 
 1. Start the watcher to generate the JSON files.
 2. Add in `interval_sec` value to `subscriptions.json`.
-3. Add an entry to `subscriptions.json` with a `username` value and an `rss` value of the user's RSS URL.
-4. Add a `watchlist` entry to the subscription with at least one `tag` and/or `regex` value.
-5. (Optional) Add an entry to `webhooks.json` with `name` and `url` values, and place the `name` value in one or more watchlist entries in the `webhooks` property.
+3. Add an entry to `subscriptions.json` in the `subscriptions` list with **both** a `username` value and `rss` value (RSS URL).
+4. Add an entry to the `watchlist` list of the subscription with at least one `tag` and/or `regex` value.
+5. (Optional) Add an entry to `webhooks.json` in the `webhooks` list with **both** a `name` value and `url` value, and place the `name` value in one or more watchlist entries in the `webhooks` property.
 6. Restart the watcher.
+
+> #### Important Notes
+> 
+> * Any JSON file that is missing from the `/watcher` container directory will be generated at startup.
+> * The watcher will need to be restarted when making any change to a JSON file.
 
 > Visit the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki) for more information on Getting Started.
 
 ### Triggering Download
 
-The watcher will download a torrent file when one of the following conditions are met with the title of the torrent:
+The watcher will download a torrent file if **one of the following** conditions are met:
 
-* **One or more** `tag` value matches a string sequence and there are **no** `regex` patterns present.
-* **One or more** `regex` pattern matches a string sequence and there are **no** `tag` values present.
-* Both **one or more** `tag` value and **one or more** `regex` pattern matches a string sequence.
+* When a `tag` value finds a match in the **torrent title** and there are **no** `regex` patterns.
+* When a `regex` pattern finds a match in the **torrent title** and there are **no** `tag` values.
+* When **both** a `tag` value and a `regex` pattern finds a match in the **torrent title**.
 
-In any case, if a `exclude_regex` pattern matches a string sequence, the torrent file will **not** be downloaded.
+In any case, if a `exclude_regex` pattern finds a match, the torrent file will **not be downloaded**.
 
 ## Docker
 

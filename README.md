@@ -9,7 +9,6 @@
 
 * Monitors the RSS feed of Nyaa users and downloads torrent files based upon substrings and/or regular expressions.
 * Notifies Discord channels via webhooks when a torrent file is downloaded.
-* Officially supports `.si` and `.land` domains.
 
 ## Usage
 
