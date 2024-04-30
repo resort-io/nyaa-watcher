@@ -17,9 +17,9 @@
 **To begin watching** follow these steps:
 
 1. Create a **`subscriptions.json` file** in the `/watcher` container directory.
-2. Use the [***subscriptions.json* generator**](https://www.online-python.com/5w9JMmfQid) script to get a **custom JSON string** and **paste it into** `subscriptions.json`.
+2. Use the [***subscriptions.json* generator**](https://onlinegdb.com/hsnOWQY6W) script to get a **custom JSON string** and **paste it into** `subscriptions.json`.
 3. ***(Optional)*** Create a **`webhooks.json` file** in the `/watcher` container directory.
-4. ***(Optional)*** Use the [***webhooks.json* generator**](https://www.online-python.com/tmoXYrqd6A) script to get a **custom JSON string** and **paste it into** `webhooks.json`.
+4. ***(Optional)*** Use the [***webhooks.json* generator**](https://onlinegdb.com/3o648M3tp) script to get a **custom JSON string** and **paste it into** `webhooks.json`.
 5. Start the watcher.
 
 > #### Important Notes
@@ -41,7 +41,7 @@ The watcher will download a torrent file if **one of the following** conditions 
 
 ## Docker
 
-Information on pulling the image and creating a container can be found on the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki/Docker).
+Information on **pulling the image and creating a container** can be found on the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki/Docker).
 
 ## Files
 
@@ -208,6 +208,7 @@ Below are examples of regular expressions that can be modified for your needs.
 
 Titles with the `00` format may contain the words ***720p*** or ***1080p***, which may interfere with searching,
 so you may want to use a `regex` value (or combination with a `tags` value) that contains the **series title and the numbering pattern**.
+See the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki#examples-of-webhooksjson) for an example.
 
 > Visit [Regex101](https://regex101.com/) for more information on creating and testing patterns.
 
