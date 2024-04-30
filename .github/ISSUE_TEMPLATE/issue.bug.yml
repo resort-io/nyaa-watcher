@@ -1,8 +1,7 @@
 name: Bug Report
 description: Create a new bug report.
-title: "[BUG]: <title>"
+title: "[BUG] New Bug"
 labels: [bug]
-assignees: [resort-io]
 body:
   - type: textarea
     id: issue
@@ -14,14 +13,20 @@ body:
   - type: textarea
     id: log
     attributes:
-      label: Log Message
-      description: What was the error message from the server log?
+      label: Debug Log Message
+      description: Set the `LOG_LEVEL` envrionment variable to `DEBUG` and paste the entire log message.
     validations:
       required: true
   - type: textarea
     id: context
     attributes:
       label: Additional Information
-      description: Add any other context that may be relevant to the problem.
+      description: Provide any other information or context that may be relevant to the bug and/or steps that can possibly reproduce the bug.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Code Changes
+      description: Provide code changes for the feature if you have any. Use comments to specify files or context.
     validations:
       required: false

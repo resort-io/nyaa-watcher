@@ -18,6 +18,7 @@ class Logger:
                 The `white_lines` key can be used to specify whether white lines should be logged before and/or after the message (`t`, `b`, or `tb`).
         :return: None
         """
+
         level_num: int = logging.DEBUG if options and options.get('level') == "debug" else logging.INFO
         exc_info: bool = options.get('exc_info') if options and options.get('exc_info') else False
         log_tips = os.environ.get('LOG_TIPS', "true").lower() == "true"
@@ -52,6 +53,7 @@ class Logger:
                 The `white_lines` key can be used to specify whether white lines should be logged before and/or after the message (`t`, `b`, or `tb`).
         :return: None
         """
+        
         if options:
             options['level'] = "debug"
         else:

@@ -1,6 +1,4 @@
-import json
 import os
-import re
 import requests
 import sched
 import time
@@ -78,7 +76,7 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooke
         Config.append_to_history(successes, errors)
 
         error_string = f" Finished with {len(errors)} error{'' if len(errors) == 1 else 's'}." if len(errors) > 0 else ""
-        Logger.log(f"Done!{error_string if len(errors) > 0 else ''}.")
+        Logger.log(f"Done!{error_string if len(errors) > 0 else ''}")
 
     # Schedule next check
     if reschedule:

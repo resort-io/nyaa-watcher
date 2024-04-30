@@ -7,16 +7,12 @@
 
 ## Features
 
-* Monitors a Nyaa user's RSS feed and downloads torrent files based upon substrings and/or regular expressions.
+* Monitors the RSS feeds of multiple Nyaa users and downloads torrent files based upon tags and/or regular expressions.
 * Notifies Discord channels via webhooks when a torrent file is downloaded.
 
-### Roadmap
-
-* Add support for multiple RSS feeds.
-* Add full support for all Nyaa domains.
-* Open repository for contributions.
-
 ## Usage
+
+See the [setup documentation](./SETUP.md) or [nyaa-watcher Wiki pages](https://github.com/resort-io/nyaa-watcher/wiki) for more information on Getting Started.
 
 ### [docker cli](https://docs.docker.com/engine/reference/commandline/cli/)
 
@@ -31,14 +27,12 @@ docker run
 
 ### Parameters
 
-The syntax for the volume parameter is `<host>:<container>`. See the [setup documentation](./SETUP.md) for more information.
+The syntax for the volume parameter is `<host>:<container>`. See the [nyaa-watcher Docker Wiki](https://github.com/resort-io/nyaa-watcher/wiki/Docker) for more information.
 
-| Parameter       | Description                                                                    |
-|-----------------|--------------------------------------------------------------------------------|
-| `-v /downloads` | Directory for downloaded torrent files.                                        |
-| `-v /watcher`   | Directory for watcher JSON files.                                              |
-| `-e LOG_LEVEL`  | Log information level (Optional). `INFO` (default) or `DEBUG`                  |
-| `-e SHOW_TIPS`  | Show tips in the log from the watcher (Optional) . `true` (default) or `false` |
+| Parameter       | Description                                                       |
+|-----------------|-------------------------------------------------------------------|
+| `-v /downloads` | Directory for downloaded torrent files.                           |
+| `-v /watcher`   | Directory for watcher JSON files.                                 |
 
 ## Changelog
 

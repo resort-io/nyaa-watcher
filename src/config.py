@@ -11,8 +11,8 @@ def get_json_path(filename: str) -> str:
     :return: A string containing the filepath to the JSON file.
     """
 
-    version = f"{'json/dev.' if os.environ.get('ENV', 'PRODUCTION').lower() == 'development' else '/'}{filename}.json"
-    return os.environ.get("WATCHER_DIR", "/watcher") + version
+    filepath = f"{'json/dev.' if os.environ.get('ENV', 'PRODUCTION').lower() == 'development' else '/'}{filename}.json"
+    return os.environ.get("WATCHER_DIR", "/watcher") + filepath
 
 
 def _get_file_version() -> str:
@@ -51,7 +51,7 @@ def _generate_files() -> None:
 
         if not os.path.exists(get_json_path("history")):
             file = open(get_json_path("history"), "x")
-            file.write(json.dumps(new_history_json(), indent=4))
+            file.write(json.dumps(_new_history_json(), indent=4))
             file.close()
             Logger.debug("Generated 'history.json'.")
 
@@ -70,213 +70,6 @@ def _generate_files() -> None:
         raise ValueError(f"Error generating files: {e}")
 
 
-def _update_to_v111() -> None:
-    """
-    Updates JSON files from v1.0.0 and v1.0.1 to v1.1.1.
-    :return: None
-    """
-
-    if Config.version != "1.0.0" or Config.version != "1.0.1":
-        return
-
-    Logger.debug("Updating to v1.1.1...")
-
-    # Adding missing 'webhooks' property to 'watchlist.json'
-    try:
-        file = open(get_json_path("watchlist"), "r")
-        watchlist = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
-
-    for entry in watchlist.get('watchlist'):
-        if 'webhooks' not in entry:
-            entry['webhooks'] = []
-            Logger.log(f"Added 'webhooks' property to watchlist entry: {entry.get('name')}.", {"level": "debug"})
-
-    file = open(get_json_path("watchlist"), "w")
-    file.write(json.dumps(watchlist, indent=4))
-    file.close()
-
-    # Adding sample webhook entry to 'webhooks.json', if empty
-    try:
-        file = open(get_json_path("webhooks"), "r")
-        webhooks = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("webhooks.json", e.doc, e.pos)
-
-    if len(webhooks.get('webhooks')) == 0:
-        new_webhook_json = {
-            "webhooks": [
-                {
-                    "name": "Example Webhook Name",
-                    "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
-                    "notifications": {
-                        "title": "",
-                        "description": "",
-                        "show_category": 3,
-                        "show_downloads": 4,
-                        "show_leechers": 6,
-                        "show_published": 1,
-                        "show_seeders": 5,
-                        "show_size": 2
-                    }
-                }
-            ]
-        }
-
-        file = open(get_json_path("webhooks"), "w")
-        file.write(json.dumps(new_webhook_json, indent=4))
-        file.close()
-
-    Logger.log("Updated to v1.1.1.")
-    Config.version = "1.1.1"
-
-
-def _update_to_v112() -> None:
-    """
-    Updates JSON files from v1.1.0 and v1.1.1 to v1.1.2.
-    :return: None
-    """
-
-    if Config.version != "1.1.0" or Config.version != "1.1.1":
-        return
-
-    Logger.debug("Updating to v1.1.2...")
-
-    # Adding 'errors' property and changing 'history' to 'downloads' in 'history.json'
-    try:
-        file = open(get_json_path("history"), "r")
-        history = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
-
-    history = {
-        "downloads": history.get('history', []),
-        "errors": history.get('errors', [])
-    }
-
-    file = open(get_json_path("history"), "w")
-    file.write(json.dumps(history, indent=4))
-    file.close()
-
-    # Change value name and adding 'version' property in 'config.json'
-    try:
-        file = open(get_json_path("config"), "r")
-        config = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
-
-    config = {
-        "nyaa_rss": config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=NYAA_USERNAME"),
-        "interval_sec": config.get('watcher_interval_seconds', 600),
-        "version": "1.1.2"
-    }
-
-    file = open(get_json_path("config"), "w")
-    file.write(json.dumps(config, indent=4))
-    file.close()
-
-    Logger.log("Updated to v1.1.2.")
-    Config.version = "1.1.2"
-
-
-def _update_to_v120() -> None:
-    """
-    Updates JSON files from v1.1.2 to v1.2.0.
-    :return: None
-    """
-
-    if Config.version != "1.1.2":
-        return
-
-    Logger.debug("Updating to v1.2.0...")
-
-    # Get values and update the 'version' value in 'config.json'
-    try:
-        file = open(get_json_path("config"), "r")
-        config = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
-
-    interval = config.get('watcher_interval_seconds', 600)
-    rss = config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=USERNAME")
-
-    # Update 'watchlist.json' and switch to 'subscriptions.json'
-    try:
-        file = open(get_json_path("watchlist"), "r")
-        watchlist = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
-
-    username = re.search(r"u=[^&]*", rss).group().replace(r"u=", "")
-
-    new_watchlist = []
-    for entry in watchlist.get('watchlist'):
-        new_watchlist.append({
-            "name": entry.get('name'),
-            "tags": entry.get('tags', []),
-            "regex": entry.get('regex', []),
-            "exclude_regex": entry.get('exclude_regex', []),
-            "webhooks": entry.get('webhooks', [])
-        })
-
-    subscriptions = {
-        "interval_sec": interval,
-        "subscriptions": [
-            {
-                "username": username,
-                "rss": rss,
-                "watchlist": new_watchlist,
-                "previous_hash": ""
-            }
-        ]
-    }
-
-    file = open(get_json_path("subscriptions"), "w")
-    file.write(json.dumps(subscriptions, indent=4))
-    file.close()
-
-    # Adding 'uploader' property to 'history.json'
-    try:
-        file = open(get_json_path("history"), "r")
-        history = json.loads(file.read())
-        file.close()
-    except json.decoder.JSONDecodeError as e:
-        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
-
-    new_history = []
-    for entry in history.get('downloads'):
-        new_history.append({
-            "uploader": entry.get('uploader', username),
-            "torrent_title": entry.get('torrent_title'),
-            "date_downloaded": entry.get('date_downloaded'),
-            "nyaa_page": entry.get('nyaa_page'),
-            "nyaa_hash": entry.get('nyaa_hash')
-        })
-
-    file = open(get_json_path("history"), "w")
-    file.write(json.dumps(new_history, indent=4))
-    file.close()
-
-    # Update 'version' value in 'config.json'
-    config = {
-        "version": "1.2.0"
-    }
-
-    file = open(get_json_path("config"), "w")
-    file.write(json.dumps(config, indent=4))
-    file.close()
-
-    Logger.log("Updated to v1.2.0.")
-    Config.version = "1.2.0"
-
-
 def _new_config_json() -> dict:
     """
     Creates a new 'config.json' dictionary of the latest version.
@@ -287,7 +80,7 @@ def _new_config_json() -> dict:
     }
 
 
-def new_history_json() -> dict:
+def _new_history_json() -> dict:
     """
     Creates a new 'history.json' dictionary of the latest version.
     :return: A default 'history.json' dictionary.
@@ -448,19 +241,7 @@ def _verify_subscriptions_entry(sub: dict) -> dict:
         }
 
     for watchlist in sub.get('watchlist'):
-        if not all(watchlist.get('name') and watchlist.get('tags') and watchlist.get('regex') and watchlist.get('exclude_regex') and watchlist.get('webhooks')):
-            return {
-                "result": False,
-                "message": "one or more 'watchlist' entries that contains missing or invalid properties"
-            }
-
-        if watchlist.get('name') == "":
-            return {
-                "result": False,
-                "message": "one or more 'watchlist' entries that contains no 'name' value"
-            }
-
-        if len(watchlist.get('tags')) + len(watchlist.get('regex')) == 0:
+        if len(watchlist.get('tags', []) + watchlist.get('regex', [])) == 0:
             return {
                 "result": False,
                 "message": "one or more 'watchlist' entries that contains no 'tags' or 'regex' values."
@@ -483,7 +264,7 @@ def _verify_history_parse() -> None:
     if not os.path.exists(path):
         Logger.log("Cannot find 'history.json'. Creating file...")
         file = open(path, "x")
-        file.write(json.dumps(new_history_json(), indent=4))
+        file.write(json.dumps(_new_history_json(), indent=4))
         file.close()
         Logger.log("Created 'history.json'.")
         return
@@ -738,3 +519,210 @@ class Config:
         file = open(get_json_path("subscriptions"), "w")
         file.write(json.dumps(subscriptions, indent=4))
         file.close()
+
+
+def _update_to_v111() -> None:
+    """
+    Updates JSON files from v1.0.0 and v1.0.1 to v1.1.1.
+    :return: None
+    """
+
+    if Config.version != "1.0.0" or Config.version != "1.0.1":
+        return
+
+    Logger.debug("Updating to v1.1.1...")
+
+    # Adding missing 'webhooks' property to 'watchlist.json'
+    try:
+        file = open(get_json_path("watchlist"), "r")
+        watchlist = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
+
+    for entry in watchlist.get('watchlist'):
+        if 'webhooks' not in entry:
+            entry['webhooks'] = []
+            Logger.log(f"Added 'webhooks' property to watchlist entry: {entry.get('name')}.", {"level": "debug"})
+
+    file = open(get_json_path("watchlist"), "w")
+    file.write(json.dumps(watchlist, indent=4))
+    file.close()
+
+    # Adding sample webhook entry to 'webhooks.json', if empty
+    try:
+        file = open(get_json_path("webhooks"), "r")
+        webhooks = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("webhooks.json", e.doc, e.pos)
+
+    if len(webhooks.get('webhooks')) == 0:
+        new_webhook_json = {
+            "webhooks": [
+                {
+                    "name": "Example Webhook Name",
+                    "url": "https://discord.com/api/webhooks/RANDOM_STRING/RANDOM_STRING",
+                    "notifications": {
+                        "title": "",
+                        "description": "",
+                        "show_category": 3,
+                        "show_downloads": 4,
+                        "show_leechers": 6,
+                        "show_published": 1,
+                        "show_seeders": 5,
+                        "show_size": 2
+                    }
+                }
+            ]
+        }
+
+        file = open(get_json_path("webhooks"), "w")
+        file.write(json.dumps(new_webhook_json, indent=4))
+        file.close()
+
+    Logger.log("Updated to v1.1.1.")
+    Config.version = "1.1.1"
+
+
+def _update_to_v112() -> None:
+    """
+    Updates JSON files from v1.1.0 and v1.1.1 to v1.1.2.
+    :return: None
+    """
+
+    if Config.version != "1.1.0" or Config.version != "1.1.1":
+        return
+
+    Logger.debug("Updating to v1.1.2...")
+
+    # Adding 'errors' property and changing 'history' to 'downloads' in 'history.json'
+    try:
+        file = open(get_json_path("history"), "r")
+        history = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
+
+    history = {
+        "downloads": history.get('history', []),
+        "errors": history.get('errors', [])
+    }
+
+    file = open(get_json_path("history"), "w")
+    file.write(json.dumps(history, indent=4))
+    file.close()
+
+    # Change value name and adding 'version' property in 'config.json'
+    try:
+        file = open(get_json_path("config"), "r")
+        config = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
+
+    config = {
+        "nyaa_rss": config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=NYAA_USERNAME"),
+        "interval_sec": config.get('watcher_interval_seconds', 600),
+        "version": "1.1.2"
+    }
+
+    file = open(get_json_path("config"), "w")
+    file.write(json.dumps(config, indent=4))
+    file.close()
+
+    Logger.log("Updated to v1.1.2.")
+    Config.version = "1.1.2"
+
+
+def _update_to_v120() -> None:
+    """
+    Updates JSON files from v1.1.2 to v1.2.0.
+    :return: None
+    """
+
+    if Config.version != "1.1.2":
+        return
+
+    Logger.debug("Updating to v1.2.0...")
+
+    # Get values and update the 'version' value in 'config.json'
+    try:
+        file = open(get_json_path("config"), "r")
+        config = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("config.json", e.doc, e.pos)
+
+    interval = config.get('watcher_interval_seconds', 600)
+    rss = config.get('nyaa_rss', "https://nyaa.si/?page=rss&u=USERNAME")
+
+    # Update 'watchlist.json' and switch to 'subscriptions.json'
+    try:
+        file = open(get_json_path("watchlist"), "r")
+        watchlist = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("watchlist.json", e.doc, e.pos)
+
+    username = re.search(r"u=[^&]*", rss).group().replace(r"u=", "")
+
+    new_watchlist = []
+    for entry in watchlist.get('watchlist'):
+        new_watchlist.append({
+            "name": entry.get('name'),
+            "tags": entry.get('tags', []),
+            "regex": entry.get('regex', []),
+            "exclude_regex": entry.get('exclude_regex', []),
+            "webhooks": entry.get('webhooks', [])
+        })
+
+    subscriptions = {
+        "interval_sec": interval,
+        "subscriptions": [
+            {
+                "username": username,
+                "rss": rss,
+                "watchlist": new_watchlist,
+                "previous_hash": ""
+            }
+        ]
+    }
+
+    file = open(get_json_path("subscriptions"), "w")
+    file.write(json.dumps(subscriptions, indent=4))
+    file.close()
+
+    # Adding 'uploader' property to 'history.json'
+    try:
+        file = open(get_json_path("history"), "r")
+        history = json.loads(file.read())
+        file.close()
+    except json.decoder.JSONDecodeError as e:
+        raise json.decoder.JSONDecodeError("history.json", e.doc, e.pos)
+
+    new_history = []
+    for entry in history.get('downloads'):
+        new_history.append({
+            "uploader": entry.get('uploader', username),
+            "torrent_title": entry.get('torrent_title'),
+            "date_downloaded": entry.get('date_downloaded'),
+            "nyaa_page": entry.get('nyaa_page'),
+            "nyaa_hash": entry.get('nyaa_hash')
+        })
+
+    file = open(get_json_path("history"), "w")
+    file.write(json.dumps(new_history, indent=4))
+    file.close()
+
+    # Update 'version' value in 'config.json'
+    config = {
+        "version": "1.2.0"
+    }
+
+    file = open(get_json_path("config"), "w")
+    file.write(json.dumps(config, indent=4))
+    file.close()
+
+    Logger.log("Updated to v1.2.0.")
+    Config.version = "1.2.0"

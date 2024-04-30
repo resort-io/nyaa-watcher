@@ -37,7 +37,7 @@ def _insert_tags(string: str, webhook_name: str, torrent: dict) -> str:
     :return: A string with replaced tags.
     """
 
-    string = string.replace("$webhook_name", webhook_name) \
+    string = string.replace("$webhook", webhook_name) \
         .replace("$title", torrent.get('title')) \
         .replace("$downloads", torrent.get('nyaa_downloads')) \
         .replace("$seeders", torrent.get('nyaa_seeders')) \
