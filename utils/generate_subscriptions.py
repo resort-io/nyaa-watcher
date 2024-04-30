@@ -1,59 +1,79 @@
 import json
 
 
+def non_empty_input(prompt: str) -> str:
+    while True:
+        string = input(prompt)
+        if string:
+            return string
+        print("(Error: Input cannot be empty)")
+
+
+def get_interval() -> int:
+    while True:
+        interval = non_empty_input("Enter an integer for the interval: ")
+        if interval.isdigit() and int(interval) >= 60:
+            return int(interval)
+        print("Interval must be an integer at least 60 seconds input.")
+
+
 def create_watchlist() -> dict:
     watchlist = {}
 
-    name = input("Type a watchlist 'name' value (Enter to skip): ")
-    if name:
-        watchlist['name'] = name
-
-    tags = []
     while True:
-        tag = input("Type a watchlist 'tag' value (Enter to skip): ")
-        if not tag:
-            break
-        tags.append(tag)
-    if tags:
-        watchlist['tags'] = tags
+        name = input("Type a watchlist 'name' value (Enter to skip): ")
+        if name:
+            watchlist['name'] = name
 
-    regexes = []
-    while True:
-        regex = input("Type a watchlist 'regex' value (Enter to skip): ")
-        if not regex:
-            break
-        regexes.append(regex)
-    if regexes:
-        watchlist['regex'] = regexes
+        tags = []
+        while True:
+            tag = input("Type a watchlist 'tag' value (Enter to skip): ")
+            if not tag:
+                break
+            tags.append(tag)
+        if tags:
+            watchlist['tags'] = tags
 
-    ex_regexes = []
-    while True:
-        ex_regex = input("Type a watchlist 'exclude_regex' value (Enter to skip): ")
-        if not ex_regex:
-            break
-        ex_regexes.append(ex_regex)
-    if ex_regexes:
-        watchlist['exclude_regex'] = ex_regexes
+        regexes = []
+        while True:
+            regex = input("Type a watchlist 'regex' value (Enter to skip): ")
+            if not regex:
+                break
+            regexes.append(regex)
+        if regexes:
+            watchlist['regex'] = regexes
 
-    webhooks = []
-    while True:
-        webhook = input("Type a Discord webhook 'name' value (Enter to skip): ")
-        if not webhook:
-            break
-        webhooks.append(webhook)
-    if webhooks:
-        watchlist['webhooks'] = webhooks
+        ex_regexes = []
+        while True:
+            ex_regex = input("Type a watchlist 'exclude_regex' value (Enter to skip): ")
+            if not ex_regex:
+                break
+            ex_regexes.append(ex_regex)
+        if ex_regexes:
+            watchlist['exclude_regex'] = ex_regexes
 
-    return watchlist
+        webhooks = []
+        while True:
+            webhook = input("Type a Discord webhook 'name' value (Enter to skip): ")
+            if not webhook:
+                break
+            webhooks.append(webhook)
+        if webhooks:
+            watchlist['webhooks'] = webhooks
+
+        if len(tags) + len(regexes) > 0:
+            return watchlist
+        print("(Error: A watchlist entry needs at least one 'tag' or 'regex' value)")
 
 
 def create_subscription() -> dict:
     print()
 
     subscription = {
-        'username': input("Enter Nyaa username: "),
-        'rss': input("Enter the Nyaa RSS URL: "),
-        'watchlist': [create_watchlist()]
+        'username': non_empty_input("Enter Nyaa username: "),
+        'rss': non_empty_input("Enter the Nyaa RSS URL: "),
+        'watchlist': [create_watchlist()],
+        'previous_hash': ""
     }
 
     while True:
@@ -70,7 +90,7 @@ def main():
     print("~~~ Nyaa Watcher: Subscriptions JSON Generator ~~~")
 
     subscriptions = {
-        'interval_sec': int(input("Enter an integer for the interval: ")),
+        'interval_sec': get_interval(),
         'subscriptions': [create_subscription()]
     }
 
