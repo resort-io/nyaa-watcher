@@ -11,7 +11,9 @@ def non_empty_input(prompt: str) -> str:
 
 def get_integer(prompt: str) -> int:
     while True:
-        integer = non_empty_input(prompt)
+        integer = input(prompt)
+        if integer == "":
+            return 0
         if integer.isdigit() and 0 <= int(integer) <= 6:
             return int(integer)
         print("(Error: Input must be an integer from 0 to 6)")
@@ -27,25 +29,29 @@ def create_webhook() -> dict:
         }
     }
 
-    show_category = get_integer("Type an integer for the 'show_category' value for notifications (Enter for 0): ")
-    webhook['notifications']['show_category'] = int(show_category) if show_category else 0
+    while True:
+        show_category = get_integer("Type an integer for the 'show_category' value for notifications (Enter for 0): ")
+        webhook['notifications']['show_category'] = show_category if show_category else 0
 
-    show_downloads = get_integer("Type an integer for the 'show_downloads' value for notifications (Enter for 0): ")
-    webhook['notifications']['show_downloads'] = int(show_downloads) if show_downloads else 0
+        show_downloads = get_integer("Type an integer for the 'show_downloads' value for notifications (Enter for 0): ")
+        webhook['notifications']['show_downloads'] = show_downloads if show_downloads else 0
 
-    show_leechers = get_integer("Type an integer for the 'show_leechers' value for notifications (Enter for 0): ")
-    webhook['notifications']['show_leechers'] = int(show_leechers) if show_leechers else 0
+        show_leechers = get_integer("Type an integer for the 'show_leechers' value for notifications (Enter for 0): ")
+        webhook['notifications']['show_leechers'] = show_leechers if show_leechers else 0
 
-    show_published = get_integer("Type an integer for the 'show_published' value for notifications (Enter for 0): ")
-    webhook['notifications']['show_published'] = int(show_published) if show_published else 0
+        show_published = get_integer("Type an integer for the 'show_published' value for notifications (Enter for 0): ")
+        webhook['notifications']['show_published'] = show_published if show_published else 0
 
-    show_seeders = get_integer("Type an integer for the 'show_seeders' value for notifications (Enter for 0): ")
-    webhook['notifications']['show_seeders'] = int(show_seeders) if show_seeders else 0
+        show_seeders = get_integer("Type an integer for the 'show_seeders' value for notifications (Enter for 0): ")
+        webhook['notifications']['show_seeders'] = show_seeders if show_seeders else 0
 
-    show_size = get_integer("Type an integer for the 'show_size' value for notifications (Enter for 0): ")
-    webhook['notifications']['show_size'] = int(show_size) if show_size else 0
+        show_size = get_integer("Type an integer for the 'show_size' value for notifications (Enter for 0): ")
+        webhook['notifications']['show_size'] = show_size if show_size else 0
 
-    return webhook
+        array = [show_category, show_downloads, show_leechers, show_published, show_seeders, show_size]
+        if len(set(array)) == len(array):
+            return webhook
+        print("(Error: Duplicate values are not allowed for the 'show_' values)")
 
 
 def main():
