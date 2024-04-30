@@ -1,6 +1,5 @@
 ### Development ###
 src/downloads/
-__tests__/
 dev.*.json
 
 ### Environment & OS ###

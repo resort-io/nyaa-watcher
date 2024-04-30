@@ -13,7 +13,7 @@
   * Moved the `nyaa_rss` and `interval_sec` properties from `config.json` into `subscriptions.json`.
 * Added `excl_regex` property to watchlist entries in `subscriptions.json`.
 * Changed `subscriptions.json` verification to only require at least one `tag` or `regex` value; all other values are optional.
-* Created scripts that generate custom `subscriptions.json` and `watchlist.json` JSON strings.
+* Created scripts to generate custom `subscriptions.json` and `watchlist.json` JSON strings.
 * Removed initial RSS connection test.
 * Renamed `$webhook_name` torrent token to `$webhook`.
 * Renamed `SHOW_TIPS` environment variable to `LOG_TIPS`.
