@@ -71,11 +71,11 @@ Since this project adds features with each release, pull requests will be merged
 |-------------------|----------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | `ENV`             | Determines which JSON files to use. JSON files will be generated when running `__init__.py`. | `DEVELOPMENT` (uses the `dev.*.json` files) or `PRODUCTION` (uses the `*.json` files) |
 | `LOG_LEVEL`       | Logging level for the watcher.                                                               | `INFO` or `DEBUG`                                                                     |
-| `LOG_RSS_ENTRIES` | Determines whether to log each RSS entry and corresponding matches when searching.           | `true` (`DEBUG` logging only) or `false`                                              |
+| `LOG_RSS_ENTRIES` | Determines whether to log each RSS torrent and corresponding matches when searching.         | `true` (`DEBUG` logging only) or `false`                                              |
 | `LOG_TIPS`        | Determines whether to log the watcher tips.                                                  | `true` or `false`                                                                     |
-| `WATCHER_DIR`     | Directory for watcher python files, relative to `__init__.py`.                               | `./`                                                                                  |
-| `DOWNLOADS_DIR`   | Directory for the downloaded torrent files.                                                  | `./downloads` (Directory is not tracked)                                              |
-| `INTERVAL_SEC`    | Interval between each subscriptions search.                                                  | Any integer                                                                           |
+| `WATCHER_DIR`     | Development directory for the `/watcher` container directory.                                | `./`                                                                                  |
+| `DOWNLOADS_DIR`   | Development directory for the `/downloads` container directory.                              | `./downloads` (Directory is not tracked)                                              |
+| `INTERVAL_SEC`    | Interval between each subscriptions search.                                                  | Any integer greater than `0`                                                          |
 
 ### Improving The Documentation
 

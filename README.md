@@ -7,7 +7,7 @@
 
 ## Features
 
-* Monitors the RSS feeds of multiple Nyaa users and downloads torrent files based upon tags and/or regular expressions.
+* Monitors multiple Nyaa users feeds and downloads torrent files based upon tags and/or regular expressions.
 * Notifies Discord channels via webhooks when a torrent file is downloaded.
 
 ## Usage
