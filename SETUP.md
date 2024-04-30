@@ -124,7 +124,7 @@ Contains each Nyaa user and the uploads you want to watch.
 }
 ```
 
-> Visit the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki#example-subscriptionsjson) for more information.
+> Visit the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki#examples-of-subscriptionsjson) for more information.
 
 > See [Regular Expressions](#regular-expressions) below for more information on patterns.
 
@@ -171,7 +171,7 @@ Contains the information for the Discord webhooks and notification customization
 }
 ```
 
-> Visit the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki#example-webhooksjson) for more information.
+> Visit the [nyaa-watcher Wiki](https://github.com/resort-io/nyaa-watcher/wiki#examples-of-webhooksjson) for more information.
 
 ### Torrent Info Tokens
 
