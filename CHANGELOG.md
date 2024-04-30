@@ -2,20 +2,20 @@
 
 # Changelog
 
-## [1.2.0](https://github.com/resort-io/nyaa-watcher/releases/tag/v1.2.0) *(04/29/2024)*
+## [1.2.0](https://github.com/resort-io/nyaa-watcher/releases/tag/v1.2.0) *(04/30/2024)*
 
 * Added feature to watch and download torrents from multiple Nyaa RSS feeds.
   * Renamed `watchlist.json` to `subscriptions.json`.
   * Added `subscriptions` property to `subscriptions.json`.
   * Added `previous_hash` property to `subscriptions.json` entries.
   * Added `uploader` property to `history.json` entries.
-  * Added `$uploader` and `$watchlist` string tokens. 
+  * Added `$uploader` and `$watchlist` torrent tokens. 
   * Moved the `nyaa_rss` and `interval_sec` properties from `config.json` into `subscriptions.json`.
 * Added `excl_regex` property to watchlist entries in `subscriptions.json`.
 * Changed `subscriptions.json` verification to only require at least one `tag` or `regex` value; all other values are optional.
 * Created scripts that generate custom `subscriptions.json` and `watchlist.json` JSON strings.
 * Removed initial RSS connection test.
-* Renamed `$webhook_name` string token to `$webhook`.
+* Renamed `$webhook_name` torrent token to `$webhook`.
 * Renamed `SHOW_TIPS` environment variable to `LOG_TIPS`.
 
 ## [1.1.2](https://github.com/resort-io/nyaa-watcher/releases/tag/v1.1.2) *(04/16/2024)*
@@ -26,7 +26,7 @@
 * Renamed `watcher_interval_seconds` to `interval_sec` in *config.json*.
 * Renamed `/watch` container directory to `/downloads`.
 * Updated `downloaded_date` result to be more accurate for *history.json*.
-* Updated JSON file verification and changed it to only execute at startup (instead of executing before every write).
+* Updated JSON file verification and changed it to only execute at startup (instead of executing at every fetch).
 * Updated RSS fetch function to only read the latest entries since the previous fetch.
 * Updated logging to show successful and failed downloads.
 
