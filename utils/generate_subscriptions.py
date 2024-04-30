@@ -11,10 +11,10 @@ def non_empty_input(prompt: str) -> str:
 
 def get_interval() -> int:
     while True:
-        interval = non_empty_input("Enter an integer for the interval: ")
+        interval = non_empty_input("Type an integer for the interval: ")
         if interval.isdigit() and int(interval) >= 60:
             return int(interval)
-        print("Interval must be an integer at least 60 seconds input.")
+        print("(Error: Interval must be an integer at least 60 seconds)")
 
 
 def create_watchlist() -> dict:
@@ -63,15 +63,15 @@ def create_watchlist() -> dict:
 
         if len(tags) + len(regexes) > 0:
             return watchlist
-        print("(Error: A watchlist entry needs at least one 'tag' or 'regex' value)")
+        print("(Error: A watchlist entry requires at least one 'tag' or 'regex' value)")
 
 
 def create_subscription() -> dict:
     print()
 
     subscription = {
-        'username': non_empty_input("Enter Nyaa username: "),
-        'rss': non_empty_input("Enter the Nyaa RSS URL: "),
+        'username': non_empty_input("Type Nyaa username: "),
+        'rss': non_empty_input("Type the Nyaa RSS URL: "),
         'watchlist': [create_watchlist()],
         'previous_hash': ""
     }
