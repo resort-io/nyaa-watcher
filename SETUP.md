@@ -16,11 +16,12 @@
 
 **To begin watching** follow these steps:
 
-1. Create a **`subscriptions.json` file** in the `/watcher` container directory.
-2. Use the [***subscriptions.json* generator**](https://onlinegdb.com/hsnOWQY6W) script to get a **custom JSON string** and **paste it into** `subscriptions.json`.
-3. ***(Optional)*** Create a **`webhooks.json` file** in the `/watcher` container directory.
-4. ***(Optional)*** Use the [***webhooks.json* generator**](https://onlinegdb.com/3o648M3tp) script to get a **custom JSON string** and **paste it into** `webhooks.json`.
-5. Start the watcher.
+1. [**Pull the latest image**](https://github.com/resort-io/nyaa-watcher/wiki/Docker) and **create a container** with the `/watcher` and `/downloads` volumes.
+2. Create a **`subscriptions.json` file** in the `/watcher` container directory.
+3. Use the [***subscriptions.json* generator**](https://onlinegdb.com/hsnOWQY6W) script to get a **custom JSON string** and **paste it into** `subscriptions.json`.
+4. ***(Optional)*** Create a **`webhooks.json` file** in the `/watcher` container directory.
+5. ***(Optional)*** Use the [***webhooks.json* generator**](https://onlinegdb.com/3o648M3tp) script to get a **custom JSON string** and **paste it into** `webhooks.json`.
+6. Start the watcher.
 
 > #### Important Notes
 > 
