@@ -14,7 +14,7 @@
 
 See the [setup documentation](./SETUP.md) or [nyaa-watcher Wiki pages](https://github.com/resort-io/nyaa-watcher/wiki) for more information on Getting Started.
 
-### [docker cli](https://docs.docker.com/engine/reference/commandline/cli/)
+### [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/)
 
 ```docker
 docker run
@@ -29,10 +29,10 @@ docker run
 
 The syntax for the volume parameter is `<host>:<container>`. See the [nyaa-watcher Docker Wiki](https://github.com/resort-io/nyaa-watcher/wiki/Docker) for more information.
 
-| Parameter       | Description                                                       |
-|-----------------|-------------------------------------------------------------------|
-| `-v /downloads` | Directory for downloaded torrent files.                           |
-| `-v /watcher`   | Directory for watcher JSON files.                                 |
+| Parameter       | Description                             |
+|-----------------|-----------------------------------------|
+| `-v /downloads` | Directory for downloaded torrent files. |
+| `-v /watcher`   | Directory for watcher JSON files.       |
 
 ## Changelog
 
