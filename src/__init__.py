@@ -24,7 +24,7 @@ def main() -> None:
     Logger.log("~~~ Nyaa Watcher ~~~")
 
     if not os.path.exists(os.environ.get("DOWNLOADS_DIR", "/downloads")):
-        Logger.log("Map the '/downloads' directory to access downloaded files.", {"tip": True})
+        Logger.log("Map a local directory to the '/downloads' container directory to access downloaded files.", {"tip": True})
 
     try:
         Config.update_and_verify()
