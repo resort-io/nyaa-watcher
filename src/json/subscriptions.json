@@ -9,6 +9,7 @@
                     "name": "",
                     "tags": [],
                     "regex": [],
+                    "exclude_regex": [],
                     "webhooks": [],
                     "previous_hash": ""
                 }

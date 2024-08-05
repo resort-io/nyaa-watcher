@@ -325,7 +325,7 @@ def _verify_webhook_entry(webhook: dict) -> dict:
                 "message": "One or more webhooks in webhooks.json contains missing or invalid properties. Change the properties and restart the watcher."
             }
 
-    notify_properties = ['title', 'description', 'show_downloads', 'show_seeders', 'show_leechers', 'show_published', 'show_category', 'show_size']
+    notify_properties = ['show_downloads', 'show_seeders', 'show_leechers', 'show_published', 'show_category', 'show_size']
     for key in notify_properties:
         if key not in webhook.get('notifications'):
             return {
