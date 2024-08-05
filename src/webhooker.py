@@ -156,11 +156,12 @@ class Webhooker:
 
         # Notification title
         title = webhook_json.get('notifications').get('title')
-        notification.title = f"Downloading New Torrent: {torrent.get('title')}" if title == "" else _insert_tags(title, webhook_json.get('name'), torrent)
+        notification.title = f"Downloading New Torrent: {torrent.get('title')}" if not title else _insert_tags(title, webhook_json.get('name'), torrent)
 
-        # Notification description (no default value)
-        if webhook_json.get('notifications').get('description') != "":
-            notification.description = _insert_tags(webhook_json.get('notifications').get('description'), webhook_json.get('name'), torrent)
+        # Notification description
+        description = webhook_json.get('notifications').get('description')
+        if description:
+            notification.description = _insert_tags(description, webhook_json.get('name'), torrent)
 
         # Notification hyperlink to Nyaa page
         notification.url = f"{torrent.get('id')}"
@@ -171,7 +172,7 @@ class Webhooker:
         try:
             Logger.debug(f"Sending notification via '{webhook_name}' discord webhook...")
             discord_webhook.send(embed=notification)
-            Logger.debug(f"Notification sent via '{webhook_name}' webhook.")
+            Logger.debug(f"Notification sent via '{webhook_name}' discord webhook.")
         except Exception as e:
             Logger.log(f"Webhook Error: Failed to send notification via '{webhook_name}' discord webhook.")
             Logger.debug(f"{e}", {"exc_info": True})
