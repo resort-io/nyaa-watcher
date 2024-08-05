@@ -30,14 +30,13 @@ def download_torrent(title: str, url: str) -> dict:
         return {"status": 500, "message": str(e)}
 
 
-def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooker, reschedule: bool = True) -> None:
+def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooker) -> None:
     """
     Fetches all new torrents and schedules the next check.
     :param scheduler: The scheduler object used to schedule the next check.
     :param watcher: The Watcher object used to fetch all new torrents.
     :param interval: The interval (in seconds) at which to check for new torrents.
     :param webhooker: The Webhooker object used to send Discord notifications.
-    :param reschedule: Whether to reschedule the next check (Defaults to `True`).
     :return: None
     """
 
@@ -79,7 +78,6 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooke
         Logger.log(f"Done!{error_string if len(errors) > 0 else ''}")
 
     # Schedule next check
-    if reschedule:
-        interval_string = Config.get_interval_string(interval)
-        Logger.log(f"Searching for new uploads in {interval_string}.")
-        scheduler.enter(interval, 1, fetch, (scheduler, watcher, interval, webhooker))
+    interval_string = Config.get_interval_string(interval)
+    Logger.log(f"Searching for new uploads in {interval_string}.")
+    scheduler.enter(interval, 1, fetch, (scheduler, watcher, interval, webhooker))
