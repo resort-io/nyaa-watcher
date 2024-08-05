@@ -68,8 +68,7 @@ def create_webhook(url: str) -> discord.SyncWebhook | None:
     """
     Creates a Discord webhook object from a webhook URL.
     :param url: The URL of a Discord webhook.
-    :return: A Discord webhook object.
-    :return: `None` if the webhook URL is invalid.
+    :return: A Discord webhook object. `None` if the webhook URL is invalid.
     """
 
     discord_webhook = None
@@ -115,8 +114,7 @@ class Webhooker:
         """
         Returns a webhook entry from the 'webhooks' dictionary.
         :param name: The name of the webhook.
-        :return: The webhook entry dictionary.
-        :return: `None` if the webhook is not found.
+        :return: The webhook entry dictionary. `None` if the webhook is not found.
         """
 
         for webhook in self.json_webhooks.get('webhooks'):
@@ -128,8 +126,7 @@ class Webhooker:
         """
         Returns a Discord webhook object from the 'discord_webhooks' dictionary.
         :param name:
-        :return: The Discord webhook object.
-        :return: `None` if the webhook is not found.
+        :return: The Discord webhook object. `None` if the webhook is not found.
         """
 
         return self.discord_webhooks.get(name, None)
