@@ -115,10 +115,10 @@ class Watcher:
                 if log_entries:
                     Logger.debug(
                         f"Watchlist: {watchlist_entry.get('name', 'Unknown Watchlist')}\n"
-                        f" - Tags     (Match = {tag_match}): {tags}\n"
-                        f" - RegEx    (Match = {regex_match}): {regexes}\n"
-                        f" - Ex.RegEx (Match = {ex_regex_match}): {ex_regexes}\n"
-                        f" - Hash     (Match = {hash_match}): {torrent_hash}"
+                        f" - Tags     (Match={tag_match}): {tags}\n"
+                        f" - RegEx    (Match={regex_match}): {regexes}\n"
+                        f" - Ex.RegEx (Match={ex_regex_match}): {ex_regexes}\n"
+                        f" - Hash     (Match={hash_match}): {torrent_hash}"
                     )
                     if watchlist_entry == watchlist[-1]:
                         Logger.debug()
