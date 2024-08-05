@@ -65,7 +65,7 @@ def _new_config_json() -> dict:
     :return: A default 'config.json' dictionary.
     """
     return {
-        "version": "1.2.0"
+        "version": "1.2.1"
     }
 
 
@@ -76,8 +76,8 @@ def _new_history_json() -> dict:
     """
 
     return {
-        "errors": [],
-        "downloads": []
+        "downloads": [],
+        "errors": []
     }
 
 
@@ -211,30 +211,31 @@ def _verify_subscriptions_entry(sub: dict) -> dict:
     :return: A dictionary with `result` and `message` values for the verification.
     """
 
-    if not sub.get('username') or not sub.get('rss') or not sub.get('watchlist') or sub.get('previous_hash') is None:
+    if not sub.get('username') or not sub.get('rss') or sub.get('previous_hash') is None:
         return {
             "result": False,
-            "message": "one or more entries that contains missing or invalid 'username', 'rss, 'watchlist', and/or and/or 'previous_hash' properties"
+            "message": "one or more entries that contains missing or invalid 'username', 'rss, and/or 'previous_hash' properties"
         }
 
-    if sub.get('username') == "USERNAME":
+    if not sub.get('username', "") or sub.get('username') == "USERNAME":
         return {
             "result": False,
-            "message": "one or more entries that contains the default 'username' value"
+            "message": "one or more entries requires a 'username' value"
         }
 
     if sub.get('rss') == "https://nyaa.si/?page=rss&u=NYAA_USERNAME":
         return {
             "result": False,
-            "message": "one or more entries that contains the default 'rss' value"
+            "message": "one or more entries requires an 'rss' value"
         }
 
-    for watchlist in sub.get('watchlist'):
-        if len(watchlist.get('tags', []) + watchlist.get('regex', [])) == 0:
-            return {
-                "result": False,
-                "message": "one or more 'watchlist' entries that contains no 'tags' or 'regex' values."
-            }
+    if sub.get('watchlist'):
+        for watchlist in sub.get('watchlist'):
+            if len(watchlist.get('tags', []) + watchlist.get('regex', [])) == 0:
+                return {
+                    "result": False,
+                    "message": "empty 'tags' and/or 'regex' values."
+                }
 
     return {"result": True, "message": "success"}
 
