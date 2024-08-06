@@ -5,7 +5,7 @@ import sched
 import time
 from config import Config
 from dotenv import load_dotenv
-from functions import download_torrent, fetch
+from functions import fetch
 from logger import Logger
 from watcher import Watcher
 from webhooker import Webhooker

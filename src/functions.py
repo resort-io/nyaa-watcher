@@ -1,6 +1,7 @@
 import os
 import requests
 import sched
+import re
 import time
 from config import Config
 from datetime import datetime
@@ -53,21 +54,25 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooke
         successes = list()
         errors = list()
         for torrent in new_torrents:
-            Logger.debug(f" - Downloading: {torrent.get('title')}...")
+            Logger.log(f" - Downloading: {torrent.get('title')}...")
 
-            download = download_torrent(torrent.get('title'), torrent.get('link'))
+            filename: str = truncate_title(torrent.get('title'), torrent.get('uploader'))
+
+            download = download_torrent(filename, torrent.get('link'))
             torrent['download_datetime'] = str(datetime.now())  # Attach download datetime to torrent
 
             if download.get('status') == 200:
-                Logger.log(f" - Downloaded: {torrent.get('title')}")
+                Logger.log(f" - Downloaded! Saved as: '{filename}.torrent'")
                 successes.append(torrent)
 
                 for webhook_name in torrent.get('webhooks'):
                     webhooker.send_notification(webhook_name, torrent)
 
             else:
-                Logger.log(f" - Error: {torrent.get('title')} (HTTP Status Code: {download.get('status')}.")
-                Logger.debug(f" - {download.get('message', 'Unknown error.')}")
+                Logger.log(
+                    f" - Error: {torrent.get('title')} (HTTP Status Code: {download.get('status')}.\n"
+                    f" - Error Message: {download.get('message', 'Unknown error.')}"
+                )
                 errors.append(torrent)
             Logger.debug()
 
@@ -81,3 +86,9 @@ def fetch(scheduler: sched, watcher: Watcher, interval: int, webhooker: Webhooke
     interval_string = Config.get_interval_string(interval)
     Logger.log(f"Searching for new uploads in {interval_string}.")
     scheduler.enter(interval, 1, fetch, (scheduler, watcher, interval, webhooker))
+
+
+def truncate_title(string: str, username: str) -> str:
+    # Removes round bracket groups, square bracket groups, and special chars
+    string = re.sub(r'\(.*?\)|\[.*?\]|[<>:"/\\|?*]', '', string)
+    return f"[{username}] " + string.strip()
