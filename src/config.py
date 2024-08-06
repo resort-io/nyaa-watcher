@@ -102,6 +102,7 @@ def _new_subscriptions_json() -> dict:
                         "webhooks": []
                     }
                 ],
+                "webhooks": [],
                 "previous_hash": ""
             }
         ]
@@ -162,9 +163,9 @@ def _verify_config_parse() -> None:
     if not config.get('version'):
         raise Exception("Parse Error: 'version' is missing from 'config.json'. Add the properties and restart the watcher.")
 
-    valid_versions = ["1.0.0", "1.0.1", "1.1.1", "1.1.2", "1.2.0"]
+    valid_versions = ["1.0.0", "1.0.1", "1.1.1", "1.1.2", "1.2.0", "1.2.1"]
     if config.get('version') and config.get('version') not in valid_versions:
-        raise Exception(f"Parse Error: Version '{config.get('version')}' is not a valid version. Change the property to '1.0.0' in 'config.json' and restart the watcher to migrate to v1.2.0.")
+        raise Exception(f"Parse Error: Version '{config.get('version')}' is not a valid version. Change the property in 'config.json' to the previous version and restart the watcher to migrate.")
 
 
 def _verify_subscriptions_parse() -> None:
@@ -193,10 +194,10 @@ def _verify_subscriptions_parse() -> None:
         raise json.decoder.JSONDecodeError("subscriptions.json", e.doc, e.pos)
 
     if not subscriptions.get('subscriptions') or len(subscriptions.get('subscriptions')) == 0:
-        raise Exception("Parse Error: 'subscriptions.json' contains no entries. Add entries and restart the watcher.")
+        raise Exception("Parse Error: The 'subscriptions` property contains no entries in 'subscriptions.json'. Add entries and restart the watcher.")
 
     if not isinstance(int(subscriptions.get('interval_sec')), int) or int(subscriptions.get('interval_sec')) < 60:
-        raise Exception("Parse Error: The 'interval_sec' property is missing or invalid in 'subscriptions.json'. Add the property and restart the watcher.")
+        raise Exception("Parse Error: The 'interval_sec' property is missing or invalid in 'subscriptions.json'. Set the property to at least 60 seconds and restart the watcher.")
 
     for sub in subscriptions.get('subscriptions'):
         result = _verify_subscriptions_entry(sub)
@@ -214,7 +215,7 @@ def _verify_subscriptions_entry(sub: dict) -> dict:
     if not sub.get('username') or not sub.get('rss') or sub.get('previous_hash') is None:
         return {
             "result": False,
-            "message": "one or more entries that contains missing or invalid 'username', 'rss, and/or 'previous_hash' properties"
+            "message": "one or more entries that contains missing or invalid 'username', 'rss', and/or 'previous_hash' properties"
         }
 
     if not sub.get('username', "") or sub.get('username') == "USERNAME":
@@ -318,35 +319,32 @@ def _verify_webhook_entry(webhook: dict) -> dict:
     :return: A dictionary with `result` and `message` values for the verification.
     """
 
-    properties = ['name', 'url', 'notifications']
+    properties = ['name', 'url']
     for key in properties:
         if key not in webhook:
             return {
                 "result": False,
-                "message": "One or more webhooks in webhooks.json contains missing or invalid properties. Change the properties and restart the watcher."
+                "message": "One or more webhooks in webhooks.json contains missing or invalid 'name' or `url` properties. Change the properties and restart the watcher."
             }
 
-    notify_properties = ['show_downloads', 'show_seeders', 'show_leechers', 'show_published', 'show_category', 'show_size']
-    for key in notify_properties:
-        if key not in webhook.get('notifications'):
+    if webhook.get('notifications') and len(webhook.get('notifications')) > 0:
+        # All non-zero values
+        notify_values: list = [value for key, value in webhook.get('notifications').items() if isinstance(value, int) and value > 0]
+
+        # Checking ranges
+        for value in notify_values:
+            if value not in range(0, 7):
+                return {
+                    "result": False,
+                    "message": f"The '{webhook.get('name')}' webhook contains one or more 'show_' properties out of range (0 to 6). Change the webhook properties and restart the watcher"
+                }
+
+        # Checking for duplicates
+        if len(notify_values) != len(set(notify_values)):
             return {
                 "result": False,
-                "message": f"'{webhook.get('name')}' webhook contains one or more 'show_' properties that are missing or invalid. Change the webhook properties and restart the watcher"
+                "message": f"The '{webhook.get('name')}' webhook contains one or more duplicate 'show_' properties. Change the webhook properties and restart the watcher"
             }
-
-    notify_values: list = [value for key, value in webhook.get('notifications').items() if isinstance(value, int) and value > 0]
-    for value in notify_values:
-        if value not in range(0, 7):
-            return {
-                "result": False,
-                "message": f"'{webhook.get('name')}' webhook contains one or more 'show_' properties out of range (0 to 6). Change the webhook properties and restart the watcher"
-            }
-
-    if len(notify_values) != len(set(notify_values)):
-        return {
-            "result": False,
-            "message": f"'{webhook.get('name')}' webhook contains one or more duplicate 'show_' properties. Change the webhook properties and restart the watcher"
-        }
 
     return {"result": True, "message": "success"}
 

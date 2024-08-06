@@ -1,4 +1,5 @@
 import discord
+import os
 import re
 from logger import Logger
 
@@ -12,19 +13,33 @@ def _apply_fields(webhook_json: dict, notification: discord.Embed, torrent: dict
     :return: A discord.Embed object with the applied fields.
     """
 
+    webhook_config: dict = webhook_json.get('notifications', {
+        "show_published": 1,
+        "show_size": 2,
+        "show_category": 3,
+        "show_downloads": 4,
+        "show_seeders": 5,
+        "show_leechers": 6
+    })
+
     for i in range(1, 7):
-        if webhook_json.get('notifications').get('show_downloads') == i:
-            notification.add_field(name="Downloads", value=torrent.get('nyaa_downloads'))
-        elif webhook_json.get('notifications').get('show_seeders') == i:
-            notification.add_field(name="Seeders", value=torrent.get('nyaa_seeders'))
-        elif webhook_json.get('notifications').get('show_leechers') == i:
-            notification.add_field(name="Leechers", value=torrent.get('nyaa_leechers'))
-        elif webhook_json.get('notifications').get('show_published') == i:
+        if webhook_config.get('show_published', 1) == i:
             notification.add_field(name="Published", value=re.sub(r":\d\d -0000", "", torrent.get('published')))
-        elif webhook_json.get('notifications').get('show_category') == i:
-            notification.add_field(name="Category", value=torrent.get('nyaa_category'))
-        elif webhook_json.get('notifications').get('show_size') == i:
+
+        elif webhook_config.get('show_size', 2) == i:
             notification.add_field(name="Size", value=torrent.get('nyaa_size'))
+
+        elif webhook_config.get('show_category', 3) == i:
+            notification.add_field(name="Category", value=torrent.get('nyaa_category'))
+
+        elif webhook_config.get('show_downloads', 4) == i:
+            notification.add_field(name="Downloads", value=torrent.get('nyaa_downloads'))
+
+        elif webhook_config.get('show_seeders', 5) == i:
+            notification.add_field(name="Seeders", value=torrent.get('nyaa_seeders'))
+
+        elif webhook_config.get('show_leechers', 6) == i:
+            notification.add_field(name="Leechers", value=torrent.get('nyaa_leechers'))
     return notification
 
 
@@ -136,15 +151,15 @@ class Webhooker:
         Sends a notification to a Discord webhook.
         :param webhook_name: The name of the webhook.
         :param torrent: A dictionary of a torrent entry.
-        :param webhook: A webhook entry dictionary (Defaults to `None`).
-        :param url: A Discord webhook URL (Defaults to `None`).
+        :param webhook: A webhook entry dictionary. Used to test (Defaults to `None`).
+        :param url: A Discord webhook URL. Used to test (Defaults to `None`).
         :return: None
         """
 
-        if not url or not webhook:
+        if not url or not webhook:  # Production
             webhook_json = self.get_json_webhook(webhook_name)
             discord_webhook = self.get_discord_webhook(webhook_name)
-        else:
+        else:  # Testing
             webhook_json = webhook
             discord_webhook = create_webhook(url)
 
@@ -153,15 +168,17 @@ class Webhooker:
             return
 
         notification = discord.Embed()
+        webhook_config: dict = webhook_json.get('notifications')
 
         # Notification title
-        title = webhook_json.get('notifications').get('title')
-        notification.title = f"Downloading New Torrent: {torrent.get('title')}" if not title else _insert_tags(title, webhook_json.get('name'), torrent)
+        title: str = f"Downloading New Torrent: {torrent.get('title')}"
+        if webhook_config and webhook_config.get('title'):
+            title = _insert_tags(webhook_config.get('title'), webhook_json.get('name'), torrent)
+        notification.title = title
 
         # Notification description
-        description = webhook_json.get('notifications').get('description')
-        if description:
-            notification.description = _insert_tags(description, webhook_json.get('name'), torrent)
+        if webhook_config and webhook_config.get('description'):
+            notification.description = _insert_tags(webhook_config.get('description'), webhook_json.get('name'), torrent)
 
         # Notification hyperlink to Nyaa page
         notification.url = f"{torrent.get('id')}"
