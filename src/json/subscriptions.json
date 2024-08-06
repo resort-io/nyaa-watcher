@@ -10,10 +10,11 @@
                     "tags": [],
                     "regex": [],
                     "exclude_regex": [],
-                    "webhooks": [],
-                    "previous_hash": ""
+                    "webhooks": []
                 }
-            ]
+            ],
+            "webhooks": [],
+            "previous_hash": ""
         }
     ]
 }
