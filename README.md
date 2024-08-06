@@ -10,6 +10,10 @@
 * Monitors multiple Nyaa users' uploads and downloads torrent files based on tags and/or regular expressions.
 * Notifies Discord channels via webhooks when a torrent file is downloaded.
 
+### Roadmap
+
+* Replace the current in-memory storage with SQLite.
+
 ## Usage
 
 See the [setup documentation](./SETUP.md) or [nyaa-watcher Wiki pages](https://github.com/resort-io/nyaa-watcher/wiki) for more information on Getting Started.
