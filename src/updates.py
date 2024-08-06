@@ -19,13 +19,14 @@ def update_files(version: str) -> str:
     version = update_to_v111(version)
     version = update_to_v112(version)
     version = update_to_v120(version)
+    version = update_to_v121(version)
     return version
 
 
 def update_to_v111(version: str) -> str:
     """
     Updates JSON files from v1.0.0/v1.0.1 to v1.1.1.
-    :return: None
+    :return: Updated `version` param.
     """
 
     if version != "1.0.0" or version != "1.0.1":
@@ -89,7 +90,7 @@ def update_to_v111(version: str) -> str:
 def update_to_v112(version: str) -> str:
     """
     Updates JSON files from v1.1.0/v1.1.1 to v1.1.2.
-    :return: None
+    :return: Updated `version` param.
     """
 
     if version != "1.1.0" or version != "1.1.1":
@@ -139,7 +140,7 @@ def update_to_v112(version: str) -> str:
 def update_to_v120(version: str) -> str:
     """
     Updates JSON files from v1.1.2 to v1.2.0.
-    :return: None
+    :return: Updated `version` param.
     """
 
     if version != "1.1.2":
@@ -227,3 +228,27 @@ def update_to_v120(version: str) -> str:
 
     Logger.log("Updated to v1.2.0.")
     return "1.2.0"
+
+
+def update_to_v121(version: str) -> str:
+    """
+        Updates JSON files from v1.2.0 to v1.2.1.
+        :return: Updated `version` param.
+        """
+
+    if version != "1.2.0":
+        return version
+
+    Logger.debug("Updating to v1.2.1...")
+
+    # Update 'version' value in 'config.json'
+    config = {
+        "version": "1.2.1"
+    }
+
+    file = open(get_json_path("config"), "w")
+    file.write(json.dumps(config, indent=4))
+    file.close()
+
+    Logger.log("Updated to v1.2.1.")
+    return "1.2.1"
