@@ -47,21 +47,21 @@ class Watcher:
                 "nyaa_hash": torrent.get('nyaa_infohash')
             })
 
-    def fetch_feed(self, rss: str, sub_name: str, watchlist: list[dict] = None, prev_hash: str = None) -> list:
+    def fetch_feed(self, rss: str, sub_name: str, prev_hash: str = None, watchlist: list[dict] = None) -> list:
         """
         Fetches an RSS feed and filters the torrents based on the watchlist.
         :param rss: The URL of the RSS feed (E.g., https://nyaa.si/?page=rss&u=Username).
         :param watchlist: The `watchlist` property from a `subscriptions` entry.
         :param sub_name: The `username` property from a `subscriptions` entry.
-        :param prev_hash: The most recent torrent hash of the previous fetch. The `previous_hash` property from a `subscriptions` entry. (Defaults to None).
+        :param prev_hash: The most recent torrent hash of the previous fetch. The `previous_hash` property from a `subscriptions` entry.
         :return: A list of dictionaries, containing matched torrents fetched from the `rss` param.
         """
 
-        log_entries: bool = os.environ.get("LOG_RSS_ENTRIES", "false").lower() == "true"
+        # log_entries: bool = os.environ.get("LOG_RSS_ENTRIES", "false").lower() == "true"
         feed: FeedParserDict = feedparser.parse(rss)
 
         if len(feed.entries) == 0:
-            Logger.log(f"Unknown Error: No entries from {rss}.")
+            Logger.log(f"Unknown Error: No uploads from {rss}.")
             return []
 
         download_queue = []
@@ -74,10 +74,10 @@ class Watcher:
                 Logger.debug(f"Found previously fetched torrent: {title}")
                 break
 
-            if log_entries:
-                Logger.debug(f"Torrent: {title}")
+            Logger.debug(f"Reading: {title}")
 
             # TODO: Create an optional global `webhooks` property for `subscription` entries
+            # all_webhooks: list[str] = []
 
             if watchlist and len(watchlist) > 0:
                 for watchlist_entry in watchlist:
@@ -115,16 +115,15 @@ class Watcher:
                         history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == torrent_hash]
                         hash_match = len(history_entry) > 0
 
-                    if log_entries:
-                        Logger.debug(
-                            f"Watchlist: {watchlist_entry.get('name', 'Unknown Watchlist')}\n"
-                            f" - Tags     (Match={tag_match}): {tags}\n"
-                            f" - RegEx    (Match={regex_match}): {regexes}\n"
-                            f" - Ex.RegEx (Match={ex_regex_match}): {ex_regexes}\n"
-                            f" - Hash     (Match={hash_match}): {torrent_hash}"
-                        )
-                        if watchlist_entry == watchlist[-1]:
-                            Logger.debug()
+                    Logger.debug(
+                        f"Watchlist: {watchlist_entry.get('name', 'Unknown Watchlist')}\n"
+                        f" - Tags     (Match={tag_match}): {tags}\n"
+                        f" - RegEx    (Match={regex_match}): {regexes}\n"
+                        f" - Ex.RegEx (Match={ex_regex_match}): {ex_regexes}\n"
+                        f" - History  (Match={hash_match}): {torrent_hash}"
+                    )
+                    if watchlist_entry == watchlist[-1]:
+                        Logger.debug()
 
                     # Add to queue if not already downloaded
                     if match and not hash_match and not ex_regex_match:
@@ -133,8 +132,7 @@ class Watcher:
                         torrent['webhooks'] = watchlist_entry.get("webhooks", [])
                         download_queue.append(torrent)
 
-                        if log_entries:
-                            Logger.debug("Torrent added to download queue.")
+                        Logger.debug("Torrent added to download queue.")
                         break
 
             # No `watchlist` property
@@ -143,15 +141,17 @@ class Watcher:
                 history_entry = [(entry['nyaa_hash'], entry) for entry in self.history.get("downloads") if entry.get('nyaa_hash') == torrent_hash]
                 hash_match = len(history_entry) > 0
 
+                Logger.debug(f" - History (Match={hash_match}): {torrent_hash}")
+
                 if not hash_match:
                     torrent['uploader'] = sub_name
                     torrent['webhooks'] = []
                     download_queue.append(torrent)
 
-                    if log_entries:
-                        Logger.debug("Torrent added to download queue.")
+                    Logger.debug("Torrent added to download queue.")
 
         Config.set_previous_hash(sub_name, feed.entries[0].get('nyaa_infohash', ""))
+        self.set_previous_hash(sub_name, feed.entries[0].get('nyaa_infohash', ""))
         return _sort_torrents(download_queue)
 
     def fetch_all_feeds(self) -> list:
@@ -164,5 +164,11 @@ class Watcher:
         Logger.log()
         for sub in self.subscriptions.get("subscriptions"):
             Logger.log(f"Searching for new uploads from '{sub.get('username')}'...")
-            queue += self.fetch_feed(sub.get('rss'), sub.get('username'), sub.get('watchlist', []), sub.get('previous_hash'))
+            queue += self.fetch_feed(sub.get('rss'), sub.get('username'), sub.get('previous_hash'), sub.get('watchlist', []))
         return queue
+
+    def set_previous_hash(self, sub_name: str, hash_value: str) -> None:
+        for sub in self.subscriptions.get("subscriptions"):
+            if sub.get('username') == sub_name:
+                sub['previous_hash'] = hash_value or sub['previous_hash']
+                break

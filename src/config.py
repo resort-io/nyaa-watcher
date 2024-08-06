@@ -501,7 +501,7 @@ class Config:
 
         for sub in subscriptions.get('subscriptions'):
             if sub.get('username') == sub_name:
-                sub['previous_hash'] = hash_value
+                sub['previous_hash'] = hash_value or sub['previous_hash']
                 break
 
         file = open(get_json_path("subscriptions"), "w")
