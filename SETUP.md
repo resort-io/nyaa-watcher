@@ -16,7 +16,7 @@
 
 **To begin watching** follow these steps:
 
-1. [**Pull the latest image**](https://github.com/resort-io/nyaa-watcher/wiki/Docker) and **create a container** with the `/watcher` and `/downloads` volumes.
+1. [**Pull the latest image**](https://github.com/resort-io/nyaa-watcher/wiki/Docker) and **create a container** with mapped `/watcher` and `/downloads` volumes.
 2. Create a **`subscriptions.json` file** in the `/watcher` container directory.
 3. Use the [***subscriptions.json* generator**](https://onlinegdb.com/hsnOWQY6W) script to get a **custom JSON string** and **paste it into** `subscriptions.json`.
 4. ***(Optional)*** Create a **`webhooks.json` file** in the `/watcher` container directory.
@@ -35,6 +35,7 @@ The watcher will download a torrent file if **one of the following** conditions 
 * When a `tag` value finds a match in the **torrent title** and there are **no** `regex` patterns.
 * When a `regex` pattern finds a match in the **torrent title** and there are **no** `tag` values.
 * When **both** a `tag` value and a `regex` pattern finds a match in the **torrent title**.
+* When **no** `watchlist` value is present. **All torrent uploads will be downloaded** from a subscription.
 
 **In any case**, if a **`exclude_regex` pattern** finds a match, the torrent file **will not be downloaded**.
 
@@ -86,19 +87,20 @@ Contains each Nyaa user and the uploads you want to watch.
 
 > #### Important Notes
 > 
-> * Each `subscriptions` entry must have a `username`, `rss`, and a `watchlist` value. 
+> * Each `subscriptions` entry must have a `username` and an `rss` value. 
 > * Each `watchlist` entry must have and **at least one `tag` or `regex`** value. All other values are optional.
 
 * `interval_sec [int]` - **Number of seconds** between each subscriptions search (Must be **at least 60 seconds**).
 * `subscriptions [list]` - List of Nyaa subscriptions.
   * `username [str]` - **Name to identify** a subscription.
   * `rss [str]` - **RSS URL** of a Nyaa user.
-  * `watchlist [list]` - List of series for the watcher to search for in a subscription.
-    * `name [str]` - **Name to identify** a watchlist entry (Optional; not used for searching).
+  * `watchlist [list]` - List of series for the watcher to search for in a subscription (Optional).
+    * `name [str]` - **Name to differentiate** watchlist entries (Optional; not used for searching).
     * `tags [list]` - **List of strings** to search for within **torrent titles**.
     * `regex [list]` - **List of regular expression patterns** to search for within **torrent titles** (No delimiters or flags).
     * `exclude_regex [list]` - **List of regular expression patterns** to search for within torrent titles, which **will prevent a download if found** (No delimiters or flags) (Optional). 
-    * `webhooks [list]` - **List of strings** with the `name` values from `webhooks.json` that will be notified when a torrent file downloads (Optional).
+    * `webhooks [list]` - **List of strings** with the `name` values from `webhooks.json` that will be notified when a torrent file downloads **(watchlist-scoped)** (Optional).
+  * `webhooks [list]` - **List of strings** with the `name` values from `webhooks.json` that will be notified when a torrent file downloads **(subscription-scoped)** (Optional).
   * `previous_hash [str]` - Previous hash value of most recent subscription fetch. This value is automatically updated for each subscription by the watcher.
 
 > Use [this online Python script](https://onlinegdb.com/hsnOWQY6W) to create a custom JSON string for the `subscriptions.json` file.
@@ -119,6 +121,7 @@ Contains each Nyaa user and the uploads you want to watch.
                     "webhooks": []
                 }
             ],
+            "webhooks": [],
             "previous_hash": ""
         }
     ]
@@ -139,15 +142,15 @@ Contains the information for the Discord webhooks and notification customization
 
 * `name [str]` - **Name of the webhook** (This is the value used in the `webhooks` property in `watchlist.json`).
 * `url [str]` - **URL of the Discord webhook**.
-* `notifications [dict]` - Customization for the notification.
-  * `title [str]` - **Custom title** of the Discord notification. **Leave blank for default message**.
-  * `description [str]` - **Custom description** of the Discord notification. **Leave blank for no message**.
-  * `show_category [int]` - (0 to 6) **Nyaa category** for the torrent.
-  * `show_downloads [int]` - (0 to 6) **Number of downloads** for the torrent.
-  * `show_leechers [int]` - (0 to 6) **Number of leechers** for the torrent.
-  * `show_published [int]` - (0 to 6) **Date and time** the torrent was published. 
-  * `show_seeders [int]` - (0 to 6) **Number of seeders** for the torrent.
-  * `show_size [int]` - (0 to 6) **Size of the torrent**.
+* `notifications [dict]` - Customization for the notification (Optional).
+  * `title [str]` - **Custom title** of the Discord notification (Optional; leave blank for default message).
+  * `description [str]` - **Custom description** of the Discord notification (Optional).
+  * `show_category [int]` - (0 to 6) **Nyaa category** for the torrent (Optional).
+  * `show_downloads [int]` - (0 to 6) **Number of downloads** for the torrent (Optional).
+  * `show_leechers [int]` - (0 to 6) **Number of leechers** for the torrent (Optional).
+  * `show_published [int]` - (0 to 6) **Date and time** the torrent was published (Optional). 
+  * `show_seeders [int]` - (0 to 6) **Number of seeders** for the torrent (Optional).
+  * `show_size [int]` - (0 to 6) **Size of the torrent** (Optional).
 
 > Use [this online Python script](https://onlinegdb.com/3o648M3tp) to create a custom JSON string for the `webhooks.json` file.
 

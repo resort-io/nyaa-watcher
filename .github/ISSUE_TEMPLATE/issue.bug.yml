@@ -14,9 +14,9 @@ body:
     id: log
     attributes:
       label: Debug Log Message
-      description: Set the `LOG_LEVEL` envrionment variable to `DEBUG` and paste the entire log message.
+      description: What was the log message you received? You can receive additional information by setting the `LOG_LEVEL` environment variable to `DEBUG`.
     validations:
-      required: true
+      required: false
   - type: textarea
     id: context
     attributes:
@@ -26,7 +26,7 @@ body:
       required: false
   - type: textarea
     attributes:
-      label: Code Changes
+      label: Code Changes (Not Required)
       description: Provide code changes for the feature if you have any. Use comments to specify files or context.
     validations:
       required: false

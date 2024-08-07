@@ -56,7 +56,7 @@ Feature suggestions are tracked as [GitHub issues](https://github.com/resort-io/
 * Create a new branch for your feature or bug fix.
 * Make a copy of the `.env.example` file and rename it to `.env`.
 * Make your changes and push your changes to your fork.
-* Create a pull request to the `develop` branch of the main repository.
+* Create a pull request to the `main` branch of the repository.
 
 Since this project adds features with each release, pull requests will be merged into the `develop` branch, and then the `main` as a stable release.
 
@@ -71,7 +71,6 @@ Since this project adds features with each release, pull requests will be merged
 |-------------------|----------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | `ENV`             | Determines which JSON files to use. JSON files will be generated when running `__init__.py`. | `DEVELOPMENT` (uses the `dev.*.json` files) or `PRODUCTION` (uses the `*.json` files) |
 | `LOG_LEVEL`       | Logging level for the watcher.                                                               | `INFO` or `DEBUG`                                                                     |
-| `LOG_RSS_ENTRIES` | Determines whether to log each RSS torrent and corresponding matches when searching.         | `true` (`DEBUG` logging only) or `false`                                              |
 | `LOG_TIPS`        | Determines whether to log the watcher tips.                                                  | `true` or `false`                                                                     |
 | `WATCHER_DIR`     | Development directory for the `/watcher` container directory.                                | `./`                                                                                  |
 | `DOWNLOADS_DIR`   | Development directory for the `/downloads` container directory.                              | `./downloads` (Directory is not tracked)                                              |

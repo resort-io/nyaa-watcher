@@ -17,7 +17,7 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: Code Changes
+      label: Code Changes (Not Required)
       description: Provide code changes for the feature if you have any. Use comments to specify files or context.
     validations:
       required: false
