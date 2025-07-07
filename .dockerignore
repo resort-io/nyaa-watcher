@@ -1,4 +1,5 @@
 ### Development ###
+data/
 src/downloads/
 dev.*.json
 
@@ -11,6 +12,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+src/db/migrations/meta/
 
 ### IntelliJ & VSCode ###
 .idea/

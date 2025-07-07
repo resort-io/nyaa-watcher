@@ -1,0 +1,625 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "f327486b-e1f5-4efe-aa7b-d088355d31a1",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "config": {
+      "name": "config",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "downloads": {
+      "name": "downloads",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "subscriptionID": {
+          "name": "subscriptionID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "success": {
+          "name": "success",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "page": {
+          "name": "page",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "hash": {
+          "name": "hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "datetime": {
+          "name": "datetime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "downloads_subscriptionID_unique": {
+          "name": "downloads_subscriptionID_unique",
+          "columns": [
+            "subscriptionID"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "downloads_subscriptionID_webhooks_id_fk": {
+          "name": "downloads_subscriptionID_webhooks_id_fk",
+          "tableFrom": "downloads",
+          "tableTo": "webhooks",
+          "columnsFrom": [
+            "subscriptionID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "filter_exclude_regexes": {
+      "name": "filter_exclude_regexes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "filterID": {
+          "name": "filterID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "filter_exclude_regexes_filterID_unique": {
+          "name": "filter_exclude_regexes_filterID_unique",
+          "columns": [
+            "filterID"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "filter_exclude_regexes_filterID_subscription_filters_id_fk": {
+          "name": "filter_exclude_regexes_filterID_subscription_filters_id_fk",
+          "tableFrom": "filter_exclude_regexes",
+          "tableTo": "subscription_filters",
+          "columnsFrom": [
+            "filterID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "filter_regexes": {
+      "name": "filter_regexes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "filterID": {
+          "name": "filterID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "filter_regexes_filterID_unique": {
+          "name": "filter_regexes_filterID_unique",
+          "columns": [
+            "filterID"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "filter_regexes_filterID_subscription_filters_id_fk": {
+          "name": "filter_regexes_filterID_subscription_filters_id_fk",
+          "tableFrom": "filter_regexes",
+          "tableTo": "subscription_filters",
+          "columnsFrom": [
+            "filterID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "filter_tags": {
+      "name": "filter_tags",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "filterID": {
+          "name": "filterID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "filter_tags_filterID_unique": {
+          "name": "filter_tags_filterID_unique",
+          "columns": [
+            "filterID"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "filter_tags_filterID_subscription_filters_id_fk": {
+          "name": "filter_tags_filterID_subscription_filters_id_fk",
+          "tableFrom": "filter_tags",
+          "tableTo": "subscription_filters",
+          "columnsFrom": [
+            "filterID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "filter_webhooks": {
+      "name": "filter_webhooks",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "filterID": {
+          "name": "filterID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "webhookID": {
+          "name": "webhookID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "filter_webhooks_filterID_unique": {
+          "name": "filter_webhooks_filterID_unique",
+          "columns": [
+            "filterID"
+          ],
+          "isUnique": true
+        },
+        "filter_webhooks_webhookID_unique": {
+          "name": "filter_webhooks_webhookID_unique",
+          "columns": [
+            "webhookID"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "filter_webhooks_filterID_subscription_filters_id_fk": {
+          "name": "filter_webhooks_filterID_subscription_filters_id_fk",
+          "tableFrom": "filter_webhooks",
+          "tableTo": "subscription_filters",
+          "columnsFrom": [
+            "filterID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "filter_webhooks_webhookID_webhooks_id_fk": {
+          "name": "filter_webhooks_webhookID_webhooks_id_fk",
+          "tableFrom": "filter_webhooks",
+          "tableTo": "webhooks",
+          "columnsFrom": [
+            "webhookID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "subscription_filters": {
+      "name": "subscription_filters",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "subscriptionID": {
+          "name": "subscriptionID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "subscription_filters_subscriptionID_unique": {
+          "name": "subscription_filters_subscriptionID_unique",
+          "columns": [
+            "subscriptionID"
+          ],
+          "isUnique": true
+        },
+        "subscription_filters_name_unique": {
+          "name": "subscription_filters_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "subscription_filters_subscriptionID_webhooks_id_fk": {
+          "name": "subscription_filters_subscriptionID_webhooks_id_fk",
+          "tableFrom": "subscription_filters",
+          "tableTo": "webhooks",
+          "columnsFrom": [
+            "subscriptionID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "subscription_webhooks": {
+      "name": "subscription_webhooks",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "subscriptionID": {
+          "name": "subscriptionID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "webhookID": {
+          "name": "webhookID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "subscription_webhooks_subscriptionID_unique": {
+          "name": "subscription_webhooks_subscriptionID_unique",
+          "columns": [
+            "subscriptionID"
+          ],
+          "isUnique": true
+        },
+        "subscription_webhooks_webhookID_unique": {
+          "name": "subscription_webhooks_webhookID_unique",
+          "columns": [
+            "webhookID"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "subscription_webhooks_subscriptionID_webhooks_id_fk": {
+          "name": "subscription_webhooks_subscriptionID_webhooks_id_fk",
+          "tableFrom": "subscription_webhooks",
+          "tableTo": "webhooks",
+          "columnsFrom": [
+            "subscriptionID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "subscription_webhooks_webhookID_webhooks_id_fk": {
+          "name": "subscription_webhooks_webhookID_webhooks_id_fk",
+          "tableFrom": "subscription_webhooks",
+          "tableTo": "webhooks",
+          "columnsFrom": [
+            "webhookID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "webhooks": {
+      "name": "webhooks",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "webhooks_name_unique": {
+          "name": "webhooks_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "users": {
+      "name": "users",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "users_name_unique": {
+          "name": "users_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "webhook_config": {
+      "name": "webhook_config",
+      "columns": {
+        "webhookID": {
+          "name": "webhookID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "webhook_config_webhookID_webhooks_id_fk": {
+          "name": "webhook_config_webhookID_webhooks_id_fk",
+          "tableFrom": "webhook_config",
+          "tableTo": "webhooks",
+          "columnsFrom": [
+            "webhookID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
